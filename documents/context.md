@@ -378,3 +378,530 @@ mion-blog/
 ## 결론
 
 현재 Mion Blog 프로젝트는 **견고한 기초 인프라**가 완성된 상태입니다. Next.js와 Nest.js의 최신 기술 스택을 활용하여 현대적인 풀스택 블로그 시스템의 토대가 마련되어 있으며, 이제 실제 비즈니스 로직과 사용자 인터페이스 구현 단계로 진입할 준비가 되었습니다.
+
+---
+
+# Phase 1: API 컨트롤러 구현 상세 작업 계획 (2025-09-06)
+
+## 개요 및 목표
+
+**목표**: 실제 데이터를 처리하는 완전한 CRUD API 시스템 구현
+**기간**: 즉시 시작 가능
+**담당**: 여러 전문가 협업
+**우선순위**: 최고 (전체 시스템의 핵심)
+
+## 작업 세분화
+
+### 1. 기초 인프라 설정 (Phase 1.1)
+
+#### 1.1.1 데이터베이스 연결 설정
+**담당 영역**: Database Infrastructure
+**예상 시간**: 2-3시간
+**의존성**: 없음 (독립 작업 가능)
+
+**작업 내용**:
+```typescript
+// blog-api/src/database/database.module.ts
+- Drizzle ORM 연결 설정
+- Neon Database 연결 문자열 구성
+- 연결 풀링 설정
+- 환경별 데이터베이스 설정 (dev/prod)
+```
+
+**산출물**:
+- `database.module.ts`: 데이터베이스 모듈 설정
+- `database.service.ts`: 데이터베이스 서비스
+- 연결 테스트 코드
+
+**검증 방법**:
+```bash
+pnpm --filter=blog-api test:db-connection
+```
+
+#### 1.1.2 DTO 클래스 정의
+**담당 영역**: API Design
+**예상 시간**: 3-4시간
+**의존성**: packages/shared 타입 정의
+
+**작업 내용**:
+```typescript
+// blog-api/src/posts/dto/
+- CreatePostDto: 포스트 생성 요청 데이터
+- UpdatePostDto: 포스트 수정 요청 데이터
+- PostQueryDto: 포스트 목록 조회 필터링
+- PostResponseDto: 포스트 응답 데이터
+
+// blog-api/src/categories/dto/
+- CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto
+
+// blog-api/src/tags/dto/
+- CreateTagDto, UpdateTagDto, TagResponseDto
+```
+
+**산출물**:
+- 모든 DTO 클래스 (class-validator 데코레이터 포함)
+- Swagger API 문서용 데코레이터
+- 타입 안전성 보장
+
+**검증 방법**:
+```bash
+pnpm --filter=blog-api build  # 타입 오류 없이 빌드 성공
+```
+
+#### 1.1.3 공통 인터셉터 및 필터 설정
+**담당 영역**: Backend Architecture
+**예상 시간**: 2-3시간
+**의존성**: 없음
+
+**작업 내용**:
+```typescript
+// blog-api/src/common/
+- ResponseInterceptor: 일관된 API 응답 형식
+- ErrorFilter: 전역 에러 처리
+- LoggingInterceptor: API 요청/응답 로깅
+- ValidationPipe: 전역 데이터 검증
+```
+
+**산출물**:
+- 공통 인터셉터 및 필터
+- 에러 응답 표준화
+- 로깅 시스템
+
+### 2. Categories API 구현 (Phase 1.2)
+
+#### 1.2.1 Categories 컨트롤러 & 서비스
+**담당 영역**: Backend Development
+**예상 시간**: 4-5시간
+**의존성**: 1.1 완료 후
+
+**작업 내용**:
+```typescript
+// 구현할 엔드포인트:
+GET    /api/categories          # 모든 카테고리 조회
+GET    /api/categories/:slug    # 특정 카테고리 조회
+POST   /api/categories          # 카테고리 생성 (ADMIN)
+PUT    /api/categories/:slug    # 카테고리 수정 (ADMIN)
+DELETE /api/categories/:slug    # 카테고리 삭제 (ADMIN)
+```
+
+**세부 작업**:
+1. **CategoriesController**: REST API 엔드포인트 정의
+2. **CategoriesService**: 비즈니스 로직 구현
+3. **CategoriesRepository**: 데이터베이스 CRUD 작업
+4. **Slug 중복 검증**: 카테고리 slug 유니크 보장
+5. **권한 검증**: ADMIN 전용 작업 보호
+
+**산출물**:
+```
+blog-api/src/categories/
+├── categories.controller.ts
+├── categories.service.ts  
+├── categories.repository.ts
+├── categories.module.ts
+└── dto/
+    ├── create-category.dto.ts
+    ├── update-category.dto.ts
+    └── category-response.dto.ts
+```
+
+#### 1.2.2 Categories API 테스트
+**담당 영역**: QA/Testing
+**예상 시간**: 2-3시간
+**의존성**: 1.2.1 완료 후
+
+**작업 내용**:
+- Unit Tests: 서비스 로직 테스트
+- Integration Tests: API 엔드포인트 테스트
+- E2E Tests: 실제 데이터베이스와의 통합 테스트
+
+**검증 시나리오**:
+```typescript
+describe('Categories API', () => {
+  it('should create category with unique slug')
+  it('should prevent duplicate category names')
+  it('should require ADMIN role for creation')
+  it('should return paginated category list')
+  it('should update category slug correctly')
+  it('should prevent deletion if posts exist')
+})
+```
+
+### 3. Tags API 구현 (Phase 1.3)
+
+#### 1.3.1 Tags 컨트롤러 & 서비스
+**담당 영역**: Backend Development
+**예상 시간**: 3-4시간
+**의존성**: 1.2 완료 후 (병렬 작업 가능)
+
+**작업 내용**:
+```typescript
+// 구현할 엔드포인트:
+GET    /api/tags               # 모든 태그 조회
+GET    /api/tags/:slug         # 특정 태그 조회
+POST   /api/tags               # 태그 생성 (ADMIN)
+PUT    /api/tags/:slug         # 태그 수정 (ADMIN)
+DELETE /api/tags/:slug         # 태그 삭제 (ADMIN)
+GET    /api/tags/search?q=     # 태그 검색 (자동완성용)
+```
+
+**세부 작업**:
+1. **TagsController**: REST API 엔드포인트 정의
+2. **TagsService**: 비즈니스 로직 + 검색 기능
+3. **TagsRepository**: 데이터베이스 CRUD + 검색 쿼리
+4. **자동완성 API**: 태그명 부분 검색 기능
+5. **사용 빈도 조회**: 인기 태그 순서 정렬
+
+**특별 요구사항**:
+- **태그 검색**: `LIKE %query%` 검색 지원
+- **사용 빈도**: 포스트에 사용된 횟수 기준 정렬
+- **대소문자 무시**: 검색 시 case-insensitive
+
+#### 1.3.2 Tags API 테스트
+**담당 영역**: QA/Testing
+**예상 시간**: 2시간
+**의존성**: 1.3.1 완료 후
+
+### 4. Posts API 구현 (Phase 1.4) - 핵심 작업
+
+#### 1.4.1 Posts 기본 CRUD
+**담당 영역**: Backend Development (Senior)
+**예상 시간**: 6-8시간
+**의존성**: 1.2, 1.3 완료 후
+
+**작업 내용**:
+```typescript
+// 구현할 엔드포인트:
+GET    /api/posts                    # 포스트 목록 (페이징, 필터링)
+GET    /api/posts/:slug              # 포스트 상세 조회
+POST   /api/posts                    # 포스트 생성 (ADMIN)
+PUT    /api/posts/:slug              # 포스트 수정 (ADMIN)
+DELETE /api/posts/:slug              # 포스트 삭제 (ADMIN)
+PATCH  /api/posts/:slug/publish      # 발행 상태 변경 (ADMIN)
+PATCH  /api/posts/:slug/view         # 조회수 증가 (PUBLIC)
+```
+
+**복잡한 비즈니스 로직**:
+
+1. **MDX 파싱**: 
+   - 제목 자동 추출 (첫 번째 H1)
+   - excerpt 자동 생성 (첫 200자)
+   - 목차(TOC) 생성
+
+2. **Slug 관리**:
+   - 한글 제목 → 영문 slug 변환
+   - 중복 방지 (suffix 숫자 추가)
+   - URL 안전성 검증
+
+3. **관계형 데이터**:
+   - 카테고리 연결 (Foreign Key)
+   - 태그 다대다 관계 (PostTags 테이블)
+   - 사용자(작성자) 연결
+
+4. **조회수 시스템**:
+   - IP 기반 중복 방지
+   - Redis 캐싱 (선택사항)
+   - 통계용 일별 조회수
+
+#### 1.4.2 Posts 고급 기능
+**담당 영역**: Backend Development (Senior)
+**예상 시간**: 4-5시간
+**의존성**: 1.4.1 완료 후
+
+**작업 내용**:
+
+1. **필터링 & 정렬**:
+```typescript
+GET /api/posts?category=development&tag=nextjs&sort=latest&page=1&limit=10
+GET /api/posts?published=true&author=mion&search=typescript
+```
+
+2. **검색 기능**:
+   - 제목/내용 전체 텍스트 검색
+   - 태그/카테고리 필터링
+   - 복합 조건 검색
+
+3. **관련 포스트**:
+   - 같은 카테고리 포스트
+   - 유사 태그 포스트
+   - 추천 알고리즘 (간단 버전)
+
+#### 1.4.3 Posts API 테스트
+**담당 영역**: QA/Testing
+**예상 시간**: 4-5시간
+**의존성**: 1.4.2 완료 후
+
+**복잡한 테스트 시나리오**:
+```typescript
+describe('Posts API Complex Scenarios', () => {
+  it('should extract title from MDX H1 tag')
+  it('should generate unique slug from Korean title')
+  it('should handle duplicate slug with suffix')
+  it('should create post-tag relationships correctly')
+  it('should increment view count only once per IP')
+  it('should return filtered posts by multiple conditions')
+  it('should perform full-text search in title and content')
+  it('should prevent non-admin from creating posts')
+  it('should validate MDX content format')
+})
+```
+
+### 5. 통합 테스트 및 최적화 (Phase 1.5)
+
+#### 1.5.1 전체 API 통합 테스트
+**담당 영역**: QA/Testing
+**예상 시간**: 3-4시간
+**의존성**: 1.2, 1.3, 1.4 모두 완료 후
+
+**작업 내용**:
+- 실제 워크플로우 테스트
+- 성능 테스트 (응답 시간, 동시 요청)
+- 데이터 정합성 검증
+- 권한 시스템 종합 테스트
+
+#### 1.5.2 Swagger 문서 완성
+**담당 영역**: API Documentation
+**예상 시간**: 2-3시간
+**의존성**: 모든 API 완료 후
+
+**작업 내용**:
+- 모든 엔드포인트 문서화
+- 요청/응답 예시 추가
+- 에러 코드 정의
+- Postman Collection 생성
+
+#### 1.5.3 성능 최적화
+**담당 영역**: Performance Engineering  
+**예상 시간**: 2-3시간
+**의존성**: 통합 테스트 완료 후
+
+**작업 내용**:
+- 데이터베이스 인덱스 최적화
+- N+1 쿼리 문제 해결
+- 응답 캐싱 전략
+- 페이징 최적화
+
+## 병렬 작업 가능 구조
+
+### 동시 진행 가능한 작업들
+
+**팀 A (Database + Infrastructure)**:
+- 1.1.1 데이터베이스 연결 설정
+- 1.1.3 공통 인터셉터 설정
+
+**팀 B (API Design + DTO)**:
+- 1.1.2 DTO 클래스 정의
+- Swagger 설정 준비
+
+**팀 C (Categories API)**:
+- 1.2.1 Categories 구현 (1.1 완료 후)
+
+**팀 D (Tags API)**:  
+- 1.3.1 Tags 구현 (1.1 완료 후, 1.2와 병렬)
+
+**팀 E (Posts API)**:
+- 1.4.1 Posts 기본 CRUD (1.2, 1.3 완료 후)
+
+**팀 F (QA/Testing)**:
+- 각 API 완료 시점에 테스트 시작
+
+## 체크포인트 및 검증
+
+### Milestone 1: 기초 설정 완료
+**완료 조건**:
+- [ ] 데이터베이스 연결 성공
+- [ ] 모든 DTO 클래스 정의 완료
+- [ ] 공통 인터셉터/필터 적용
+- [ ] `pnpm build` 성공
+
+### Milestone 2: Categories + Tags API 완료
+**완료 조건**:
+- [ ] Categories CRUD 모든 엔드포인트 작동
+- [ ] Tags CRUD + 검색 기능 작동
+- [ ] Unit Test 80% 이상 커버리지
+- [ ] Swagger 문서 생성
+
+### Milestone 3: Posts API 완료
+**완료 조건**:
+- [ ] Posts CRUD 모든 기능 구현
+- [ ] MDX 파싱 및 Slug 생성 작동
+- [ ] 조회수 시스템 작동
+- [ ] 복합 필터링/검색 기능 작동
+- [ ] 관련 포스트 추천 기능
+
+### Milestone 4: Phase 1 완료
+**완료 조건**:
+- [ ] 모든 API 통합 테스트 통과
+- [ ] Swagger 문서 완성
+- [ ] 성능 최적화 적용
+- [ ] `http://localhost:3001/api-docs` 접속 가능
+
+## 전문가 역할 분담 가이드
+
+### Backend Development (Senior)
+- 복잡한 비즈니스 로직 (Posts API)
+- 데이터베이스 관계형 설계
+- 성능 최적화
+
+### Backend Development (Junior)  
+- 단순 CRUD 작업 (Categories, Tags)
+- DTO 클래스 작성
+- 기본 테스트 코드
+
+### API Design Specialist
+- REST API 설계 원칙 적용
+- Swagger 문서화 표준
+- 일관된 응답 형식 설계
+
+### Database Engineer
+- Drizzle ORM 설정
+- 쿼리 최적화
+- 인덱스 전략
+
+### QA/Testing Specialist
+- 테스트 시나리오 작성
+- 자동화 테스트 구축
+- 성능 테스트
+
+### DevOps Engineer
+- 환경 변수 관리
+- 로깅 시스템 설정
+- 배포 준비
+
+## 다음 단계 (Phase 2 준비)
+
+Phase 1 완료 후 즉시 시작할 수 있는 작업들:
+- Next.js 프론트엔드에서 API 호출
+- 홈페이지 포스트 목록 표시
+- 포스트 상세 페이지 MDX 렌더링
+
+**Phase 1 완료 예상 시간**: 총 25-35시간 (팀 규모에 따라 1-2주)
+
+---
+
+**이 상세 계획을 통해 여러 전문가가 동시에 협업하여 효율적으로 Phase 1을 완성할 수 있습니다.**
+
+---
+
+# Phase 1.1.1 데이터베이스 연결 시스템 구현 완료 (2025-09-09)
+
+## 🎉 구현 완료 현황
+
+### ✅ 성공적으로 완료된 작업들
+
+#### 1. NestJS + Drizzle ORM + Neon Database 연결 완료
+- **데이터베이스 연결**: PostgreSQL (Neon) 서버리스 환경 연결 성공
+- **WebSocket 지원**: `ws` 패키지 설치로 Neon Database의 WebSocket 연결 구현
+- **타입 안전성**: Drizzle ORM을 통한 완전한 타입 안전 쿼리 시스템
+
+#### 2. 확장 가능한 환경변수 로딩 시스템 구현
+**파일**: `packages/database/src/config/env-loader.ts`
+- **자동 앱 감지**: 현재 실행 중인 앱(blog-api 등)을 자동으로 감지
+- **다중 앱 지원**: 향후 추가되는 API 앱들 자동 지원 (blog-api 외)
+- **우아한 폴백**: 환경변수 파일을 찾지 못해도 시스템 환경변수로 폴백
+- **몬리포 최적화**: 루트 디렉토리부터 앱별 환경변수 파일까지 계층적 로딩
+
+```typescript
+// 주요 기능들
+- 앱 자동 감지: process.cwd() 기반 실행 컨텍스트 파악
+- 경로 자동 생성: ../../../apps/{app}/.env 하드코딩 제거
+- 다층 로딩: 시스템 → 루트 → 앱별 순서로 환경변수 로딩
+- 타입 안전성: TypeScript로 안전한 환경변수 처리
+```
+
+#### 3. 데이터베이스 헬스 체크 시스템
+**엔드포인트**: `GET /api/database/health`
+**파일들**:
+- `apps/blog-api/src/database/database.service.ts`: 헬스 체크 로직
+- `apps/blog-api/src/database/database.controller.ts`: HTTP 엔드포인트
+- `apps/blog-api/src/database/database.module.ts`: NestJS 모듈 설정
+
+**응답 형식**:
+```json
+{
+  "success": true,
+  "message": "Database is healthy"
+}
+```
+
+#### 4. 모듈 시스템 최적화
+- **CommonJS 전환**: ES 모듈에서 CommonJS로 전환하여 복잡한 import 문제 해결
+- **워크스페이스 호환**: `@repo/database` 패키지의 monorepo 환경 완벽 지원
+- **TypeScript 경로 매핑**: 워크스페이스 패키지들의 올바른 모듈 해결
+
+### 🔧 해결된 기술적 문제들
+
+#### 1. ES Module Import 오류 해결
+**문제**: `.js` 확장자 사용으로 인한 모듈 해결 실패
+**해결**: CommonJS 전환으로 안정적인 모듈 시스템 구축
+
+#### 2. WebSocket 연결 누락 문제 해결
+**문제**: `Database is not healthy` 오류 발생
+**원인**: Neon Database의 서버리스 환경에서 WebSocket 구현체 필요
+**해결**: `ws` 패키지 설치 및 `neonConfig.webSocketConstructor` 설정
+
+#### 3. 하드코딩된 환경변수 경로 문제 해결
+**문제**: `blog-api` 앱에만 고정된 하드코딩된 경로
+**해결**: 확장 가능한 자동 감지 시스템으로 모든 앱 지원
+
+### 🚀 현재 상태 및 검증
+
+#### 실행 로그 (성공)
+```bash
+[Nest] 2025-09-09 DatabaseModule dependencies initialized
+[env-loader] Loaded environment variables from: [ '/Users/sgma/Documents/develop/mion-blog/apps/blog-api/.env' ]
+[DatabaseService] Connection established successfully
+[Nest] 2025-09-09 Application successfully started on port 3001
+```
+
+#### API 테스트 가능
+- **헬스 체크**: `GET http://localhost:3001/api/database/health`
+- **Swagger 문서**: `http://localhost:3001/api-docs`
+- **실시간 상태**: 데이터베이스 연결 상태 실시간 확인 가능
+
+### 📁 변경된 파일들
+
+```
+packages/database/
+├── src/
+│   ├── config/env-loader.ts          # 새로 생성 (확장 가능한 환경변수 시스템)
+│   └── connection.ts                 # 수정 (env-loader 적용)
+├── package.json                      # 수정 (ws 패키지 추가)
+└── tsconfig.json                     # 수정 (CommonJS 전환)
+
+apps/blog-api/
+├── src/
+│   ├── database/
+│   │   ├── database.controller.ts    # 새로 생성 (헬스 엔드포인트)
+│   │   ├── database.service.ts       # 새로 생성 (헬스 체크 로직)
+│   │   └── database.module.ts        # 새로 생성 (NestJS 모듈)
+│   ├── app.module.ts                 # 수정 (DatabaseModule 추가)
+│   └── main.ts                       # 수정 (글로벌 prefix 설정)
+└── tsconfig.json                     # 수정 (CommonJS 전환, 경로 매핑)
+```
+
+### 🎯 다음 단계 준비 완료
+
+Phase 1.1.1이 완료되어 다음 단계들을 시작할 준비가 되었습니다:
+
+#### Phase 1.1.2: DTO 클래스 정의
+- CreatePostDto, UpdatePostDto, PostResponseDto
+- CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto  
+- CreateTagDto, UpdateTagDto, TagResponseDto
+- class-validator 데코레이터 적용
+- Swagger 문서화 데코레이터 추가
+
+#### Phase 1.1.3: 공통 인터셉터 및 필터 설정
+- ResponseInterceptor (일관된 API 응답 형식)
+- ErrorFilter (전역 에러 처리)
+- LoggingInterceptor (API 요청/응답 로깅)
+- ValidationPipe (전역 데이터 검증)
+
+### 💡 핵심 성취
+
+1. **확장성**: 새로운 API 앱 추가 시 자동으로 환경변수 시스템 적용
+2. **안정성**: WebSocket + PostgreSQL 연결의 완전한 작동
+3. **모니터링**: 실시간 데이터베이스 상태 확인 가능
+4. **타입 안전성**: 전체 시스템에서 TypeScript 완전 지원
+5. **개발 경험**: 명확한 에러 메시지와 로깅 시스템
+
+**Phase 1.1.1 데이터베이스 연결 시스템이 성공적으로 완료되어 본격적인 API 개발 단계로 진입할 준비가 완료되었습니다!**

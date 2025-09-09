@@ -1,9 +1,9 @@
 import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
-import { users } from "./users.js";
-import { categories } from "./categories.js";
-import { tags } from "./tags.js";
+import { users } from "./users";
+import { categories } from "./categories";
+import { tags } from "./tags";
 
 export const posts = pgTable("posts", {
   id: text("id")
