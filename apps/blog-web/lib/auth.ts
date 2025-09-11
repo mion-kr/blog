@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "./auth-config"
 
 // 서버 사이드에서 세션 가져오기
 export async function getSession() {
