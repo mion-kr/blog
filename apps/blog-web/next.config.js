@@ -5,6 +5,9 @@ const nextConfig = {
   // MDX를 페이지로 처리하도록 설정
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
   
+  // 워크스페이스 패키지 트랜스파일 설정
+  transpilePackages: ['@repo/shared', '@repo/ui'],
+  
   // 실험적 기능들
   experimental: {
     mdxRs: true, // Rust 기반 MDX 컴파일러 (더 빠름)

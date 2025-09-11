@@ -1,25 +1,176 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalDependencies": [
+    "package.json",
+    "tsconfig.json",
+    "tsconfig.*.json",
+    ".env*"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
-    },
-    "db:build": {
-      "dependsOn": [],
-      "outputs": ["dist/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "src/**",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "tsup.config.ts"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "!dist/cache/**"
+      ],
+      "outputLogs": "new-only",
+      "env": ["NODE_ENV"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "public/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "styles/**",
+        ".env*",
+        "next.config.mjs",
+        "tailwind.config.ts",
+        "tsconfig.json",
+        "tsup.config.ts"
+      ],
+      "outputLogs": "new-only"
+    },
+    "check-types": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        "types/**",
+        "tsconfig.json",
+        "tsconfig.build.json"
+      ],
+      "outputLogs": "new-only"
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        ".eslintrc*",
+        "eslint.config.*"
+      ],
+      "outputLogs": "new-only"
+    },
+    "format": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**",
+        "app/**",
+        "components/**",
+        "lib/**",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
+      "outputLogs": "new-only"
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**",
+        "test/**",
+        "jest.config.*",
+        "vitest.config.*"
+      ],
+      "outputs": ["coverage/**"],
+      "outputLogs": "new-only"
+    },
+    "test:watch": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "test/**",
+        "jest.config.*",
+        "vitest.config.*"
+      ]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "test/**",
+        "e2e/**",
+        "playwright.config.*"
+      ],
+      "outputs": ["test-results/**", "playwright-report/**"],
+      "outputLogs": "new-only"
+    },
+    "db:generate": {
+      "inputs": [
+        "src/schema/**",
+        "drizzle.config.ts",
+        "drizzle/**/*.sql"
+      ],
+      "outputs": ["drizzle/**"],
+      "outputLogs": "new-only"
+    },
+    "db:migrate": {
+      "dependsOn": ["db:generate"],
+      "cache": false,
+      "inputs": ["drizzle/**/*.sql"],
+      "outputLogs": "new-only"
+    },
+    "db:push": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "inputs": [
+        "src/schema/**",
+        "drizzle.config.ts"
+      ],
+      "outputLogs": "new-only"
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/schema/**",
+        "drizzle.config.ts"
+      ]
+    },
+    "db:seed": {
+      "dependsOn": ["^build", "db:push"],
+      "cache": false,
+      "inputs": [
+        "src/seed.ts",
+        "src/schema/**"
+      ],
+      "outputLogs": "new-only"
+    },
+    "clean": {
+      "cache": false,
+      "inputs": [],
+      "outputs": []
     }
   }
 }
