@@ -15,6 +15,7 @@ export interface Tag {
   name: string; // 태그 이름 (예: "Next.js", "TypeScript", "블로그")
   slug: string; // URL 친화적 문자열 (예: "nextjs", "typescript", "blog")
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Post {

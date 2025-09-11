@@ -3,21 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
-    "dev": "tsc --project tsconfig.build.json --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
+    "build:tsc": "tsc --project tsconfig.build.json",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
@@ -37,6 +39,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.5.4",
     "drizzle-kit": "^0.24.2",
+    "tsup": "^8.5.0",
     "tsx": "^4.16.5",
     "typescript": "^5.6.2"
   }
