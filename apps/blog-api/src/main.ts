@@ -1,48 +1,73 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import helmet from 'helmet';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cors from 'cors';
+import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { CategoriesModule } from './categories/categories.module';
+import { PostsModule } from './posts/posts.module';
+import { TagsModule } from './tags/tags.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Pino Logger 설정
+  app.useLogger(app.get(Logger));
+
+  // 포트 설정 (Swagger 서버 설정에서 사용하기 위해 미리 정의)
+  const port = process.env.PORT ?? 3001;
+
+  // 글로벌 프리픽스 설정
+  app.setGlobalPrefix('api');
 
   // 보안 헤더 설정
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-  }));
+    }),
+  );
 
   // CORS 설정 - 요구사항 문서 기준
-  app.use(cors({
-    origin: [
-      'https://blog.mion.dev', // 프로덕션 도메인
-      'http://localhost:3000',  // 개발 환경
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  }));
+  app.use(
+    cors({
+      origin: [
+        'https://blog.mion.dev', // 프로덕션 도메인
+        'http://localhost:3000', // 개발 환경
+      ],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+    }),
+  );
 
   // 전역 ValidationPipe 설정
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
+  // 전역 인터셉터와 필터는 CommonModule에서 APP_INTERCEPTOR, APP_FILTER Provider로 등록됨
 
   // Swagger API 문서 설정
   const config = new DocumentBuilder()
-    .setTitle('Mion\'s Blog API')
+    .setTitle("Mion's Blog API")
     .setDescription('Mion의 기술 블로그 API 문서')
     .setVersion('1.0')
+    .addServer(`http://localhost:${port}`, '개발 환경')
+    .addServer('https://blog-api.mion.dev', '프로덕션 환경')
     .addBearerAuth({
       type: 'http',
       scheme: 'bearer',
@@ -58,7 +83,9 @@ async function bootstrap() {
     .addTag('database', '데이터베이스 테스트 API (개발 환경 전용)')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    include: [PostsModule, CategoriesModule, TagsModule],
+  });
   SwaggerModule.setup('api-docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
@@ -67,13 +94,13 @@ async function bootstrap() {
     },
   });
 
-  // 글로벌 프리픽스 설정
-  app.setGlobalPrefix('api');
-
-  const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  
-  console.log(`🚀 Blog API is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger docs available at: http://localhost:${port}/api-docs`);
+
+  // Pino Logger 인스턴스를 가져와서 사용
+  const logger = app.get(Logger);
+  logger.log(`🚀 Blog API is running on: http://localhost:${port}`);
+  logger.log(
+    `📚 Swagger docs available at: http://localhost:${port}/api-docs`,
+  );
 }
 bootstrap();

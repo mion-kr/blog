@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { TagsService } from './tags.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -29,6 +29,7 @@ import {
   ApiAdminUpdate,
   ApiAdminDelete,
   ApiConflictError,
+  PaginatedResponse,
 } from '../common/decorators';
 
 /**
@@ -41,6 +42,7 @@ import {
  * - PUT /api/tags/:slug - 태그 수정 (ADMIN + CSRF)
  * - DELETE /api/tags/:slug - 태그 삭제 (ADMIN + CSRF)
  */
+@ApiExtraModels(TagResponseDto)
 @ApiTags('tags')
 @Controller('tags')
 export class TagsController {
@@ -51,6 +53,7 @@ export class TagsController {
    * 쿼리 파라미터로 페이징, 정렬, 필터링 지원
    */
   @Get()
+  @PaginatedResponse()
   @ApiPublicList(
     TagResponseDto,
     '태그 목록 조회',

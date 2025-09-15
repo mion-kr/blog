@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { CategoriesService } from './categories.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -29,6 +29,7 @@ import {
   ApiAdminUpdate,
   ApiAdminDelete,
   ApiConflictError,
+  PaginatedResponse,
 } from '../common/decorators';
 
 /**
@@ -41,6 +42,7 @@ import {
  * - PUT /api/categories/:slug - 카테고리 수정 (ADMIN + CSRF)
  * - DELETE /api/categories/:slug - 카테고리 삭제 (ADMIN + CSRF)
  */
+@ApiExtraModels(CategoryResponseDto)
 @ApiTags('categories')
 @Controller('categories')
 export class CategoriesController {
@@ -51,6 +53,7 @@ export class CategoriesController {
    * 쿼리 파라미터로 페이징, 정렬, 필터링 지원
    */
   @Get()
+  @PaginatedResponse()
   @ApiPublicList(
     CategoryResponseDto,
     '카테고리 목록 조회',

@@ -7,6 +7,8 @@ import { DatabaseModule } from './database';
 import { PostsModule } from './posts/posts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
+import { CommonModule } from './common/common.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { TagsModule } from './tags/tags.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    LoggerModule, // Pino Logger 모듈 추가
+    CommonModule, // 공통 모듈 추가 (GlobalExceptionFilter 포함)
     DatabaseModule,
     AuthModule,
     PostsModule,

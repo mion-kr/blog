@@ -1,4 +1,3 @@
-// Utils index file
+export { PaginationMeta } from "./pagination";
+export type { ApiPaginationMeta } from "./pagination";
 export * from "./slug";
-// Test comment for watch mode
-export const testUtil = () => 'incremental test';

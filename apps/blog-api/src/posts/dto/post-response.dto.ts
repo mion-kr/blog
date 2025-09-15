@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { PostWithRelations } from '@repo/shared';
+import { TagResponseDto } from '../../tags/dto/tag-response.dto';
 
 export class AuthorResponseDto {
   @ApiProperty({
@@ -26,7 +27,7 @@ export class AuthorResponseDto {
   image?: string;
 }
 
-export class CategoryResponseDto {
+export class PostCategoryResponseDto {
   @ApiProperty({
     description: '카테고리 ID',
     example: '01234567-89ab-cdef-0123-456789abcdef',
@@ -55,46 +56,6 @@ export class CategoryResponseDto {
   })
   @Expose()
   description?: string;
-
-  @ApiProperty({
-    description: '생성 일시',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  @Expose()
-  @Type(() => Date)
-  createdAt: Date;
-
-  @ApiProperty({
-    description: '수정 일시',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  @Expose()
-  @Type(() => Date)
-  updatedAt: Date;
-}
-
-export class TagResponseDto {
-  @ApiProperty({
-    description: '태그 ID',
-    example: '01234567-89ab-cdef-0123-456789abcdef',
-    format: 'uuid',
-  })
-  @Expose()
-  id: string;
-
-  @ApiProperty({
-    description: '태그 이름',
-    example: 'Next.js',
-  })
-  @Expose()
-  name: string;
-
-  @ApiProperty({
-    description: '태그 슬러그',
-    example: 'nextjs',
-  })
-  @Expose()
-  slug: string;
 
   @ApiProperty({
     description: '생성 일시',
@@ -214,11 +175,11 @@ export class PostResponseDto implements PostWithRelations {
 
   @ApiProperty({
     description: '카테고리 정보',
-    type: CategoryResponseDto,
+    type: PostCategoryResponseDto,
   })
   @Expose()
-  @Type(() => CategoryResponseDto)
-  category: CategoryResponseDto;
+  @Type(() => PostCategoryResponseDto)
+  category: PostCategoryResponseDto;
 
   @ApiProperty({
     description: '태그 목록',

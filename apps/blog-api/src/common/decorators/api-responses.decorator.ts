@@ -4,7 +4,10 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiOperation,
+  getSchemaPath,
 } from '@nestjs/swagger';
+
+import { ApiResponseDto, PaginatedApiResponseDto } from '../dto';
 
 /**
  * 공통 에러 응답 데코레이터
@@ -101,7 +104,17 @@ export function ApiAdminCreate<TModel extends Type<any>>(
     ApiResponse({
       status: 201,
       description: '생성 성공',
-      type: responseType,
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(ApiResponseDto) },
+          {
+            properties: {
+              data: { $ref: getSchemaPath(responseType) },
+              message: { example: '생성이 완료되었습니다.' },
+            },
+          },
+        ],
+      },
     }),
     ApiAdminErrors(),
   );
@@ -131,7 +144,17 @@ export function ApiAdminUpdate<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: `${resourceName} 수정 성공`,
-      type: responseType,
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(ApiResponseDto) },
+          {
+            properties: {
+              data: { $ref: getSchemaPath(responseType) },
+              message: { example: '수정이 완료되었습니다.' },
+            },
+          },
+        ],
+      },
     }),
     ApiAdminErrors(),
     ApiNotFoundError(resourceName),
@@ -183,7 +206,23 @@ export function ApiPublicList<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: '목록 조회 성공',
-      type: [responseType],
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(PaginatedApiResponseDto) },
+          {
+            properties: {
+              data: {
+                type: 'array',
+                items: { $ref: getSchemaPath(responseType) },
+              },
+              message: { 
+                example: '0개의 항목을 조회했습니다.',
+                description: '조회된 항목 수에 따라 동적으로 변경됩니다.',
+              },
+            },
+          },
+        ],
+      },
     }),
     ApiCommonErrors(),
   );
@@ -211,7 +250,17 @@ export function ApiPublicDetail<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: `${resourceName} 조회 성공`,
-      type: responseType,
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(ApiResponseDto) },
+          {
+            properties: {
+              data: { $ref: getSchemaPath(responseType) },
+              message: { example: '조회가 완료되었습니다.' },
+            },
+          },
+        ],
+      },
     }),
     ApiNotFoundError(resourceName),
     ApiCommonErrors(),
