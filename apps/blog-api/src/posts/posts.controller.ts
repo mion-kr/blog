@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -20,7 +20,7 @@ import { CsrfGuard } from '../auth/guards/csrf.guard';
 import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PostResponseDto } from './dto/post-response.dto';
+import { PostResponseDto, AuthorResponseDto, PostCategoryResponseDto } from './dto/post-response.dto';
 
 import {
   ApiPublicList,
@@ -28,6 +28,8 @@ import {
   ApiAdminCreate,
   ApiAdminUpdate,
   ApiAdminDelete,
+  ResponseMessage,
+  PaginatedResponse,
 } from '../common/decorators';
 
 /**
@@ -40,6 +42,11 @@ import {
  * - PUT /api/posts/:slug - 포스트 수정 (ADMIN + CSRF)
  * - DELETE /api/posts/:slug - 포스트 삭제 (ADMIN + CSRF)
  */
+@ApiExtraModels(
+  PostResponseDto,
+  AuthorResponseDto,
+  PostCategoryResponseDto,
+)
 @ApiTags('posts')
 @Controller('posts')
 export class PostsController {
@@ -50,6 +57,7 @@ export class PostsController {
    * 쿼리 파라미터로 페이징, 정렬, 필터링 지원
    */
   @Get()
+  @PaginatedResponse()
   @ApiPublicList(
     PostResponseDto,
     '포스트 목록 조회',

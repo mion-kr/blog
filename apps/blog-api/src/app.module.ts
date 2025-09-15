@@ -7,6 +7,7 @@ import { DatabaseModule } from './database';
 import { PostsModule } from './posts/posts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { TagsModule } from './tags/tags.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    CommonModule, // 공통 모듈 추가 (GlobalExceptionFilter 포함)
     DatabaseModule,
     AuthModule,
     PostsModule,
