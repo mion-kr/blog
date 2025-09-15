@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { ErrorResponse } from '../interfaces/api-response.interface';
 
 /**
@@ -8,7 +9,12 @@ import { ErrorResponse } from '../interfaces/api-response.interface';
  */
 @Injectable()
 export class ErrorLogger {
-  private readonly logger = new Logger('ExceptionFilter');
+  constructor(
+    @InjectPinoLogger(ErrorLogger.name)
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext('ExceptionFilter');
+  }
 
   /**
    * 에러를 로깅합니다.
@@ -19,7 +25,7 @@ export class ErrorLogger {
     request: Request,
     errorResponse: ErrorResponse
   ): void {
-    const { method, url, ip } = request;
+    const { method, url } = request;
     const statusCode = errorResponse.error?.statusCode ?? 500;
     const errorCode = errorResponse.error?.code ?? 'UNKNOWN';
 
@@ -28,13 +34,13 @@ export class ErrorLogger {
 
     if (statusCode >= 500) {
       // 서버 에러는 ERROR 레벨로 로깅
-      this.logger.error(logMessage, {
+      this.logger.error({
         ...logContext,
         exception: this.getExceptionDetails(exception),
-      });
+      }, logMessage);
     } else {
       // 클라이언트 에러는 WARN 레벨로 로깅
-      this.logger.warn(logMessage, logContext);
+      this.logger.warn(logContext, logMessage);
     }
   }
 
@@ -44,7 +50,7 @@ export class ErrorLogger {
   private buildLogContext(
     request: Request,
     errorResponse: ErrorResponse
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     const { method, url, ip } = request;
     const statusCode = errorResponse.error?.statusCode ?? 500;
     const errorCode = errorResponse.error?.code ?? 'UNKNOWN';
@@ -64,7 +70,7 @@ export class ErrorLogger {
   /**
    * 예외 상세 정보 추출
    */
-  private getExceptionDetails(exception: unknown): any {
+  private getExceptionDetails(exception: unknown): unknown {
     if (exception instanceof Error) {
       return {
         name: exception.constructor.name,

@@ -3,13 +3,19 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cors from 'cors';
 import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Pino Logger 설정
+  app.useLogger(app.get(Logger));
 
   // 포트 설정 (Swagger 서버 설정에서 사용하기 위해 미리 정의)
   const port = process.env.PORT ?? 3001;
@@ -90,8 +96,10 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`🚀 Blog API is running on: http://localhost:${port}`);
-  console.log(
+  // Pino Logger 인스턴스를 가져와서 사용
+  const logger = app.get(Logger);
+  logger.log(`🚀 Blog API is running on: http://localhost:${port}`);
+  logger.log(
     `📚 Swagger docs available at: http://localhost:${port}/api-docs`,
   );
 }
