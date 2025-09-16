@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
 import { PostWithRelations } from '@repo/shared';
+import { Expose, Type } from 'class-transformer';
 import { TagResponseDto } from '../../tags/dto/tag-response.dto';
 
 export class AuthorResponseDto {
@@ -183,8 +183,7 @@ export class PostResponseDto implements PostWithRelations {
 
   @ApiProperty({
     description: '태그 목록',
-    type: [TagResponseDto],
-    isArray: true,
+    type: () => [TagResponseDto],
   })
   @Expose()
   @Type(() => TagResponseDto)
