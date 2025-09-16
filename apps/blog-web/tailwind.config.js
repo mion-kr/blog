@@ -2,7 +2,7 @@ import typography from "@tailwindcss/typography";
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["media"], // 시스템 설정에 따른 자동 다크모드 (class 방식 비활성화)
+  darkMode: ["media"], // 시스템 설정에 따른 자동 다크모드
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -18,77 +18,74 @@ export default {
         "2xl": "1400px",
       },
     },
-    // 요구사항 문서의 브레이크포인트 반영
+    // 브레이크포인트
     screens: {
-      'xs': '475px',    // 작은 모바일
-      'sm': '640px',    // 큰 모바일
-      'md': '768px',    // 태블릿
-      'lg': '1024px',   // 작은 노트북
-      'xl': '1280px',   // 데스크톱
-      '2xl': '1536px'   // 큰 데스크톱
+      'xs': '475px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px'
     },
     extend: {
+      // v4에서는 대부분의 색상이 CSS 변수로 관리됨
       colors: {
-        // Primary brand colors - 요구사항 문서 기준
-        brand: {
-          50: "var(--color-primary-50)",
-          100: "var(--color-primary-100)",
-          500: "var(--color-primary-500)",
-          900: "var(--color-primary-900)",
-        },
-        // Accent colors  
-        "accent-primary": "var(--color-accent-primary)",
-        "accent-secondary": "var(--color-accent-secondary)", 
-        "accent-success": "var(--color-accent-success)",
-        "accent-warning": "var(--color-accent-warning)",
-        "accent-error": "var(--color-accent-error)",
-        
-        // Semantic colors
-        "custom-background": "var(--color-background)",
-        surface: "var(--color-surface)",
-        "text-primary": "var(--color-text-primary)",
-        "text-secondary": "var(--color-text-secondary)",
-        "custom-border": "var(--color-border)",
-
-        // shadcn/ui colors (CSS variables 사용)
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // CSS 변수 참조
+        border: "var(--color-border)",
+        input: "var(--color-input)",
+        ring: "var(--color-ring)",
+        background: "var(--color-background)",
+        foreground: "var(--color-text-primary)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--color-primary)",
+          foreground: "var(--color-primary-foreground)",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "var(--color-secondary)",
+          foreground: "var(--color-secondary-foreground)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--color-destructive)",
+          foreground: "var(--color-destructive-foreground)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--color-muted)",
+          foreground: "var(--color-muted-foreground)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--color-accent)",
+          foreground: "var(--color-accent-foreground)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--color-popover)",
+          foreground: "var(--color-popover-foreground)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--color-card)",
+          foreground: "var(--color-card-foreground)",
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)",
+      },
+      fontSize: {
+        xs: "var(--font-size-xs)",
+        sm: "var(--font-size-sm)",
+        base: "var(--font-size-base)",
+        lg: "var(--font-size-lg)",
+        xl: "var(--font-size-xl)",
+        "2xl": "var(--font-size-2xl)",
+        "3xl": "var(--font-size-3xl)",
+        "4xl": "var(--font-size-4xl)",
+        "5xl": "var(--font-size-5xl)",
+      },
+      fontWeight: {
+        normal: "var(--font-weight-normal)",
+        medium: "var(--font-weight-medium)",
+        semibold: "var(--font-weight-semibold)",
+        bold: "var(--font-weight-bold)",
       },
       keyframes: {
         "accordion-down": {
@@ -101,62 +98,92 @@ export default {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "var(--animate-accordion-down)",
+        "accordion-up": "var(--animate-accordion-up)",
       },
-      typography: {
+      typography: ({ theme }) => ({
         DEFAULT: {
           css: {
+            '--tw-prose-body': 'var(--color-text-primary)',
+            '--tw-prose-headings': 'var(--color-text-primary)',
+            '--tw-prose-lead': 'var(--color-text-secondary)',
+            '--tw-prose-links': 'var(--color-accent-primary)',
+            '--tw-prose-bold': 'var(--color-text-primary)',
+            '--tw-prose-counters': 'var(--color-text-secondary)',
+            '--tw-prose-bullets': 'var(--color-text-secondary)',
+            '--tw-prose-hr': 'var(--color-border)',
+            '--tw-prose-quotes': 'var(--color-text-secondary)',
+            '--tw-prose-quote-borders': 'var(--color-border)',
+            '--tw-prose-captions': 'var(--color-text-secondary)',
+            '--tw-prose-code': 'var(--color-text-primary)',
+            '--tw-prose-pre-code': 'var(--color-text-primary)',
+            '--tw-prose-pre-bg': 'var(--color-surface)',
+            '--tw-prose-th-borders': 'var(--color-border)',
+            '--tw-prose-td-borders': 'var(--color-border)',
             maxWidth: 'none',
-            color: 'var(--color-text-primary)',
-            '[class~="lead"]': {
-              color: 'var(--color-text-secondary)',
-            },
+            color: 'var(--tw-prose-body)',
             a: {
-              color: 'var(--color-accent-primary)',
+              color: 'var(--tw-prose-links)',
               textDecoration: 'underline',
               fontWeight: '500',
               '&:hover': {
-                color: 'var(--color-accent-primary)',
                 textDecoration: 'none',
               },
             },
+            '[class~="lead"]': {
+              color: 'var(--tw-prose-lead)',
+            },
             strong: {
-              color: 'var(--color-text-primary)',
+              color: 'var(--tw-prose-bold)',
               fontWeight: '600',
             },
             'ol > li::before': {
-              color: 'var(--color-text-secondary)',
+              color: 'var(--tw-prose-counters)',
             },
             'ul > li::before': {
-              backgroundColor: 'var(--color-text-secondary)',
+              backgroundColor: 'var(--tw-prose-bullets)',
             },
             hr: {
-              borderColor: 'var(--color-border)',
+              borderColor: 'var(--tw-prose-hr)',
             },
             blockquote: {
-              color: 'var(--color-text-secondary)',
-              borderLeftColor: 'var(--color-border)',
+              color: 'var(--tw-prose-quotes)',
+              borderLeftColor: 'var(--tw-prose-quote-borders)',
             },
-            'h1, h2, h3, h4, h5, h6': {
-              color: 'var(--color-text-primary)',
+            h1: {
+              color: 'var(--tw-prose-headings)',
+            },
+            h2: {
+              color: 'var(--tw-prose-headings)',
+            },
+            h3: {
+              color: 'var(--tw-prose-headings)',
+            },
+            h4: {
+              color: 'var(--tw-prose-headings)',
+            },
+            h5: {
+              color: 'var(--tw-prose-headings)',
+            },
+            h6: {
+              color: 'var(--tw-prose-headings)',
             },
             'figure figcaption': {
-              color: 'var(--color-text-secondary)',
+              color: 'var(--tw-prose-captions)',
             },
             code: {
-              color: 'var(--color-text-primary)',
-              backgroundColor: 'var(--color-surface)',
+              color: 'var(--tw-prose-code)',
+              backgroundColor: 'var(--tw-prose-pre-bg)',
               padding: '0.25rem 0.5rem',
               borderRadius: '0.25rem',
               fontWeight: '500',
             },
             'a code': {
-              color: 'var(--color-accent-primary)',
+              color: 'var(--tw-prose-links)',
             },
             pre: {
-              color: 'var(--color-text-primary)',
-              backgroundColor: 'var(--color-surface)',
+              color: 'var(--tw-prose-pre-code)',
+              backgroundColor: 'var(--tw-prose-pre-bg)',
               borderRadius: '0.5rem',
               padding: '1.5rem',
             },
@@ -165,18 +192,17 @@ export default {
               padding: 0,
             },
             thead: {
-              color: 'var(--color-text-primary)',
-              borderBottomColor: 'var(--color-border)',
+              borderBottomColor: 'var(--tw-prose-th-borders)',
             },
             'tbody tr': {
-              borderBottomColor: 'var(--color-border)',
+              borderBottomColor: 'var(--tw-prose-td-borders)',
             },
             'thead th': {
               fontWeight: '600',
             },
           },
         },
-      },
+      }),
     },
   },
   plugins: [typography],

@@ -1,100 +1,134 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* Tailwind CSS v4 Theme Configuration */
+@theme {
+  /* Primary Color Palette - 요구사항 문서 기준 */
+  --color-primary-50: #f8fafc;
+  --color-primary-100: #f1f5f9;
+  --color-primary-200: #e2e8f0;
+  --color-primary-300: #cbd5e1;
+  --color-primary-400: #94a3b8;
+  --color-primary-500: #64748b;
+  --color-primary-600: #475569;
+  --color-primary-700: #334155;
+  --color-primary-800: #1e293b;
+  --color-primary-900: #0f172a;
+  --color-primary-950: #020617;
+
+  /* Accent Colors */
+  --color-accent-primary: #3b82f6;
+  --color-accent-primary-hover: #2563eb;
+  --color-accent-secondary: #8b5cf6;
+  --color-accent-secondary-hover: #7c3aed;
+  --color-accent-success: #10b981;
+  --color-accent-success-hover: #059669;
+  --color-accent-warning: #f59e0b;
+  --color-accent-warning-hover: #d97706;
+  --color-accent-error: #ef4444;
+  --color-accent-error-hover: #dc2626;
+
+  /* Typography Scale */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  /* Font Weight */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Animation */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+/* Light mode semantic colors */
 @layer base {
   :root {
-    /* Primary Colors - 요구사항 문서 기준 */
-    --color-primary-50: #f8fafc;
-    --color-primary-100: #f1f5f9;
-    --color-primary-500: #64748b;
-    --color-primary-900: #0f172a;
-
-    /* Accent Colors */
-    --color-accent-primary: #3b82f6;
-    --color-accent-secondary: #8b5cf6;
-    --color-accent-success: #10b981;
-    --color-accent-warning: #f59e0b;
-    --color-accent-error: #ef4444;
-
     /* Semantic Colors - Light Mode */
     --color-background: var(--color-primary-50);
     --color-surface: #ffffff;
+    --color-surface-hover: var(--color-primary-50);
     --color-text-primary: var(--color-primary-900);
     --color-text-secondary: var(--color-primary-500);
+    --color-text-muted: var(--color-primary-400);
     --color-border: var(--color-primary-100);
+    --color-border-hover: var(--color-primary-200);
+    --color-input: var(--color-primary-100);
+    --color-ring: var(--color-accent-primary);
 
-    /* Typography Scale */
-    --font-size-xs: 0.75rem; /* 12px */
-    --font-size-sm: 0.875rem; /* 14px */
-    --font-size-base: 1rem; /* 16px */
-    --font-size-lg: 1.125rem; /* 18px */
-    --font-size-xl: 1.25rem; /* 20px */
-    --font-size-2xl: 1.5rem; /* 24px */
-    --font-size-3xl: 1.875rem; /* 30px */
-    --font-size-4xl: 2.25rem; /* 36px */
+    /* Component-specific colors */
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text-primary);
+    --color-popover: var(--color-surface);
+    --color-popover-foreground: var(--color-text-primary);
+    --color-primary: var(--color-accent-primary);
+    --color-primary-foreground: #ffffff;
+    --color-secondary: var(--color-primary-100);
+    --color-secondary-foreground: var(--color-text-primary);
+    --color-muted: var(--color-primary-100);
+    --color-muted-foreground: var(--color-text-secondary);
+    --color-accent: var(--color-primary-100);
+    --color-accent-foreground: var(--color-text-primary);
+    --color-destructive: var(--color-accent-error);
+    --color-destructive-foreground: #ffffff;
 
-    /* Font Weight */
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-
-    /* shadcn/ui variables */
-    --background: var(--color-background);
-    --foreground: var(--color-text-primary);
-    --card: var(--color-surface);
-    --card-foreground: var(--color-text-primary);
-    --popover: var(--color-surface);
-    --popover-foreground: var(--color-text-primary);
-    --primary: var(--color-accent-primary);
-    --primary-foreground: #ffffff;
-    --secondary: #f1f5f9;
-    --secondary-foreground: var(--color-text-primary);
-    --muted: #f1f5f9;
-    --muted-foreground: var(--color-text-secondary);
-    --accent: #f1f5f9;
-    --accent-foreground: var(--color-text-primary);
-    --destructive: var(--color-accent-error);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-border);
-    --input: var(--color-border);
-    --ring: var(--color-accent-primary);
-    --radius: 0.5rem;
+    /* Hero section */
+    --color-hero-gradient-from: var(--color-primary-50);
+    --color-hero-gradient-via: rgba(255, 255, 255, 0.9);
+    --color-hero-chip: rgba(255, 255, 255, 0.8);
   }
 
-  /* Dark mode - 시스템 설정에 따른 자동 전환 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      /* Dark mode semantic colors */
-      --color-background: #0f172a;
-      --color-surface: #1e293b;
-      --color-text-primary: #f8fafc;
-      --color-text-secondary: #94a3b8;
-      --color-border: #334155;
+  html[data-theme="dark"] {
+    /* Semantic Colors - Dark Mode */
+    --color-background: var(--color-primary-950);
+    --color-surface: var(--color-primary-900);
+    --color-surface-hover: var(--color-primary-800);
+    --color-text-primary: var(--color-primary-50);
+    --color-text-secondary: var(--color-primary-400);
+    --color-text-muted: var(--color-primary-500);
+    --color-border: var(--color-primary-800);
+    --color-border-hover: var(--color-primary-700);
+    --color-input: var(--color-primary-800);
 
-      /* shadcn/ui dark mode */
-      --background: var(--color-background);
-      --foreground: var(--color-text-primary);
-      --card: var(--color-surface);
-      --card-foreground: var(--color-text-primary);
-      --popover: var(--color-surface);
-      --popover-foreground: var(--color-text-primary);
-      --secondary: #334155;
-      --secondary-foreground: var(--color-text-primary);
-      --muted: #334155;
-      --muted-foreground: var(--color-text-secondary);
-      --accent: #334155;
-      --accent-foreground: var(--color-text-primary);
-      --border: var(--color-border);
-      --input: var(--color-border);
-    }
+    /* Component-specific colors */
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text-primary);
+    --color-popover: var(--color-surface);
+    --color-popover-foreground: var(--color-text-primary);
+    --color-secondary: var(--color-primary-800);
+    --color-secondary-foreground: var(--color-text-primary);
+    --color-muted: var(--color-primary-800);
+    --color-muted-foreground: var(--color-text-secondary);
+    --color-accent: var(--color-primary-800);
+    --color-accent-foreground: var(--color-text-primary);
+
+    /* Hero section */
+    --color-hero-gradient-from: var(--color-primary-900);
+    --color-hero-gradient-via: rgba(15, 23, 42, 0.9);
+    --color-hero-chip: rgba(15, 23, 42, 0.8);
   }
 }
 
+/* Base styles */
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--color-border);
   }
   
   html,
@@ -104,8 +138,11 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   a {
@@ -113,98 +150,423 @@
     text-decoration: none;
   }
 
+  /* Focus styles */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  /* Selection styles */
+  ::selection {
+    background-color: var(--color-accent-primary);
+    color: white;
+    opacity: 0.9;
+  }
+
+  /* Scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: var(--radius);
+    border: 3px solid var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-border-hover);
+  }
+
   /* 이미지 다크모드 처리 */
   .imgDark {
     display: none;
   }
 
-  @media (prefers-color-scheme: dark) {
-    html {
-      color-scheme: dark;
-    }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
 
-    .imgLight {
-      display: none;
-    }
-    .imgDark {
-      display: unset;
-    }
+  html[data-theme="dark"] .imgLight {
+    display: none;
+  }
+
+  html[data-theme="dark"] .imgDark {
+    display: unset;
   }
 }
 
-/* 블로그 전용 컴포넌트 스타일 - 요구사항 문서 기준 */
+/* Component styles - v4 방식 */
 @layer components {
+  /* Container */
   .blog-container {
-    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-  
+
+  @media (min-width: 640px) {
+    .blog-container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .blog-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* Header */
   .blog-header {
-    @apply sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-background) 95%, transparent);
+    backdrop-filter: blur(8px);
   }
-  
+
+  @supports (backdrop-filter: blur(8px)) {
+    .blog-header {
+      background-color: color-mix(in srgb, var(--color-background) 60%, transparent);
+    }
+  }
+
+  /* Post Card Base */
   .blog-post-card {
-    @apply group relative overflow-hidden rounded-xl border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    transition-property: transform, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
+  .blog-post-card:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+
+  /* Large Post Card */
   .blog-post-card-large {
-    @apply blog-post-card md:col-span-2; /* 더블 사이즈 카드 */
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    transition-property: transform, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
+  @media (min-width: 768px) {
+    .blog-post-card-large {
+      grid-column: span 2 / span 2;
+    }
+  }
+
+  .blog-post-card-large:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+
+  /* Post Title */
   .blog-post-title {
-    @apply text-2xl font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.025em;
+    color: var(--color-text-primary);
+    transition-property: color;
+    transition-duration: 300ms;
   }
-  
+
+  .blog-post-card:hover .blog-post-title {
+    color: var(--color-primary);
+  }
+
+  /* Large Post Title */
   .blog-post-title-large {
-    @apply text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.025em;
+    color: var(--color-text-primary);
+    transition-property: color;
+    transition-duration: 300ms;
   }
-  
+
+  .blog-post-card-large:hover .blog-post-title-large {
+    color: var(--color-primary);
+  }
+
+  /* Post Excerpt */
   .blog-post-excerpt {
-    @apply mt-3 text-muted-foreground line-clamp-3 leading-relaxed;
+    margin-top: 0.75rem;
+    color: var(--color-muted-foreground);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.75;
   }
-  
+
+  /* Post Meta */
   .blog-post-meta {
-    @apply mt-4 flex items-center space-x-4 text-sm text-muted-foreground;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-muted-foreground);
   }
-  
+
+  /* Category Badge */
   .blog-category-badge {
-    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors;
-    background-color: var(--color-accent-primary);
-    color: white;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    padding: 0.125rem 0.625rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    background-color: color-mix(in srgb, white 90%, transparent);
+    backdrop-filter: blur(4px);
+    color: var(--color-primary-700);
+    transition-property: background-color;
+    transition-duration: 200ms;
   }
-  
+
+  .blog-category-badge:hover {
+    background-color: white;
+  }
+
+  /* Tag */
   .blog-tag {
-    @apply inline-flex items-center rounded-md bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors cursor-pointer;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-secondary);
+    padding: 0.125rem 0.625rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-secondary-foreground);
+    transition-property: background-color;
+    transition-duration: 200ms;
+    cursor: pointer;
   }
 
-  /* 그리드 레이아웃 - 반응형 */
+  .blog-tag:hover {
+    background-color: color-mix(in srgb, var(--color-secondary) 80%, var(--color-background));
+  }
+
+  /* Grid Layout */
   .blog-posts-grid {
-    @apply grid gap-6;
-    @apply grid-cols-1; /* 모바일: 1컬럼 */
-    @apply md:grid-cols-2; /* 태블릿: 2컬럼 */
-    @apply lg:grid-cols-3; /* 데스크톱: 3컬럼 */
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
-  /* 네비게이션 스타일 */
+  @media (min-width: 768px) {
+    .blog-posts-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .blog-posts-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Navigation */
   .blog-nav-link {
-    @apply text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-muted-foreground);
+    transition-property: color;
+    transition-duration: 200ms;
+  }
+
+  .blog-nav-link:hover {
+    color: var(--color-primary);
   }
 
   .blog-nav-link-active {
-    @apply text-primary font-semibold;
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
   }
 
-  /* 타이포그래피 유틸리티 */
-  .text-xs { font-size: var(--font-size-xs); }
-  .text-sm { font-size: var(--font-size-sm); }
-  .text-base { font-size: var(--font-size-base); }
-  .text-lg { font-size: var(--font-size-lg); }
-  .text-xl { font-size: var(--font-size-xl); }
-  .text-2xl { font-size: var(--font-size-2xl); }
-  .text-3xl { font-size: var(--font-size-3xl); }
-  .text-4xl { font-size: var(--font-size-4xl); }
+  /* Stretched link utility for cards */
+  .stretched-link {
+    position: static;
+  }
 
-  .font-normal { font-weight: var(--font-weight-normal); }
-  .font-medium { font-weight: var(--font-weight-medium); }
-  .font-semibold { font-weight: var(--font-weight-semibold); }
-  .font-bold { font-weight: var(--font-weight-bold); }
+  .stretched-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+  }
+
+  /* Section layout helpers */
+  .blog-section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+
+  @media (max-width: 767px) {
+    .blog-section {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+  }
+
+  .blog-section + .blog-section {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .blog-section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+
+  @media (min-width: 768px) {
+    .blog-section-header {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+  }
+
+  .blog-featured-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .blog-featured-grid {
+      grid-template-columns: 2fr 1fr;
+      align-items: stretch;
+    }
+  }
+
+  .blog-featured-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .blog-featured-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .blog-featured-list {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .blog-featured-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 768px) {
+    .blog-featured-card {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .blog-trending-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .blog-trending-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .blog-trending-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.1);
+  }
+
+  .blog-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-secondary);
+    color: var(--color-secondary-foreground);
+    padding: 1.5rem;
+    min-height: 120px;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animation utilities */
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  .animate-accordion-down {
+    animation: var(--animate-accordion-down);
+  }
+
+  .animate-accordion-up {
+    animation: var(--animate-accordion-up);
+  }
 }

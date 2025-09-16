@@ -81,3 +81,9 @@ export interface CreateTagDto {
 }
 
 export interface UpdateTagDto extends Partial<CreateTagDto> {}
+
+// API 응답 DTO
+export interface PostResponseDto extends PostWithRelations {
+  // PostWithRelations에서 상속받은 모든 속성들 사용
+  // 추가적인 API 응답 전용 필드가 있다면 여기에 추가
+}
