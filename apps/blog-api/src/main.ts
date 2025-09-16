@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
+import { ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta } from './common/dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -85,6 +86,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config, {
     include: [PostsModule, CategoriesModule, TagsModule],
+    extraModels: [ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta],
   });
   SwaggerModule.setup('api-docs', app, document, {
     swaggerOptions: {
