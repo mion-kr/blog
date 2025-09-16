@@ -21,6 +21,7 @@ import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, AuthorResponseDto, PostCategoryResponseDto } from './dto/post-response.dto';
+import { TagResponseDto } from '../tags/dto/tag-response.dto';
 
 import {
   ApiPublicList,
@@ -46,6 +47,7 @@ import {
   PostResponseDto,
   AuthorResponseDto,
   PostCategoryResponseDto,
+  TagResponseDto,
 )
 @ApiTags('posts')
 @Controller('posts')

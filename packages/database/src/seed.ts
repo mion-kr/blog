@@ -22,7 +22,6 @@ async function seed() {
   // 2. 카테고리 생성
   const categoryData = [
     { name: "개발", slug: "development" },
-    { name: "일상", slug: "daily" },
     { name: "회고", slug: "retrospective" },
     { name: "튜토리얼", slug: "tutorial" },
   ];
@@ -44,9 +43,9 @@ async function seed() {
   const tagData = [
     { name: "TypeScript", slug: "typescript" },
     { name: "Next.js", slug: "nextjs" },
-    { name: "React", slug: "react" },
     { name: "Node.js", slug: "nodejs" },
     { name: "개발일기", slug: "dev-diary" },
+    { name: "AI", slug: "ai" },
   ];
 
   const insertedTags = await db

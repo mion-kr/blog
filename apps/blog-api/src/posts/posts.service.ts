@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { db, sql, posts, categories, tags, postTags, users } from '@repo/database';
-import { eq, and, or, like, desc, asc, ilike, count } from '@repo/database';
+import { eq, and, or, like, desc, asc, ilike, count, inArray } from '@repo/database';
 
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -239,7 +239,7 @@ export class PostsService {
       })
       .from(postTags)
       .leftJoin(tags, eq(postTags.tagId, tags.id))
-      .where(sql`${postTags.postId} = ANY(${postIds})`) : [];
+      .where(inArray(postTags.postId, postIds)) : [];
 
     // 9. 포스트별 태그 그룹핑
     const postTagsMap = new Map<string, any[]>();
