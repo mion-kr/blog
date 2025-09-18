@@ -12,7 +12,8 @@
     "DATABASE_URL",
     "NEXTAUTH_SECRET",
     "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET"
+    "GOOGLE_CLIENT_SECRET",
+    "ADMIN_EMAIL"
   ],
   "tasks": {
     "build": {
@@ -78,7 +79,8 @@
         ".eslintrc*",
         "eslint.config.*"
       ],
-      "outputLogs": "new-only"
+      "outputLogs": "new-only",
+      "env": ["ADMIN_EMAIL"]
     },
     "format": {
       "inputs": [
