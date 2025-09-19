@@ -106,8 +106,8 @@ export default async function HomePage() {
     <div className="flex flex-col">
       <HeroSection stats={stats} />
 
-      <section className="blog-section">
-        <div className="blog-container space-y-16">
+      <section className="py-8 max-md:py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           <FeaturedSection featuredPost={featuredPost} highlightPosts={highlightPosts} />
 
           {latestGridPosts.length > 0 && (
@@ -153,7 +153,7 @@ function HeroSection({ stats }: { stats: HomeStats }) {
         <div className="absolute bottom-0 right-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-[var(--color-primary-200)] blur-3xl" />
       </div>
 
-      <div className="blog-container relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mx-auto max-w-3xl text-center space-y-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-hero-chip)] px-4 py-1 text-sm font-medium text-[var(--color-primary)] shadow-sm backdrop-blur">
             <SparklesIcon />

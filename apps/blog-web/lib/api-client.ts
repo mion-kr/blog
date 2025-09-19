@@ -140,14 +140,6 @@ export const postsApi = {
     return apiRequest<PostResponseDto>(`/api/posts/id/${id}`);
   },
 
-  /**
-   * 포스트 조회수 증가
-   */
-  async incrementViewCount(slug: string): Promise<ApiResponse<{ viewCount: number }>> {
-    return apiRequest<{ viewCount: number }>(`/api/posts/${slug}/view`, {
-      method: 'POST',
-    });
-  },
 };
 
 /**

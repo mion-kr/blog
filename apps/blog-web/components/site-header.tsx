@@ -26,7 +26,7 @@ export function SiteHeader() {
 
   return (
     <header className="blog-header">
-      <div className="blog-container flex h-16 items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
             href="/"
@@ -76,7 +76,7 @@ export function SiteHeader() {
 
       {isMenuOpen && (
         <div id="mobile-nav" className="border-t border-[var(--color-border)] bg-[var(--color-card)] md:hidden">
-          <div className="blog-container flex flex-col gap-4 py-4">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-4 py-4">
             <nav className="flex flex-col gap-2">
               {navigation.map((item) => {
                 const isActive = item.href === "/"
