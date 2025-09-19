@@ -15,11 +15,41 @@ jest.mock('@repo/database', () => ({
     delete: jest.fn(),
     transaction: jest.fn(),
   },
-  posts: {},
-  categories: {},
-  tags: {},
-  postTags: {},
-  users: {},
+  posts: {
+    id: 'posts.id',
+    title: 'posts.title',
+    slug: 'posts.slug',
+    content: 'posts.content',
+    excerpt: 'posts.excerpt',
+    coverImage: 'posts.coverImage',
+    published: 'posts.published',
+    viewCount: 'posts.viewCount',
+    createdAt: 'posts.createdAt',
+    updatedAt: 'posts.updatedAt',
+    publishedAt: 'posts.publishedAt',
+    categoryId: 'posts.categoryId',
+    authorId: 'posts.authorId',
+  },
+  categories: {
+    id: 'categories.id',
+    name: 'categories.name',
+    slug: 'categories.slug',
+  },
+  tags: {
+    id: 'tags.id',
+    name: 'tags.name',
+    slug: 'tags.slug',
+  },
+  postTags: {
+    postId: 'postTags.postId',
+    tagId: 'postTags.tagId',
+  },
+  users: {
+    id: 'users.id',
+    name: 'users.name',
+    image: 'users.image',
+    email: 'users.email',
+  },
   eq: jest.fn((a, b) => ({ type: 'eq', a, b })),
   desc: jest.fn((field) => ({ type: 'desc', field })),
   asc: jest.fn((field) => ({ type: 'asc', field })),
@@ -29,6 +59,7 @@ jest.mock('@repo/database', () => ({
   and: jest.fn((...conditions) => ({ type: 'and', conditions })),
   or: jest.fn((...conditions) => ({ type: 'or', conditions })),
   sql: jest.fn((template, ...values) => ({ type: 'sql', template, values })),
+  inArray: jest.fn((field, values) => ({ type: 'inArray', field, values })),
 }));
 
 describe('PostsService', () => {
@@ -82,7 +113,7 @@ describe('PostsService', () => {
         },
       ];
 
-      const mockQueryBuilder = {
+      const postsQueryBuilder = {
         from: jest.fn().mockReturnThis(),
         leftJoin: jest.fn().mockReturnThis(),
         innerJoin: jest.fn().mockReturnThis(),
@@ -92,30 +123,35 @@ describe('PostsService', () => {
         offset: jest.fn().mockResolvedValue(mockPosts),
       };
 
-      mockDb.select.mockImplementation(() => {
-        const builder = { ...mockQueryBuilder };
-        builder.offset = jest.fn().mockResolvedValue(mockPosts);
-        return builder;
-      });
+      const totalCountBuilder = {
+        from: jest.fn().mockResolvedValue([{ count: mockPosts.length }]),
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+      };
 
-      // Mock for tags query
-      mockDb.select.mockImplementationOnce(() => mockQueryBuilder)
-        .mockImplementationOnce(() => ({
-          from: jest.fn().mockReturnThis(),
-          leftJoin: jest.fn().mockReturnThis(),
-          where: jest.fn().mockResolvedValue(mockPostTags),
-        }));
+      const postTagsQueryBuilder = {
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(mockPostTags),
+      };
+
+      mockDb.select
+        .mockImplementationOnce(() => postsQueryBuilder)
+        .mockImplementationOnce(() => totalCountBuilder)
+        .mockImplementationOnce(() => postTagsQueryBuilder);
 
       // Act
       const result = await service.findAll(query);
 
       // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].title).toBe('Next.js 시작하기');
-      expect(result[0].slug).toBe('nextjs-getting-started');
-      expect(result[0].viewCount).toBe(100);
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(10);
-      expect(mockQueryBuilder.offset).toHaveBeenCalledWith(0);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('Next.js 시작하기');
+      expect(result.items[0].slug).toBe('nextjs-getting-started');
+      expect(result.items[0].viewCount).toBe(100);
+      expect(result.meta.total).toBe(mockPosts.length);
+      expect(postsQueryBuilder.limit).toHaveBeenCalledWith(10);
+      expect(postsQueryBuilder.offset).toHaveBeenCalledWith(0);
+      expect(database.inArray).toHaveBeenCalledWith(database.postTags.postId, ['1']);
     });
 
     it('published 필터링이 올바르게 동작해야 함', async () => {
