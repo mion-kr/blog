@@ -99,7 +99,7 @@ async function apiRequest<T>(
 /**
  * 쿼리 파라미터를 URL 검색 파라미터로 변환
  */
-function buildQueryParams(params: PostsQuery | Record<string, unknown>): string {
+function buildQueryParams(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -120,9 +120,9 @@ export const postsApi = {
    * 포스트 목록 조회
    */
   async getPosts(query: PostsQuery = {}): Promise<PaginatedResponse<PostResponseDto>> {
-    const queryString = buildQueryParams(query);
+    const queryString = buildQueryParams(query as Record<string, unknown>);
     const response = await apiRequest<PostResponseDto[]>(`/api/posts${queryString}`);
-    
+
     return response as PaginatedResponse<PostResponseDto>;
   },
 
@@ -150,7 +150,7 @@ export const categoriesApi = {
    * 카테고리 목록 조회
    */
   async getCategories(query: CategoriesQuery = {}): Promise<PaginatedResponse<Category>> {
-    const queryString = buildQueryParams(query);
+    const queryString = buildQueryParams(query as Record<string, unknown>);
     const response = await apiRequest<Category[]>(`/api/categories${queryString}`);
 
     return response as PaginatedResponse<Category>;
@@ -172,7 +172,7 @@ export const tagsApi = {
    * 태그 목록 조회
    */
   async getTags(query: TagsQuery = {}): Promise<PaginatedResponse<Tag>> {
-    const queryString = buildQueryParams(query);
+    const queryString = buildQueryParams(query as Record<string, unknown>);
     const response = await apiRequest<Tag[]>(`/api/tags${queryString}`);
 
     return response as PaginatedResponse<Tag>;
