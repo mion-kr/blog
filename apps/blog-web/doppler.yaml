@@ -1,0 +1,3 @@
+setup:
+  - project: mion-blog
+    config: local_web
