@@ -21,6 +21,7 @@ import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, AuthorResponseDto, PostCategoryResponseDto } from './dto/post-response.dto';
+import { PaginatedData } from '@repo/shared';
 import { TagResponseDto } from '../tags/dto/tag-response.dto';
 
 import {
@@ -65,7 +66,7 @@ export class PostsController {
     '포스트 목록 조회',
     '발행된 포스트들을 페이징과 필터링을 통해 조회합니다. 공개 API이므로 인증이 필요하지 않습니다.',
   )
-  async findAll(@Query() query: PostQueryDto): Promise<PostResponseDto[]> {
+  async findAll(@Query() query: PostQueryDto): Promise<PaginatedData<PostResponseDto>> {
     return this.postsService.findAll(query);
   }
 

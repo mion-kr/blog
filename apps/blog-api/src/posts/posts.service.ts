@@ -6,6 +6,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostResponseDto } from './dto/post-response.dto';
+import { PaginatedData, PaginationMeta } from '@repo/shared';
 
 /**
  * 포스트 관련 비즈니스 로직을 처리하는 서비스
@@ -22,7 +23,7 @@ export class PostsService {
   /**
    * 포스트 목록 조회 (페이징, 필터링, 정렬 지원)
    */
-  async findAll(query: PostQueryDto): Promise<PostResponseDto[]> {
+  async findAll(query: PostQueryDto): Promise<PaginatedData<PostResponseDto>> {
     const { 
       page = 1, 
       limit = 10, 
@@ -228,7 +229,35 @@ export class PostsService {
         .offset(offset);
     }
 
-    // 8. 각 포스트의 태그 정보 조회
+    // 8. 전체 개수 조회 (동일한 조건으로)
+    let totalCountResult;
+
+    if (tagId && conditions.length > 0) {
+      totalCountResult = await db
+        .select({ count: count() })
+        .from(posts)
+        .innerJoin(postTags, eq(posts.id, postTags.postId))
+        .where(and(...conditions));
+    } else if (tagId) {
+      totalCountResult = await db
+        .select({ count: count() })
+        .from(posts)
+        .innerJoin(postTags, eq(posts.id, postTags.postId))
+        .where(eq(postTags.tagId, tagId));
+    } else if (conditions.length > 0) {
+      totalCountResult = await db
+        .select({ count: count() })
+        .from(posts)
+        .where(and(...conditions));
+    } else {
+      totalCountResult = await db
+        .select({ count: count() })
+        .from(posts);
+    }
+
+    const total = Number(totalCountResult[0]?.count ?? 0);
+
+    // 9. 각 포스트의 태그 정보 조회
     const postIds = postsResult.map(post => post.id);
     const allPostTags = postIds.length > 0 ? await db
       .select({
@@ -241,7 +270,7 @@ export class PostsService {
       .leftJoin(tags, eq(postTags.tagId, tags.id))
       .where(inArray(postTags.postId, postIds)) : [];
 
-    // 9. 포스트별 태그 그룹핑
+    // 10. 포스트별 태그 그룹핑
     const postTagsMap = new Map<string, any[]>();
     allPostTags.forEach(tag => {
       if (!postTagsMap.has(tag.postId)) {
@@ -259,8 +288,8 @@ export class PostsService {
       }
     });
 
-    // 10. 최종 응답 데이터 구성
-    return postsResult.map(post => ({
+    // 11. 최종 응답 데이터 구성
+    const items = postsResult.map(post => ({
       id: post.id,
       title: post.title,
       slug: post.slug,
@@ -289,6 +318,14 @@ export class PostsService {
       },
       tags: postTagsMap.get(post.id) || [],
     }));
+
+    // 12. 페이징 메타데이터 생성
+    const meta = PaginationMeta.create(total, page, limit);
+
+    return {
+      items,
+      meta,
+    };
   }
 
   /**
