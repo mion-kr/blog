@@ -60,10 +60,10 @@ export function ApiAdminErrors() {
  * 리소스 조회 시 사용되는 공통 에러 응답
  */
 export function ApiNotFoundError(resourceName?: string) {
-  const description = resourceName 
+  const description = resourceName
     ? `${resourceName}을(를) 찾을 수 없음`
     : '리소스를 찾을 수 없음';
-    
+
   return applyDecorators(
     ApiResponse({
       status: 404,
@@ -77,7 +77,7 @@ export function ApiNotFoundError(resourceName?: string) {
  */
 export function ApiConflictError(message?: string) {
   const description = message || '리소스 중복';
-  
+
   return applyDecorators(
     ApiResponse({
       status: 409,
@@ -99,7 +99,9 @@ export function ApiAdminCreate<TModel extends Type<any>>(
     ApiBearerAuth(),
     ApiOperation({
       summary,
-      description: description || 'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
     }),
     ApiResponse({
       status: 201,
@@ -134,7 +136,9 @@ export function ApiAdminUpdate<TModel extends Type<any>>(
     ApiBearerAuth(),
     ApiOperation({
       summary,
-      description: description || 'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
     }),
     ApiParam({
       name: 'slug',
@@ -174,7 +178,9 @@ export function ApiAdminDelete(
     ApiBearerAuth(),
     ApiOperation({
       summary,
-      description: description || 'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
     }),
     ApiParam({
       name: 'slug',
@@ -215,7 +221,7 @@ export function ApiPublicList<TModel extends Type<any>>(
                 type: 'array',
                 items: { $ref: getSchemaPath(responseType) },
               },
-              message: { 
+              message: {
                 example: '0개의 항목을 조회했습니다.',
                 description: '조회된 항목 수에 따라 동적으로 변경됩니다.',
               },

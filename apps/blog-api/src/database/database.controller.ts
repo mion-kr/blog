@@ -15,7 +15,7 @@ export class DatabaseController {
     const isHealthy = healthResult.status === 'healthy';
     return {
       success: isHealthy,
-      message: isHealthy ? 'Database is healthy' : 'Database is not healthy'
+      message: isHealthy ? 'Database is healthy' : 'Database is not healthy',
     };
   }
 }

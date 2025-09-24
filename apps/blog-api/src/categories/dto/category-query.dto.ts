@@ -1,11 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsString,
-  Min,
-  Max,
-  IsIn,
-} from 'class-validator';
+import { IsOptional, IsString, Min, Max, IsIn } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { CategoriesQuery } from '@repo/shared';
 
@@ -42,7 +36,8 @@ export class CategoryQueryDto implements CategoriesQuery {
   @IsOptional()
   @IsString()
   @IsIn(['createdAt', 'updatedAt', 'name', 'postCount'], {
-    message: '정렬 기준은 createdAt, updatedAt, name, postCount 중 하나여야 합니다.',
+    message:
+      '정렬 기준은 createdAt, updatedAt, name, postCount 중 하나여야 합니다.',
   })
   sort?: string;
 

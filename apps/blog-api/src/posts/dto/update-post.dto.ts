@@ -2,7 +2,10 @@ import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreatePostDto } from './create-post.dto';
 import { UpdatePostDto as IUpdatePostDto } from '@repo/shared';
 
-export class UpdatePostDto extends PartialType(CreatePostDto) implements IUpdatePostDto {
+export class UpdatePostDto
+  extends PartialType(CreatePostDto)
+  implements IUpdatePostDto
+{
   @ApiPropertyOptional({
     description: '포스트 제목',
     example: '수정된 포스트 제목',

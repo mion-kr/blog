@@ -4,7 +4,7 @@ import { PostsService } from './posts.service';
 
 /**
  * 포스트 모듈
- * 
+ *
  * 블로그 포스트 관련 기능을 담당하는 모듈:
  * - 포스트 CRUD 작업
  * - 조회수 증가

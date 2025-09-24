@@ -20,7 +20,11 @@ import { CsrfGuard } from '../auth/guards/csrf.guard';
 import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PostResponseDto, AuthorResponseDto, PostCategoryResponseDto } from './dto/post-response.dto';
+import {
+  PostResponseDto,
+  AuthorResponseDto,
+  PostCategoryResponseDto,
+} from './dto/post-response.dto';
 import { PaginatedData } from '@repo/shared';
 import { TagResponseDto } from '../tags/dto/tag-response.dto';
 
@@ -36,7 +40,7 @@ import {
 
 /**
  * 블로그 포스트 API 컨트롤러
- * 
+ *
  * 엔드포인트:
  * - GET /api/posts - 포스트 목록 조회 (공개)
  * - GET /api/posts/:slug - 포스트 상세 조회 (공개, 조회수 증가)
@@ -66,7 +70,9 @@ export class PostsController {
     '포스트 목록 조회',
     '발행된 포스트들을 페이징과 필터링을 통해 조회합니다. 공개 API이므로 인증이 필요하지 않습니다.',
   )
-  async findAll(@Query() query: PostQueryDto): Promise<PaginatedData<PostResponseDto>> {
+  async findAll(
+    @Query() query: PostQueryDto,
+  ): Promise<PaginatedData<PostResponseDto>> {
     return this.postsService.findAll(query);
   }
 

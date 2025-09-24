@@ -12,7 +12,11 @@ export class JwtErrorParser {
    * JWT 에러인지 확인
    */
   isJwtError(error: Error): boolean {
-    const jwtErrorNames = ['TokenExpiredError', 'JsonWebTokenError', 'NotBeforeError'];
+    const jwtErrorNames = [
+      'TokenExpiredError',
+      'JsonWebTokenError',
+      'NotBeforeError',
+    ];
     return jwtErrorNames.includes(error.constructor.name);
   }
 
@@ -24,22 +28,22 @@ export class JwtErrorParser {
       case 'TokenExpiredError':
         return {
           code: ErrorCode.JWT_TOKEN_EXPIRED,
-          message: ErrorMessages[ErrorCode.JWT_TOKEN_EXPIRED]
+          message: ErrorMessages[ErrorCode.JWT_TOKEN_EXPIRED],
         };
       case 'JsonWebTokenError':
         return {
           code: ErrorCode.INVALID_JWT_TOKEN,
-          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN]
+          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN],
         };
       case 'NotBeforeError':
         return {
           code: ErrorCode.INVALID_JWT_TOKEN,
-          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN]
+          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN],
         };
       default:
         return {
           code: ErrorCode.INVALID_JWT_TOKEN,
-          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN]
+          message: ErrorMessages[ErrorCode.INVALID_JWT_TOKEN],
         };
     }
   }

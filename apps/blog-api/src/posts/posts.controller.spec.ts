@@ -202,7 +202,9 @@ describe('PostsController', () => {
     it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
       // Arrange
       const slug = 'non-existent';
-      const error = new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      const error = new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
       mockPostsService.findOneBySlug.mockRejectedValue(error);
 
       // Act & Assert
@@ -415,11 +417,15 @@ console.log(hello);
       const updatePostDto: UpdatePostDto = {
         title: 'Updated',
       };
-      const error = new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      const error = new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
       mockPostsService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.update(slug, updatePostDto)).rejects.toThrow(error);
+      await expect(controller.update(slug, updatePostDto)).rejects.toThrow(
+        error,
+      );
       expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
     });
   });
@@ -463,7 +469,9 @@ console.log(hello);
     it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
       // Arrange
       const slug = 'non-existent';
-      const error = new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      const error = new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
       mockPostsService.remove.mockRejectedValue(error);
 
       // Act & Assert
@@ -534,7 +542,7 @@ console.log(hello);
     it('유효성 검사 에러를 처리해야 함', async () => {
       // Arrange
       const createPostDto: CreatePostDto = {
-        title: '',  // 빈 제목
+        title: '', // 빈 제목
         content: 'Content',
         published: false,
         categoryId: 'cat-1',

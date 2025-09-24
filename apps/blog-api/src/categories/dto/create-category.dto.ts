@@ -27,7 +27,8 @@ export class CreateCategoryDto implements ICreateCategoryDto {
   })
   @IsString()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: '슬러그는 소문자, 숫자, 하이픈만 사용 가능하며 하이픈으로 시작하거나 끝날 수 없습니다.',
+    message:
+      '슬러그는 소문자, 숫자, 하이픈만 사용 가능하며 하이픈으로 시작하거나 끝날 수 없습니다.',
   })
   @MaxLength(100, { message: '슬러그는 최대 100자까지 가능합니다.' })
   slug: string;

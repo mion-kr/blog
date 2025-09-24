@@ -79,6 +79,9 @@ export class CreatePostDto implements ICreatePostDto {
     isArray: true,
   })
   @IsArray()
-  @IsUUID('7', { each: true, message: '모든 태그 ID는 올바른 UUIDv7 형식이어야 합니다.' })
+  @IsUUID('7', {
+    each: true,
+    message: '모든 태그 ID는 올바른 UUIDv7 형식이어야 합니다.',
+  })
   tagIds: string[];
 }

@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -151,7 +155,9 @@ describe('PostsService', () => {
       expect(result.meta.total).toBe(mockPosts.length);
       expect(postsQueryBuilder.limit).toHaveBeenCalledWith(10);
       expect(postsQueryBuilder.offset).toHaveBeenCalledWith(0);
-      expect(database.inArray).toHaveBeenCalledWith(database.postTags.postId, ['1']);
+      expect(database.inArray).toHaveBeenCalledWith(database.postTags.postId, [
+        '1',
+      ]);
     });
 
     it('published 필터링이 올바르게 동작해야 함', async () => {
@@ -206,9 +212,18 @@ describe('PostsService', () => {
       await service.findAll(query);
 
       // Assert
-      expect(database.ilike).toHaveBeenCalledWith(database.posts.title, '%Next.js%');
-      expect(database.ilike).toHaveBeenCalledWith(database.posts.content, '%Next.js%');
-      expect(database.ilike).toHaveBeenCalledWith(database.posts.excerpt, '%Next.js%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.posts.title,
+        '%Next.js%',
+      );
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.posts.content,
+        '%Next.js%',
+      );
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.posts.excerpt,
+        '%Next.js%',
+      );
       expect(database.or).toHaveBeenCalled();
     });
 
@@ -234,7 +249,10 @@ describe('PostsService', () => {
       await service.findAll(query);
 
       // Assert
-      expect(database.eq).toHaveBeenCalledWith(database.posts.categoryId, 'cat-1');
+      expect(database.eq).toHaveBeenCalledWith(
+        database.posts.categoryId,
+        'cat-1',
+      );
     });
 
     it('tagId로 필터링이 올바르게 동작해야 함', async () => {
@@ -260,7 +278,10 @@ describe('PostsService', () => {
       await service.findAll(query);
 
       // Assert
-      expect(database.eq).toHaveBeenCalledWith(database.postTags.tagId, 'tag-1');
+      expect(database.eq).toHaveBeenCalledWith(
+        database.postTags.tagId,
+        'tag-1',
+      );
       expect(mockQueryBuilder.innerJoin).toHaveBeenCalled();
     });
 
@@ -361,9 +382,18 @@ describe('PostsService', () => {
 
       // Assert
       expect(database.eq).toHaveBeenCalledWith(database.posts.published, true);
-      expect(database.eq).toHaveBeenCalledWith(database.posts.categoryId, 'cat-1');
-      expect(database.eq).toHaveBeenCalledWith(database.posts.authorId, 'user-1');
-      expect(database.ilike).toHaveBeenCalledWith(database.posts.title, '%Next.js%');
+      expect(database.eq).toHaveBeenCalledWith(
+        database.posts.categoryId,
+        'cat-1',
+      );
+      expect(database.eq).toHaveBeenCalledWith(
+        database.posts.authorId,
+        'user-1',
+      );
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.posts.title,
+        '%Next.js%',
+      );
       expect(database.and).toHaveBeenCalled();
       expect(mockQueryBuilder.limit).toHaveBeenCalledWith(15);
       expect(mockQueryBuilder.offset).toHaveBeenCalledWith(15); // (2-1) * 15
@@ -424,7 +454,8 @@ describe('PostsService', () => {
         where: jest.fn().mockResolvedValue(undefined),
       };
 
-      mockDb.select.mockImplementationOnce(() => mockPostQueryBuilder)
+      mockDb.select
+        .mockImplementationOnce(() => mockPostQueryBuilder)
         .mockImplementationOnce(() => mockTagsQueryBuilder);
       mockDb.update.mockReturnValue(mockUpdateBuilder);
 
@@ -458,7 +489,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.findOneBySlug(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -504,7 +537,8 @@ describe('PostsService', () => {
         where: jest.fn().mockRejectedValue(new Error('Database error')),
       };
 
-      mockDb.select.mockImplementationOnce(() => mockPostQueryBuilder)
+      mockDb.select
+        .mockImplementationOnce(() => mockPostQueryBuilder)
         .mockImplementationOnce(() => mockTagsQueryBuilder);
       mockDb.update.mockReturnValue(mockUpdateBuilder);
 
@@ -517,7 +551,10 @@ describe('PostsService', () => {
       // Assert
       expect(result.id).toBe('1');
       expect(result.viewCount).toBe(101); // 여전히 증가된 값 반환
-      expect(consoleWarnSpy).toHaveBeenCalledWith('조회수 증가 실패:', expect.any(Error));
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '조회수 증가 실패:',
+        expect.any(Error),
+      );
 
       // Cleanup
       consoleWarnSpy.mockRestore();
@@ -641,7 +678,7 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.create(createPostDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'existing-post'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'existing-post'가 이미 존재합니다.`),
       );
     });
 
@@ -683,7 +720,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.create(createPostDto)).rejects.toThrow(
-        new BadRequestException(`카테고리 ID 'non-existent-cat'를 찾을 수 없습니다.`)
+        new BadRequestException(
+          `카테고리 ID 'non-existent-cat'를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -725,7 +764,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.create(createPostDto)).rejects.toThrow(
-        new BadRequestException(`다음 태그 ID를 찾을 수 없습니다: non-existent-tag`)
+        new BadRequestException(
+          `다음 태그 ID를 찾을 수 없습니다: non-existent-tag`,
+        ),
       );
     });
 
@@ -868,7 +909,9 @@ describe('PostsService', () => {
         from: jest.fn().mockReturnThis(),
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([{ ...existingPost, ...updatePostDto }]),
+        limit: jest
+          .fn()
+          .mockResolvedValue([{ ...existingPost, ...updatePostDto }]),
       };
       const afterUpdateTagsBuilder = {
         from: jest.fn().mockReturnThis(),
@@ -936,7 +979,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updatePostDto)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -978,7 +1023,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updatePostDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'another-existing-post'가 이미 존재합니다.`)
+        new ConflictException(
+          `슬러그 'another-existing-post'가 이미 존재합니다.`,
+        ),
       );
     });
 
@@ -1030,11 +1077,13 @@ describe('PostsService', () => {
         from: jest.fn().mockReturnThis(),
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([{
-          ...existingPost,
-          published: true,
-          publishedAt: new Date(),
-        }]),
+        limit: jest.fn().mockResolvedValue([
+          {
+            ...existingPost,
+            published: true,
+            publishedAt: new Date(),
+          },
+        ]),
       };
       const updatedTagsBuilder = {
         from: jest.fn().mockReturnThis(),
@@ -1201,7 +1250,9 @@ describe('PostsService', () => {
 
       // Act & Assert
       await expect(service.remove(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+        ),
       );
     });
   });
@@ -1243,7 +1294,9 @@ describe('PostsService', () => {
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateSlugUniqueness(slug)).resolves.not.toThrow();
+        await expect(
+          (service as any).validateSlugUniqueness(slug),
+        ).resolves.not.toThrow();
       });
 
       it('슬러그가 중복되면 ConflictException을 던져야 함', async () => {
@@ -1259,8 +1312,10 @@ describe('PostsService', () => {
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateSlugUniqueness(slug)).rejects.toThrow(
-          new ConflictException(`슬러그 '${slug}'가 이미 존재합니다.`)
+        await expect(
+          (service as any).validateSlugUniqueness(slug),
+        ).rejects.toThrow(
+          new ConflictException(`슬러그 '${slug}'가 이미 존재합니다.`),
         );
       });
     });
@@ -1279,7 +1334,9 @@ describe('PostsService', () => {
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateCategoryExists(categoryId)).resolves.not.toThrow();
+        await expect(
+          (service as any).validateCategoryExists(categoryId),
+        ).resolves.not.toThrow();
       });
 
       it('카테고리가 존재하지 않으면 BadRequestException을 던져야 함', async () => {
@@ -1295,8 +1352,12 @@ describe('PostsService', () => {
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateCategoryExists(categoryId)).rejects.toThrow(
-          new BadRequestException(`카테고리 ID '${categoryId}'를 찾을 수 없습니다.`)
+        await expect(
+          (service as any).validateCategoryExists(categoryId),
+        ).rejects.toThrow(
+          new BadRequestException(
+            `카테고리 ID '${categoryId}'를 찾을 수 없습니다.`,
+          ),
         );
       });
     });
@@ -1308,17 +1369,21 @@ describe('PostsService', () => {
 
         const mockSelectBuilder = {
           from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockResolvedValue([
-            { id: 'tag-1' },
-            { id: 'tag-2' },
-            { id: 'tag-3' },
-          ]),
+          where: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'tag-1' },
+              { id: 'tag-2' },
+              { id: 'tag-3' },
+            ]),
         };
 
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateTagsExist(tagIds)).resolves.not.toThrow();
+        await expect(
+          (service as any).validateTagsExist(tagIds),
+        ).resolves.not.toThrow();
       });
 
       it('일부 태그가 존재하지 않으면 BadRequestException을 던져야 함', async () => {
@@ -1327,17 +1392,20 @@ describe('PostsService', () => {
 
         const mockSelectBuilder = {
           from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockResolvedValue([
-            { id: 'tag-1' },
-            { id: 'tag-2' },
-          ]),
+          where: jest
+            .fn()
+            .mockResolvedValue([{ id: 'tag-1' }, { id: 'tag-2' }]),
         };
 
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
         // Act & Assert
-        await expect((service as any).validateTagsExist(tagIds)).rejects.toThrow(
-          new BadRequestException(`다음 태그 ID를 찾을 수 없습니다: non-existent`)
+        await expect(
+          (service as any).validateTagsExist(tagIds),
+        ).rejects.toThrow(
+          new BadRequestException(
+            `다음 태그 ID를 찾을 수 없습니다: non-existent`,
+          ),
         );
       });
 
@@ -1346,7 +1414,9 @@ describe('PostsService', () => {
         const tagIds: string[] = [];
 
         // Act & Assert
-        await expect((service as any).validateTagsExist(tagIds)).resolves.not.toThrow();
+        await expect(
+          (service as any).validateTagsExist(tagIds),
+        ).resolves.not.toThrow();
         expect(mockDb.select).not.toHaveBeenCalled();
       });
     });
@@ -1406,7 +1476,8 @@ describe('PostsService', () => {
       // Arrange
       const createPostDto: CreatePostDto = {
         title: 'MDX Post',
-        content: '# Heading\n\nThis is a paragraph with **bold** text and [links](https://example.com).\n\n## Another heading\n\nMore content here.',
+        content:
+          '# Heading\n\nThis is a paragraph with **bold** text and [links](https://example.com).\n\n## Another heading\n\nMore content here.',
         published: true,
         categoryId: 'cat-1',
         tagIds: [],

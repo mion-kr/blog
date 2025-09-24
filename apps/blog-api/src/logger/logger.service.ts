@@ -7,10 +7,23 @@ import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
  */
 export interface ILoggerService {
   log(message: string, context?: string, data?: Record<string, unknown>): void;
-  error(message: string, trace?: string, context?: string, data?: Record<string, unknown>): void;
+  error(
+    message: string,
+    trace?: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void;
   warn(message: string, context?: string, data?: Record<string, unknown>): void;
-  debug(message: string, context?: string, data?: Record<string, unknown>): void;
-  verbose(message: string, context?: string, data?: Record<string, unknown>): void;
+  debug(
+    message: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void;
+  verbose(
+    message: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void;
   setContext(context: string): void;
 }
 
@@ -38,39 +51,51 @@ export class LoggerService implements ILoggerService {
    * 에러 로그 메시지
    */
   error(
-    message: string, 
-    trace?: string, 
-    context?: string, 
-    data?: Record<string, unknown>
+    message: string,
+    trace?: string,
+    context?: string,
+    data?: Record<string, unknown>,
   ): void {
     this.logger.error(
-      { 
-        context, 
-        trace, 
-        ...data 
-      }, 
-      message
+      {
+        context,
+        trace,
+        ...data,
+      },
+      message,
     );
   }
 
   /**
    * 경고 로그 메시지
    */
-  warn(message: string, context?: string, data?: Record<string, unknown>): void {
+  warn(
+    message: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void {
     this.logger.warn({ context, ...data }, message);
   }
 
   /**
    * 디버그 로그 메시지
    */
-  debug(message: string, context?: string, data?: Record<string, unknown>): void {
+  debug(
+    message: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void {
     this.logger.debug({ context, ...data }, message);
   }
 
   /**
    * 상세 로그 메시지
    */
-  verbose(message: string, context?: string, data?: Record<string, unknown>): void {
+  verbose(
+    message: string,
+    context?: string,
+    data?: Record<string, unknown>,
+  ): void {
     this.logger.trace({ context, ...data }, message);
   }
 
@@ -89,18 +114,22 @@ export class LoggerService implements ILoggerService {
     url: string,
     statusCode: number,
     duration: number,
-    userId?: string
+    userId?: string,
   ): void {
-    const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
-    
-    this.logger[level]({
-      context: 'HTTP',
-      method,
-      url,
-      statusCode,
-      duration,
-      userId,
-    }, `${method} ${url} ${statusCode} - ${duration}ms`);
+    const level =
+      statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
+
+    this.logger[level](
+      {
+        context: 'HTTP',
+        method,
+        url,
+        statusCode,
+        duration,
+        userId,
+      },
+      `${method} ${url} ${statusCode} - ${duration}ms`,
+    );
   }
 
   /**
@@ -109,14 +138,17 @@ export class LoggerService implements ILoggerService {
   logBusinessEvent(
     event: string,
     details: Record<string, unknown>,
-    userId?: string
+    userId?: string,
   ): void {
-    this.logger.info({
-      context: 'Business',
-      event,
-      userId,
-      ...details,
-    }, `Business Event: ${event}`);
+    this.logger.info(
+      {
+        context: 'Business',
+        event,
+        userId,
+        ...details,
+      },
+      `Business Event: ${event}`,
+    );
   }
 
   /**
@@ -125,15 +157,18 @@ export class LoggerService implements ILoggerService {
   logPerformance(
     operation: string,
     duration: number,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): void {
     const level = duration > 3000 ? 'warn' : 'debug';
-    
-    this.logger[level]({
-      context: 'Performance',
-      operation,
-      duration,
-      ...metadata,
-    }, `Operation "${operation}" took ${duration}ms`);
+
+    this.logger[level](
+      {
+        context: 'Performance',
+        operation,
+        duration,
+        ...metadata,
+      },
+      `Operation "${operation}" took ${duration}ms`,
+    );
   }
 }

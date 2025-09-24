@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { db, categories, posts } from '@repo/database';
 import { eq, desc, asc, count, ilike, and, or } from '@repo/database';
 
@@ -9,7 +13,7 @@ import { CategoryQueryDto } from './dto/category-query.dto';
 
 /**
  * 카테고리 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * 주요 기능:
  * - 카테고리 CRUD 작업
  * - 슬러그 기반 조회
@@ -38,7 +42,7 @@ export class CategoriesService {
     if (search?.trim()) {
       const searchConditions = or(
         ilike(categories.name, `%${search.trim()}%`),
-        ilike(categories.description, `%${search.trim()}%`)
+        ilike(categories.description, `%${search.trim()}%`),
       );
       if (searchConditions) {
         conditions.push(searchConditions);
@@ -48,7 +52,7 @@ export class CategoriesService {
     // 정렬 조건 설정
     const orderDirection = order === 'asc' ? asc : desc;
     let orderBy;
-    
+
     switch (sort) {
       case 'name':
         orderBy = orderDirection(categories.name);
@@ -64,7 +68,7 @@ export class CategoriesService {
     }
 
     // 카테고리와 실제 포스트 수를 함께 조회
-    let baseQuery = db
+    const baseQuery = db
       .select({
         id: categories.id,
         name: categories.name,
@@ -76,28 +80,32 @@ export class CategoriesService {
         postCount: count(posts.id),
       })
       .from(categories)
-      .leftJoin(posts, and(
-        eq(categories.id, posts.categoryId),
-        eq(posts.published, true) // 발행된 포스트만 카운트
-      ))
+      .leftJoin(
+        posts,
+        and(
+          eq(categories.id, posts.categoryId),
+          eq(posts.published, true), // 발행된 포스트만 카운트
+        ),
+      )
       .groupBy(
         categories.id,
         categories.name,
         categories.slug,
         categories.description,
         categories.createdAt,
-        categories.updatedAt
+        categories.updatedAt,
       )
       .orderBy(orderBy)
       .limit(limit)
       .offset(offset);
 
     // 검색 조건이 있으면 having 절 추가 (GROUP BY 후 필터링)
-    const categoriesResult = conditions.length > 0 
-      ? await baseQuery.having(and(...conditions))
-      : await baseQuery;
+    const categoriesResult =
+      conditions.length > 0
+        ? await baseQuery.having(and(...conditions))
+        : await baseQuery;
 
-    return categoriesResult.map(category => ({
+    return categoriesResult.map((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
@@ -125,7 +133,7 @@ export class CategoriesService {
     if (search?.trim()) {
       const searchConditions = or(
         ilike(categories.name, `%${search.trim()}%`),
-        ilike(categories.description, `%${search.trim()}%`)
+        ilike(categories.description, `%${search.trim()}%`),
       );
       if (searchConditions) {
         conditions.push(searchConditions);
@@ -135,7 +143,7 @@ export class CategoriesService {
     // 정렬 조건 설정
     const orderDirection = order === 'asc' ? asc : desc;
     let orderBy;
-    
+
     switch (sort) {
       case 'name':
         orderBy = orderDirection(categories.name);
@@ -152,7 +160,7 @@ export class CategoriesService {
 
     // 카테고리와 해당 카테고리의 포스트 수를 함께 조회
     let categoriesResult;
-    
+
     if (conditions.length > 0) {
       // 검색 조건이 있는 경우
       categoriesResult = await db
@@ -188,7 +196,7 @@ export class CategoriesService {
         .offset(offset);
     }
 
-    return categoriesResult.map(category => ({
+    return categoriesResult.map((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
@@ -218,7 +226,9 @@ export class CategoriesService {
       .limit(1);
 
     if (categoryResult.length === 0) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+      );
     }
 
     const category = categoryResult[0];
@@ -237,7 +247,9 @@ export class CategoriesService {
   /**
    * 새 카테고리 생성
    */
-  async create(createCategoryDto: CreateCategoryDto): Promise<CategoryResponseDto> {
+  async create(
+    createCategoryDto: CreateCategoryDto,
+  ): Promise<CategoryResponseDto> {
     const { name, slug, description } = createCategoryDto;
 
     // 슬러그 중복 확인
@@ -271,11 +283,16 @@ export class CategoriesService {
   /**
    * 카테고리 수정
    */
-  async update(slug: string, updateCategoryDto: UpdateCategoryDto): Promise<CategoryResponseDto> {
+  async update(
+    slug: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<CategoryResponseDto> {
     // 기존 카테고리 확인
     const existingCategory = await this.findCategoryBySlug(slug);
     if (!existingCategory) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+      );
     }
 
     const { name, slug: newSlug, description } = updateCategoryDto;
@@ -324,7 +341,9 @@ export class CategoriesService {
     // 카테고리 존재 확인
     const existingCategory = await this.findCategoryBySlug(slug);
     if (!existingCategory) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+      );
     }
 
     // 해당 카테고리를 사용하는 포스트가 있는지 확인
@@ -335,14 +354,12 @@ export class CategoriesService {
 
     if (postsUsingCategory[0].count > 0) {
       throw new ConflictException(
-        `이 카테고리를 사용하는 포스트가 ${postsUsingCategory[0].count}개 있어 삭제할 수 없습니다.`
+        `이 카테고리를 사용하는 포스트가 ${postsUsingCategory[0].count}개 있어 삭제할 수 없습니다.`,
       );
     }
 
     // 카테고리 삭제
-    await db
-      .delete(categories)
-      .where(eq(categories.id, existingCategory.id));
+    await db.delete(categories).where(eq(categories.id, existingCategory.id));
   }
 
   /**

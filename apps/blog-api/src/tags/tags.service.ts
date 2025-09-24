@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { db, tags, postTags, posts } from '@repo/database';
 import { eq, desc, asc, count, ilike, and, or } from '@repo/database';
 
@@ -9,7 +13,7 @@ import { TagQueryDto } from './dto/tag-query.dto';
 
 /**
  * 태그 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * 주요 기능:
  * - 태그 CRUD 작업
  * - 슬러그 기반 조회
@@ -43,7 +47,7 @@ export class TagsService {
     // 정렬 조건 설정
     const orderDirection = order === 'asc' ? asc : desc;
     let orderBy;
-    
+
     switch (sort) {
       case 'name':
         orderBy = orderDirection(tags.name);
@@ -59,7 +63,7 @@ export class TagsService {
     }
 
     // 태그와 실제 포스트 수를 함께 조회
-    let baseQuery = db
+    const baseQuery = db
       .select({
         id: tags.id,
         name: tags.name,
@@ -71,27 +75,25 @@ export class TagsService {
       })
       .from(tags)
       .leftJoin(postTags, eq(tags.id, postTags.tagId))
-      .leftJoin(posts, and(
-        eq(postTags.postId, posts.id),
-        eq(posts.published, true) // 발행된 포스트만 카운트
-      ))
-      .groupBy(
-        tags.id,
-        tags.name,
-        tags.slug,
-        tags.createdAt,
-        tags.updatedAt
+      .leftJoin(
+        posts,
+        and(
+          eq(postTags.postId, posts.id),
+          eq(posts.published, true), // 발행된 포스트만 카운트
+        ),
       )
+      .groupBy(tags.id, tags.name, tags.slug, tags.createdAt, tags.updatedAt)
       .orderBy(orderBy)
       .limit(limit)
       .offset(offset);
 
     // 검색 조건이 있으면 having 절 추가 (GROUP BY 후 필터링)
-    const tagsResult = conditions.length > 0 
-      ? await baseQuery.having(and(...conditions))
-      : await baseQuery;
+    const tagsResult =
+      conditions.length > 0
+        ? await baseQuery.having(and(...conditions))
+        : await baseQuery;
 
-    return tagsResult.map(tag => ({
+    return tagsResult.map((tag) => ({
       id: tag.id,
       name: tag.name,
       slug: tag.slug,
@@ -123,7 +125,7 @@ export class TagsService {
     // 정렬 조건 설정
     const orderDirection = order === 'asc' ? asc : desc;
     let orderBy;
-    
+
     switch (sort) {
       case 'name':
         orderBy = orderDirection(tags.name);
@@ -140,7 +142,7 @@ export class TagsService {
 
     // 태그와 해당 태그의 포스트 수를 함께 조회
     let tagsResult;
-    
+
     if (conditions.length > 0) {
       // 검색 조건이 있는 경우
       tagsResult = await db
@@ -174,7 +176,7 @@ export class TagsService {
         .offset(offset);
     }
 
-    return tagsResult.map(tag => ({
+    return tagsResult.map((tag) => ({
       id: tag.id,
       name: tag.name,
       slug: tag.slug,
@@ -202,7 +204,9 @@ export class TagsService {
       .limit(1);
 
     if (tagResult.length === 0) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+      );
     }
 
     const tag = tagResult[0];
@@ -252,11 +256,16 @@ export class TagsService {
   /**
    * 태그 수정
    */
-  async update(slug: string, updateTagDto: UpdateTagDto): Promise<TagResponseDto> {
+  async update(
+    slug: string,
+    updateTagDto: UpdateTagDto,
+  ): Promise<TagResponseDto> {
     // 기존 태그 확인
     const existingTag = await this.findTagBySlug(slug);
     if (!existingTag) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+      );
     }
 
     const { name, slug: newSlug } = updateTagDto;
@@ -303,7 +312,9 @@ export class TagsService {
     // 태그 존재 확인
     const existingTag = await this.findTagBySlug(slug);
     if (!existingTag) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+      );
     }
 
     // 해당 태그를 사용하는 포스트가 있는지 확인
@@ -314,14 +325,12 @@ export class TagsService {
 
     if (postsUsingTag[0].count > 0) {
       throw new ConflictException(
-        `이 태그를 사용하는 포스트가 ${postsUsingTag[0].count}개 있어 삭제할 수 없습니다.`
+        `이 태그를 사용하는 포스트가 ${postsUsingTag[0].count}개 있어 삭제할 수 없습니다.`,
       );
     }
 
     // 태그 삭제
-    await db
-      .delete(tags)
-      .where(eq(tags.id, existingTag.id));
+    await db.delete(tags).where(eq(tags.id, existingTag.id));
   }
 
   /**
@@ -354,9 +363,7 @@ export class TagsService {
     if (tagIds.length === 0) return;
 
     // 각 태그별로 포스트 수 업데이트
-    await Promise.all(
-      tagIds.map(tagId => this.updatePostCount(tagId))
-    );
+    await Promise.all(tagIds.map((tagId) => this.updatePostCount(tagId)));
   }
 
   /**

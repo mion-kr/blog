@@ -201,7 +201,9 @@ describe('TagsController', () => {
       // Arrange
       const slug = 'nonexistent';
       mockTagsService.findOneBySlug.mockRejectedValue(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
 
       // Act & Assert
@@ -267,11 +269,13 @@ describe('TagsController', () => {
         slug: 'typescript',
       };
       mockTagsService.create.mockRejectedValue(
-        new ConflictException(`슬러그 'typescript'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'typescript'가 이미 존재합니다.`),
       );
 
       // Act & Assert
-      await expect(controller.create(createTagDto)).rejects.toThrow(ConflictException);
+      await expect(controller.create(createTagDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(service.create).toHaveBeenCalledWith(createTagDto);
     });
 
@@ -282,11 +286,13 @@ describe('TagsController', () => {
         slug: 'typescript-new',
       };
       mockTagsService.create.mockRejectedValue(
-        new ConflictException(`태그 이름 'TypeScript'이 이미 존재합니다.`)
+        new ConflictException(`태그 이름 'TypeScript'이 이미 존재합니다.`),
       );
 
       // Act & Assert
-      await expect(controller.create(createTagDto)).rejects.toThrow(ConflictException);
+      await expect(controller.create(createTagDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(service.create).toHaveBeenCalledWith(createTagDto);
     });
   });
@@ -373,11 +379,15 @@ describe('TagsController', () => {
         name: 'Updated Name',
       };
       mockTagsService.update.mockRejectedValue(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
 
       // Act & Assert
-      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(NotFoundException);
+      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(service.update).toHaveBeenCalledWith(slug, updateTagDto);
     });
 
@@ -388,11 +398,13 @@ describe('TagsController', () => {
         name: 'React',
       };
       mockTagsService.update.mockRejectedValue(
-        new ConflictException(`태그 이름 'React'이 이미 존재합니다.`)
+        new ConflictException(`태그 이름 'React'이 이미 존재합니다.`),
       );
 
       // Act & Assert
-      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(ConflictException);
+      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(service.update).toHaveBeenCalledWith(slug, updateTagDto);
     });
 
@@ -403,11 +415,13 @@ describe('TagsController', () => {
         slug: 'react',
       };
       mockTagsService.update.mockRejectedValue(
-        new ConflictException(`슬러그 'react'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'react'가 이미 존재합니다.`),
       );
 
       // Act & Assert
-      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(ConflictException);
+      await expect(controller.update(slug, updateTagDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(service.update).toHaveBeenCalledWith(slug, updateTagDto);
     });
 
@@ -453,7 +467,9 @@ describe('TagsController', () => {
       // Arrange
       const slug = 'nonexistent';
       mockTagsService.remove.mockRejectedValue(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
 
       // Act & Assert
@@ -465,7 +481,9 @@ describe('TagsController', () => {
       // Arrange
       const slug = 'used-tag';
       mockTagsService.remove.mockRejectedValue(
-        new ConflictException('이 태그를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.')
+        new ConflictException(
+          '이 태그를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.',
+        ),
       );
 
       // Act & Assert
@@ -547,7 +565,7 @@ describe('TagsController', () => {
       ]);
 
       // Assert
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toEqual(mockTags);
       });
       expect(service.findAll).toHaveBeenCalledTimes(3);

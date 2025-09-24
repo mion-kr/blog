@@ -59,7 +59,10 @@ export class ResponseInterceptor<T>
     );
   }
 
-  private getDefaultMessage(method: string, data: T | PaginatedData<T>): string {
+  private getDefaultMessage(
+    method: string,
+    data: T | PaginatedData<T>,
+  ): string {
     // 데이터 타입에 따른 스마트 메시지 생성
     if (Array.isArray(data)) {
       return `${data.length}개의 항목을 조회했습니다.`;
@@ -76,9 +79,11 @@ export class ResponseInterceptor<T>
     return messages[method] ?? '요청이 완료되었습니다.';
   }
 
-  private isPaginatedData(data: T | PaginatedData<T>): data is PaginatedData<T> {
+  private isPaginatedData(
+    data: T | PaginatedData<T>,
+  ): data is PaginatedData<T> {
     if (!data || typeof data !== 'object') return false;
-    
+
     const obj = data as Record<string, unknown>;
     return (
       'items' in obj &&

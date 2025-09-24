@@ -32,7 +32,7 @@ export class ApiResponseMeta implements ApiPaginationMeta {
   hasNext: boolean;
 
   @ApiProperty({
-    description: '이전 페이지 존재 여부', 
+    description: '이전 페이지 존재 여부',
     example: false,
   })
   hasPrev: boolean;

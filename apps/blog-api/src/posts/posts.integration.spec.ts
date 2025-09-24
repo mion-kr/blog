@@ -8,7 +8,7 @@ import { DatabaseModule } from '../database';
 
 /**
  * Posts API Integration Tests
- * 
+ *
  * 실제 데이터베이스와 HTTP 요청/응답을 테스트하는 통합 테스트
  * - 전체 API 엔드포인트 테스트
  * - 실제 JWT 인증 테스트
@@ -26,27 +26,28 @@ describe('PostsController (Integration)', () => {
   let adminToken: string;
 
   // 테스트 데이터
-  let testCategory = {
+  const testCategory = {
     id: '01234567-89ab-cdef-0123-456789abcdef',
     name: '개발',
-    slug: 'development'
+    slug: 'development',
   };
-  let testTags = [
+  const testTags = [
     {
       id: '12345678-9abc-def0-1234-56789abcdef0',
       name: 'Next.js',
-      slug: 'nextjs'
+      slug: 'nextjs',
     },
     {
       id: '23456789-abcd-ef01-2345-6789abcdef01',
       name: 'React',
-      slug: 'react'
-    }
+      slug: 'react',
+    },
   ];
-  
+
   const testPost = {
     title: 'Next.js 15에서 달라진 점들',
-    content: '# 안녕하세요\n\n이것은 **MDX** 포스트입니다.\n\n## 주요 변경사항\n\n- React 19 지원\n- 새로운 라우팅 시스템\n- 성능 개선',
+    content:
+      '# 안녕하세요\n\n이것은 **MDX** 포스트입니다.\n\n## 주요 변경사항\n\n- React 19 지원\n- 새로운 라우팅 시스템\n- 성능 개선',
     excerpt: 'Next.js 15의 새로운 기능들에 대해 알아봅시다.',
     coverImage: 'https://example.com/cover-image.jpg',
     published: true,
@@ -71,10 +72,10 @@ describe('PostsController (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // 글로벌 프리픽스 설정 (실제 애플리케이션과 동일)
     app.setGlobalPrefix('api');
-    
+
     // ValidationPipe 설정 (실제 애플리케이션과 동일)
     app.useGlobalPipes(
       new ValidationPipe({
@@ -121,11 +122,15 @@ describe('PostsController (Integration)', () => {
     it('발행된 포스트만 조회해야 함 (기본값)', async () => {
       // 발행된 포스트와 미발행 포스트 생성
       await createTestPost(app, { ...testPost, published: true }, adminToken);
-      await createTestPost(app, { 
-        ...testPost, 
-        title: '미발행 포스트',
-        published: false 
-      }, adminToken);
+      await createTestPost(
+        app,
+        {
+          ...testPost,
+          title: '미발행 포스트',
+          published: false,
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/posts')
@@ -165,11 +170,15 @@ describe('PostsController (Integration)', () => {
 
     it('제목과 내용으로 포스트를 검색할 수 있어야 함', async () => {
       await createTestPost(app, testPost, adminToken);
-      await createTestPost(app, { 
-        ...testPost, 
-        title: 'Vue.js 가이드',
-        content: 'Vue.js에 대한 내용입니다.' 
-      }, adminToken);
+      await createTestPost(
+        app,
+        {
+          ...testPost,
+          title: 'Vue.js 가이드',
+          content: 'Vue.js에 대한 내용입니다.',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/posts?search=Next.js')
@@ -203,14 +212,24 @@ describe('PostsController (Integration)', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0].tags.some(tag => tag.slug === tagSlug)).toBe(true);
+      expect(
+        response.body.data[0].tags.some((tag) => tag.slug === tagSlug),
+      ).toBe(true);
     });
 
     it('정렬 기능이 동작해야 함', async () => {
       // 시간차를 두고 포스트 생성
-      await createTestPost(app, { ...testPost, title: '첫 번째 포스트' }, adminToken);
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await createTestPost(app, { ...testPost, title: '두 번째 포스트' }, adminToken);
+      await createTestPost(
+        app,
+        { ...testPost, title: '첫 번째 포스트' },
+        adminToken,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await createTestPost(
+        app,
+        { ...testPost, title: '두 번째 포스트' },
+        adminToken,
+      );
 
       // 최신순 정렬 (기본값)
       const response = await request(app.getHttpServer())
@@ -303,11 +322,15 @@ describe('PostsController (Integration)', () => {
     });
 
     it('미발행 포스트는 일반 사용자가 조회할 수 없어야 함', async () => {
-      const unpublishedPost = await createTestPost(app, {
-        ...testPost,
-        title: '미발행 포스트',
-        published: false
-      }, adminToken);
+      const unpublishedPost = await createTestPost(
+        app,
+        {
+          ...testPost,
+          title: '미발행 포스트',
+          published: false,
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get(`/api/posts/${unpublishedPost.slug}`)
@@ -317,11 +340,15 @@ describe('PostsController (Integration)', () => {
     });
 
     it('관리자는 미발행 포스트도 조회할 수 있어야 함', async () => {
-      const unpublishedPost = await createTestPost(app, {
-        ...testPost,
-        title: '미발행 포스트',
-        published: false
-      }, adminToken);
+      const unpublishedPost = await createTestPost(
+        app,
+        {
+          ...testPost,
+          title: '미발행 포스트',
+          published: false,
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get(`/api/posts/${unpublishedPost.slug}`)
@@ -338,7 +365,7 @@ describe('PostsController (Integration)', () => {
       const postData = {
         ...testPost,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -366,7 +393,7 @@ describe('PostsController (Integration)', () => {
       const postData = {
         ...testPost,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -381,7 +408,7 @@ describe('PostsController (Integration)', () => {
       const postData = {
         ...testPost,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -417,7 +444,7 @@ describe('PostsController (Integration)', () => {
       const postData = {
         ...testPost,
         categoryId: '01234567-89ab-cdef-0123-456789abcdef', // 존재하지 않는 ID
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -473,7 +500,7 @@ describe('PostsController (Integration)', () => {
       const postData = {
         ...testPost,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       // 첫 번째 포스트 생성
@@ -650,7 +677,7 @@ describe('PostsController (Integration)', () => {
       const beforeResponse = await request(app.getHttpServer())
         .get(`/api/categories/${testCategory.slug}`)
         .expect(200);
-      
+
       const beforeCount = beforeResponse.body.data.postCount;
 
       await createTestPost(app, testPost, adminToken);
@@ -688,7 +715,7 @@ describe('PostsController (Integration)', () => {
       const beforeResponse = await request(app.getHttpServer())
         .get(`/api/tags/${testTags[0].slug}`)
         .expect(200);
-      
+
       const beforeCount = beforeResponse.body.data.postCount;
 
       await createTestPost(app, testPost, adminToken);
@@ -706,10 +733,11 @@ describe('PostsController (Integration)', () => {
       const createdPost = await createTestPost(app, testPost, adminToken);
 
       // 10번 동시 조회
-      const promises = Array(10).fill(null).map(() =>
-        request(app.getHttpServer())
-          .get(`/api/posts/${createdPost.slug}`)
-      );
+      const promises = Array(10)
+        .fill(null)
+        .map(() =>
+          request(app.getHttpServer()).get(`/api/posts/${createdPost.slug}`),
+        );
 
       await Promise.all(promises);
 
@@ -723,17 +751,23 @@ describe('PostsController (Integration)', () => {
 
     it('대량 포스트 목록 조회 성능 테스트', async () => {
       // 50개 포스트 생성
-      const promises = Array(50).fill(null).map((_, index) =>
-        createTestPost(app, {
-          ...testPost,
-          title: `테스트 포스트 ${index}`,
-        }, adminToken)
-      );
+      const promises = Array(50)
+        .fill(null)
+        .map((_, index) =>
+          createTestPost(
+            app,
+            {
+              ...testPost,
+              title: `테스트 포스트 ${index}`,
+            },
+            adminToken,
+          ),
+        );
 
       await Promise.all(promises);
 
       const startTime = Date.now();
-      
+
       const response = await request(app.getHttpServer())
         .get('/api/posts?limit=100')
         .expect(200);
@@ -753,7 +787,7 @@ describe('PostsController (Integration)', () => {
         ...testPost,
         content: longContent,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -772,7 +806,7 @@ describe('PostsController (Integration)', () => {
         ...testPost,
         title: 'C++/C# 프로그래밍 & JavaScript "특별판"',
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -813,7 +847,7 @@ const test = () => {
         ...testPost,
         content: mdxContent,
         categoryId: testCategory.id,
-        tagIds: testTags.map(tag => tag.id),
+        tagIds: testTags.map((tag) => tag.id),
       };
 
       const response = await request(app.getHttpServer())
@@ -852,7 +886,6 @@ async function cleanupDatabase(app: INestApplication): Promise<void> {
 async function setupTestData(app: INestApplication): Promise<void> {
   // 실제 구현 시 기본 테스트 데이터 생성
   // 카테고리, 태그, 사용자 생성
-  
   // 테스트 카테고리와 태그가 전역 변수로 정의되어 있음
   // 실제 구현에서는 데이터베이스에 생성해야 함
 }
@@ -863,12 +896,12 @@ async function setupTestData(app: INestApplication): Promise<void> {
 async function createTestPost(
   app: INestApplication,
   post: any,
-  token: string
+  token: string,
 ): Promise<any> {
   const postData = {
     ...post,
     categoryId: testCategory?.id || '01234567-89ab-cdef-0123-456789abcdef',
-    tagIds: testTags?.map(tag => tag.id) || [],
+    tagIds: testTags?.map((tag) => tag.id) || [],
   };
 
   const response = await request(app.getHttpServer())

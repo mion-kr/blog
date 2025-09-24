@@ -15,7 +15,10 @@ import {
 import { Response, Request } from 'express';
 import { ErrorResponse } from '../interfaces/api-response.interface';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { ErrorMessages, DevelopmentErrorMessages } from '../constants/error-messages.constant';
+import {
+  ErrorMessages,
+  DevelopmentErrorMessages,
+} from '../constants/error-messages.constant';
 import { JwtErrorParser } from '../parsers/jwt-error.parser';
 import { DatabaseErrorParser } from '../parsers/database-error.parser';
 import { ErrorLogger } from '../utils/error-logger.util';
@@ -53,7 +56,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   /**
    * 에러 응답 객체 생성
    */
-  private buildErrorResponse(exception: unknown, request: Request): ErrorResponse {
+  private buildErrorResponse(
+    exception: unknown,
+    request: Request,
+  ): ErrorResponse {
     const timestamp = new Date().toISOString();
     const path = request.url;
 
@@ -72,7 +78,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       '알 수 없는 오류가 발생했습니다.',
       path,
       timestamp,
-      this.isDevelopment ? { error: String(exception) } : undefined
+      this.isDevelopment ? { error: String(exception) } : undefined,
     );
   }
 
@@ -82,11 +88,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private handleHttpException(
     exception: HttpException,
     path: string,
-    timestamp: string
+    timestamp: string,
   ): ErrorResponse {
     const statusCode = exception.getStatus();
     const exceptionResponse = exception.getResponse();
-    
+
     // NestJS 기본 예외들 처리
     const errorCode = this.mapHttpStatusToErrorCode(statusCode, exception);
     let userMessage = this.getUserFriendlyMessage(errorCode);
@@ -95,7 +101,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // ValidationPipe 에러 처리
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const response = exceptionResponse as Record<string, unknown>;
-      
+
       if (Array.isArray(response.message)) {
         // class-validator 유효성 검사 에러
         userMessage = '입력 데이터가 올바르지 않습니다.';
@@ -113,7 +119,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       userMessage,
       path,
       timestamp,
-      details
+      details,
     );
   }
 
@@ -123,10 +129,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private handleGenericError(
     error: Error,
     path: string,
-    timestamp: string
+    timestamp: string,
   ): ErrorResponse {
-    let errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
-    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+    const errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+    const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 
     // JWT 에러 처리 (JwtErrorParser에 위임)
     if (this.jwtErrorParser.isJwtError(error)) {
@@ -137,20 +143,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message,
         path,
         timestamp,
-        this.isDevelopment ? { jwtErrorType: error.constructor.name } : undefined
+        this.isDevelopment
+          ? { jwtErrorType: error.constructor.name }
+          : undefined,
       );
     }
 
     // 데이터베이스 관련 에러 감지 (DatabaseErrorParser에 위임)
     if (this.databaseErrorParser.isDatabaseError(error)) {
-      const { code, statusCode: dbStatusCode } = this.databaseErrorParser.parseDatabaseError(error);
+      const { code, statusCode: dbStatusCode } =
+        this.databaseErrorParser.parseDatabaseError(error);
       return this.createErrorResponse(
         code,
         dbStatusCode,
         this.getUserFriendlyMessage(code),
         path,
         timestamp,
-        this.isDevelopment ? this.databaseErrorParser.getDatabaseErrorDetails(error) : undefined
+        this.isDevelopment
+          ? this.databaseErrorParser.getDatabaseErrorDetails(error)
+          : undefined,
       );
     }
 
@@ -160,38 +171,52 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.getUserFriendlyMessage(errorCode),
       path,
       timestamp,
-      this.isDevelopment ? { originalMessage: error.message } : undefined
+      this.isDevelopment ? { originalMessage: error.message } : undefined,
     );
   }
 
   /**
    * HTTP 상태 코드를 ErrorCode로 매핑
    */
-  private mapHttpStatusToErrorCode(statusCode: number, exception: HttpException): ErrorCode {
-    if (exception instanceof BadRequestException) return ErrorCode.VALIDATION_FAILED;
-    if (exception instanceof UnauthorizedException) return ErrorCode.UNAUTHORIZED;
+  private mapHttpStatusToErrorCode(
+    statusCode: number,
+    exception: HttpException,
+  ): ErrorCode {
+    if (exception instanceof BadRequestException)
+      return ErrorCode.VALIDATION_FAILED;
+    if (exception instanceof UnauthorizedException)
+      return ErrorCode.UNAUTHORIZED;
     if (exception instanceof ForbiddenException) return ErrorCode.FORBIDDEN;
     if (exception instanceof NotFoundException) return ErrorCode.NOT_FOUND;
     if (exception instanceof ConflictException) return ErrorCode.CONFLICT;
-    if (exception instanceof UnprocessableEntityException) return ErrorCode.UNPROCESSABLE_ENTITY;
+    if (exception instanceof UnprocessableEntityException)
+      return ErrorCode.UNPROCESSABLE_ENTITY;
 
     switch (statusCode) {
-      case 400: return ErrorCode.BAD_REQUEST;
-      case 401: return ErrorCode.UNAUTHORIZED;
-      case 403: return ErrorCode.FORBIDDEN;
-      case 404: return ErrorCode.NOT_FOUND;
-      case 409: return ErrorCode.CONFLICT;
-      case 422: return ErrorCode.UNPROCESSABLE_ENTITY;
-      default: return ErrorCode.INTERNAL_SERVER_ERROR;
+      case 400:
+        return ErrorCode.BAD_REQUEST;
+      case 401:
+        return ErrorCode.UNAUTHORIZED;
+      case 403:
+        return ErrorCode.FORBIDDEN;
+      case 404:
+        return ErrorCode.NOT_FOUND;
+      case 409:
+        return ErrorCode.CONFLICT;
+      case 422:
+        return ErrorCode.UNPROCESSABLE_ENTITY;
+      default:
+        return ErrorCode.INTERNAL_SERVER_ERROR;
     }
   }
-
 
   /**
    * 사용자 친화적 메시지 가져오기
    */
   private getUserFriendlyMessage(errorCode: ErrorCode): string {
-    const messages = this.isDevelopment ? DevelopmentErrorMessages : ErrorMessages;
+    const messages = this.isDevelopment
+      ? DevelopmentErrorMessages
+      : ErrorMessages;
     return messages[errorCode] || messages[ErrorCode.INTERNAL_SERVER_ERROR];
   }
 
@@ -204,7 +229,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     userMessage: string,
     path: string,
     timestamp: string,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ): ErrorResponse {
     return {
       success: false,
@@ -212,11 +237,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       error: {
         code,
         statusCode,
-        ...(this.isDevelopment && details ? { details } : {})
+        ...(this.isDevelopment && details ? { details } : {}),
       },
       timestamp,
       path,
     };
   }
-
 }
