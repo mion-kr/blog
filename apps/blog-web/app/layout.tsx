@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "../components/providers";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -10,7 +12,7 @@ const geistSans = localFont({
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono", 
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -45,13 +47,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body 
+    <html lang="ko" data-theme="light" suppressHydrationWarning>
+      <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <Providers>
-          {children}
+          <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-[var(--color-primary)] focus:px-4 focus:py-2 focus:text-white">
+            본문으로 건너뛰기
+          </a>
+          <div className="flex min-h-screen flex-col bg-[var(--color-background)]">
+            <SiteHeader />
+            <main id="main" className="flex-1">
+              {children}
+            </main>
+            <SiteFooter />
+          </div>
         </Providers>
       </body>
     </html>

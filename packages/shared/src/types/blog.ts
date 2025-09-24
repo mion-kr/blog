@@ -6,6 +6,7 @@ export interface Category {
   slug: string; // URL 친화적 문자열 (예: "development", "daily", "review")
   description?: string; // 카테고리 설명
   color?: string; // 테마 색상 (hex 코드)
+  postCount: number; // 해당 카테고리의 발행된 포스트 수
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,6 +15,7 @@ export interface Tag {
   id: string; // UUID, Primary Key
   name: string; // 태그 이름 (예: "Next.js", "TypeScript", "블로그")
   slug: string; // URL 친화적 문자열 (예: "nextjs", "typescript", "blog")
+  postCount: number; // 해당 태그를 사용하는 발행된 포스트 수
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,3 +83,9 @@ export interface CreateTagDto {
 }
 
 export interface UpdateTagDto extends Partial<CreateTagDto> {}
+
+// API 응답 DTO
+export interface PostResponseDto extends PostWithRelations {
+  // PostWithRelations에서 상속받은 모든 속성들 사용
+  // 추가적인 API 응답 전용 필드가 있다면 여기에 추가
+}
