@@ -14,7 +14,7 @@ import { LoggerService } from './logger.service';
     PinoLoggerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => 
+      useFactory: (configService: ConfigService) =>
         LoggerConfigFactory.createLoggerConfig(configService),
     }),
   ],

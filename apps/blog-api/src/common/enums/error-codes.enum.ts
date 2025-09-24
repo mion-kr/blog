@@ -1,6 +1,6 @@
 /**
  * 시스템 전체에서 사용되는 에러 코드 정의
- * 
+ *
  * @description
  * GlobalExceptionFilter에서 일관된 에러 처리를 위해 사용되는 표준화된 에러 코드입니다.
  * 각 에러 코드는 특정 비즈니스 상황과 HTTP 상태 코드에 매핑됩니다.
@@ -8,7 +8,7 @@
 export enum ErrorCode {
   // === 일반적인 HTTP 에러들 ===
   BAD_REQUEST = 'BAD_REQUEST',
-  UNAUTHORIZED = 'UNAUTHORIZED', 
+  UNAUTHORIZED = 'UNAUTHORIZED',
   FORBIDDEN = 'FORBIDDEN',
   NOT_FOUND = 'NOT_FOUND',
   CONFLICT = 'CONFLICT',

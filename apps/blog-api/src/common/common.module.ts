@@ -28,10 +28,6 @@ import { ErrorLogger } from './utils/error-logger.util';
       useClass: GlobalExceptionFilter,
     },
   ],
-  exports: [
-    JwtErrorParser,
-    DatabaseErrorParser,
-    ErrorLogger,
-  ],
+  exports: [JwtErrorParser, DatabaseErrorParser, ErrorLogger],
 })
 export class CommonModule {}

@@ -34,7 +34,7 @@ import {
 
 /**
  * 블로그 카테고리 API 컨트롤러
- * 
+ *
  * 엔드포인트:
  * - GET /api/categories - 카테고리 목록 조회 (공개)
  * - GET /api/categories/:slug - 카테고리 상세 조회 (공개)
@@ -59,7 +59,9 @@ export class CategoriesController {
     '카테고리 목록 조회',
     '모든 카테고리를 페이징과 필터링을 통해 조회합니다. 공개 API이므로 인증이 필요하지 않습니다.',
   )
-  async findAll(@Query() query: CategoryQueryDto): Promise<CategoryResponseDto[]> {
+  async findAll(
+    @Query() query: CategoryQueryDto,
+  ): Promise<CategoryResponseDto[]> {
     return this.categoriesService.findAll(query);
   }
 
@@ -84,7 +86,9 @@ export class CategoriesController {
   @UseGuards(AdminGuard, CsrfGuard)
   @ApiAdminCreate(CategoryResponseDto, '카테고리 생성')
   @ApiConflictError('슬러그 중복')
-  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<CategoryResponseDto> {
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+  ): Promise<CategoryResponseDto> {
     return this.categoriesService.create(createCategoryDto);
   }
 

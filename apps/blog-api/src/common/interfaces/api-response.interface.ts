@@ -1,13 +1,13 @@
 /**
  * API 응답 인터페이스 - @repo/shared로 통합
- * 
+ *
  * 이 파일은 더 이상 직접 사용하지 마세요.
  * 대신 @repo/shared의 타입들을 사용하세요:
- * 
- * import { 
- *   ApiResponse, 
+ *
+ * import {
+ *   ApiResponse,
  *   BaseApiResponse,
- *   SuccessResponse, 
+ *   SuccessResponse,
  *   ErrorResponse,
  *   PaginationMeta
  * } from '@repo/shared';
@@ -22,7 +22,7 @@ export type {
   ErrorInfo,
   ErrorData,
   ErrorDetails,
-  ValidationError
+  ValidationError,
 } from '@repo/shared';
 
 // PaginationMeta는 클래스이므로 일반 export

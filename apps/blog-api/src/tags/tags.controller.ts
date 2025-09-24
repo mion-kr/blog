@@ -34,7 +34,7 @@ import {
 
 /**
  * 블로그 태그 API 컨트롤러
- * 
+ *
  * 엔드포인트:
  * - GET /api/tags - 태그 목록 조회 (공개)
  * - GET /api/tags/:slug - 태그 상세 조회 (공개)

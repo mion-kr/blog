@@ -6,9 +6,13 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { CategoriesModule } from './categories/categories.module';
+import {
+  ApiResponseDto,
+  ApiResponseMeta,
+  PaginatedApiResponseDto,
+} from './common/dto';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
-import { ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta } from './common/dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -101,8 +105,6 @@ async function bootstrap() {
   // Pino Logger 인스턴스를 가져와서 사용
   const logger = app.get(Logger);
   logger.log(`🚀 Blog API is running on: http://localhost:${port}`);
-  logger.log(
-    `📚 Swagger docs available at: http://localhost:${port}/api-docs`,
-  );
+  logger.log(`📚 Swagger docs available at: http://localhost:${port}/api-docs`);
 }
-bootstrap();
+void bootstrap();

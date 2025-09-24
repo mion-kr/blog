@@ -23,7 +23,7 @@ export class ErrorLogger {
   logError(
     exception: unknown,
     request: Request,
-    errorResponse: ErrorResponse
+    errorResponse: ErrorResponse,
   ): void {
     const { method, url } = request;
     const statusCode = errorResponse.error?.statusCode ?? 500;
@@ -34,10 +34,13 @@ export class ErrorLogger {
 
     if (statusCode >= 500) {
       // 서버 에러는 ERROR 레벨로 로깅
-      this.logger.error({
-        ...logContext,
-        exception: this.getExceptionDetails(exception),
-      }, logMessage);
+      this.logger.error(
+        {
+          ...logContext,
+          exception: this.getExceptionDetails(exception),
+        },
+        logMessage,
+      );
     } else {
       // 클라이언트 에러는 WARN 레벨로 로깅
       this.logger.warn(logContext, logMessage);
@@ -49,7 +52,7 @@ export class ErrorLogger {
    */
   private buildLogContext(
     request: Request,
-    errorResponse: ErrorResponse
+    errorResponse: ErrorResponse,
   ): Record<string, unknown> {
     const { method, url, ip } = request;
     const statusCode = errorResponse.error?.statusCode ?? 500;

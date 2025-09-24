@@ -45,7 +45,8 @@ export class PostQueryDto implements PostsQuery {
   @IsOptional()
   @IsString()
   @IsIn(['createdAt', 'updatedAt', 'publishedAt', 'title', 'viewCount'], {
-    message: '정렬 기준은 createdAt, updatedAt, publishedAt, title, viewCount 중 하나여야 합니다.',
+    message:
+      '정렬 기준은 createdAt, updatedAt, publishedAt, title, viewCount 중 하나여야 합니다.',
   })
   sort?: string;
 
