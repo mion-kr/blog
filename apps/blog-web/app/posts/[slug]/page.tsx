@@ -116,11 +116,11 @@ function PostNavigation() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           <Link
-            href="/"
+            href="/posts"
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            홈으로 돌아가기
+            모든 포스트 보기
           </Link>
 
           <ShareButton />
@@ -306,11 +306,11 @@ function PostFooter({ post }: { post: PostResponseDto }) {
           {/* 홈으로 돌아가기 링크 */}
           <div className="text-center">
             <Link
-              href="/"
+              href="/posts"
               className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-6 py-3 font-semibold text-white hover:bg-[var(--color-accent-primary-hover)] transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              홈으로 돌아가기
+              모든 포스트 보기
             </Link>
           </div>
         </div>

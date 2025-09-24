@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 
 import { PostsContent } from './posts-content';
 import { PostsPageSkeleton } from './loading';
+import { WithSidebar } from '@/components/layout/with-sidebar';
 
 export const metadata: Metadata = {
   title: '전체 포스트 | Mion\'s Blog',
@@ -47,14 +48,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         </div>
       </section>
 
-      {/* 메인 콘텐츠 */}
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Suspense fallback={<PostsPageSkeleton />}>
-            <PostsContent searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
-      </section>
+      {/* 메인 콘텐츠 (사이드바 포함) */}
+      <WithSidebar>
+        <Suspense fallback={<PostsPageSkeleton />}>
+          <PostsContent searchParams={resolvedSearchParams} />
+        </Suspense>
+      </WithSidebar>
     </div>
   );
 }

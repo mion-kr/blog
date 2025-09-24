@@ -12,7 +12,7 @@ const geistSans = localFont({
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono", 
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -48,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" data-theme="light" suppressHydrationWarning>
-      <body 
+      <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >

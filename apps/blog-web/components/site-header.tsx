@@ -12,8 +12,6 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { href: "/", label: "홈" },
   { href: "/posts", label: "포스트" },
-  { href: "/categories", label: "카테고리" },
-  { href: "/tags", label: "태그" },
   { href: "/search", label: "검색" },
 ];
 
