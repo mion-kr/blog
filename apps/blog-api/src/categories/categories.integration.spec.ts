@@ -8,7 +8,7 @@ import { DatabaseModule } from '../database';
 
 /**
  * Categories API Integration Tests
- * 
+ *
  * 실제 데이터베이스와 HTTP 요청/응답을 테스트하는 통합 테스트
  * - 전체 API 엔드포인트 테스트
  * - 실제 JWT 인증 테스트
@@ -50,10 +50,10 @@ describe('CategoriesController (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // 글로벌 프리픽스 설정 (실제 애플리케이션과 동일)
     app.setGlobalPrefix('api');
-    
+
     // ValidationPipe 설정 (실제 애플리케이션과 동일)
     app.useGlobalPipes(
       new ValidationPipe({
@@ -125,11 +125,15 @@ describe('CategoriesController (Integration)', () => {
     it('이름으로 카테고리를 검색할 수 있어야 함', async () => {
       // 여러 테스트 카테고리 생성
       await createTestCategory(app, testCategory, adminToken);
-      await createTestCategory(app, { 
-        ...testCategory, 
-        name: '디자인', 
-        slug: 'design' 
-      }, adminToken);
+      await createTestCategory(
+        app,
+        {
+          ...testCategory,
+          name: '디자인',
+          slug: 'design',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/categories?search=개발')
@@ -143,11 +147,15 @@ describe('CategoriesController (Integration)', () => {
     it('정렬 기능이 동작해야 함', async () => {
       // 두 개의 카테고리 생성
       await createTestCategory(app, testCategory, adminToken);
-      await createTestCategory(app, { 
-        ...testCategory, 
-        name: 'B카테고리', 
-        slug: 'b-category' 
-      }, adminToken);
+      await createTestCategory(
+        app,
+        {
+          ...testCategory,
+          name: 'B카테고리',
+          slug: 'b-category',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/categories?sortBy=name&sortOrder=asc')
@@ -396,20 +404,24 @@ describe('CategoriesController (Integration)', () => {
 
     it('동시성 테스트: 같은 슬러그로 동시 생성 시 하나만 성공해야 함', async () => {
       // 동시성 테스트 로직
-      const promises = Array(5).fill(null).map(() =>
-        request(app.getHttpServer())
-          .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
-          .set('X-CSRF-Token', 'test-csrf-token')
-          .send(testCategory)
-      );
+      const promises = Array(5)
+        .fill(null)
+        .map(() =>
+          request(app.getHttpServer())
+            .post('/api/categories')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .set('X-CSRF-Token', 'test-csrf-token')
+            .send(testCategory),
+        );
 
       const results = await Promise.allSettled(promises);
-      const successful = results.filter(result => 
-        result.status === 'fulfilled' && result.value.status === 201
+      const successful = results.filter(
+        (result) =>
+          result.status === 'fulfilled' && result.value.status === 201,
       );
-      const failed = results.filter(result => 
-        result.status === 'fulfilled' && result.value.status === 409
+      const failed = results.filter(
+        (result) =>
+          result.status === 'fulfilled' && result.value.status === 409,
       );
 
       expect(successful).toHaveLength(1);
@@ -441,15 +453,15 @@ async function cleanupCategories(app: INestApplication): Promise<void> {
  * 테스트 카테고리 생성
  */
 async function createTestCategory(
-  app: INestApplication, 
-  category: any, 
-  token: string
+  app: INestApplication,
+  category: any,
+  token: string,
 ): Promise<any> {
   const response = await request(app.getHttpServer())
     .post('/api/categories')
     .set('Authorization', `Bearer ${token}`)
     .set('X-CSRF-Token', 'test-csrf-token')
     .send(category);
-  
+
   return response.body.data;
 }

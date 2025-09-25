@@ -2,7 +2,10 @@ import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreateCategoryDto } from './create-category.dto';
 import { UpdateCategoryDto as IUpdateCategoryDto } from '@repo/shared';
 
-export class UpdateCategoryDto extends PartialType(CreateCategoryDto) implements IUpdateCategoryDto {
+export class UpdateCategoryDto
+  extends PartialType(CreateCategoryDto)
+  implements IUpdateCategoryDto
+{
   @ApiPropertyOptional({
     description: '카테고리 이름',
     example: '수정된 카테고리',

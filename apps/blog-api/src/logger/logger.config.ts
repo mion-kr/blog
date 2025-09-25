@@ -13,7 +13,8 @@ import * as pino from 'pino';
 export class LoggerConfigFactory {
   static createLoggerConfig(configService: ConfigService): Params {
     const isDevelopment = configService.get('NODE_ENV') === 'development';
-    const logLevel = configService.get('LOG_LEVEL') ?? (isDevelopment ? 'debug' : 'info');
+    const logLevel =
+      configService.get('LOG_LEVEL') ?? (isDevelopment ? 'debug' : 'info');
 
     return {
       pinoHttp: {
@@ -21,18 +22,24 @@ export class LoggerConfigFactory {
         // 🔍 요청 ID 생성 (추적용)
         genReqId: (req: IncomingMessage) => {
           const xRequestId = req.headers['x-request-id'];
-          return xRequestId || `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+          return (
+            xRequestId ||
+            `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+          );
         },
         // ✅ 로깅할 요청 필터링
         autoLogging: {
           ignore: (req: IncomingMessage): boolean => {
             // Health check 등 제외
-            return req.url?.includes('/health') === true || req.url?.includes('/metrics') === true;
-          }
+            return (
+              req.url?.includes('/health') === true ||
+              req.url?.includes('/metrics') === true
+            );
+          },
         },
         // 타임스탬프 설정
         timestamp: pino.stdTimeFunctions.isoTime,
-        transport: isDevelopment 
+        transport: isDevelopment
           ? {
               target: 'pino-pretty',
               options: {
@@ -72,7 +79,8 @@ export class LoggerConfigFactory {
           res: (res: ServerResponse) => ({
             statusCode: res.statusCode,
             // getHeaders() 메서드가 존재하는 경우에만 사용, 없으면 빈 객체 반환
-            headers: typeof res.getHeaders === 'function' ? res.getHeaders() : {},
+            headers:
+              typeof res.getHeaders === 'function' ? res.getHeaders() : {},
           }),
           err: (err: Error) => {
             const errorObj: Record<string, unknown> = {
@@ -80,18 +88,22 @@ export class LoggerConfigFactory {
               message: err.message,
               stack: isDevelopment ? err.stack : undefined,
             };
-            
+
             // Error 객체의 다른 속성들을 안전하게 복사
-            Object.keys(err).forEach(key => {
+            Object.keys(err).forEach((key) => {
               if (!['message', 'stack', 'name'].includes(key)) {
                 errorObj[key] = (err as any)[key];
               }
             });
-            
+
             return errorObj;
           },
         },
-        customLogLevel: (req: IncomingMessage, res: ServerResponse, err?: Error) => {
+        customLogLevel: (
+          req: IncomingMessage,
+          res: ServerResponse,
+          err?: Error,
+        ) => {
           if (res.statusCode >= 500 || err) {
             return 'error';
           }
@@ -106,7 +118,11 @@ export class LoggerConfigFactory {
         customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
           return `${req.method} ${req.url}`;
         },
-        customErrorMessage: (req: IncomingMessage, res: ServerResponse, err: Error) => {
+        customErrorMessage: (
+          req: IncomingMessage,
+          res: ServerResponse,
+          err: Error,
+        ) => {
           return `${req.method} ${req.url} - ${err.message}`;
         },
         customAttributeKeys: {
@@ -119,7 +135,7 @@ export class LoggerConfigFactory {
           context: 'HTTP',
           userId: req.user?.id,
           ip: req.socket?.remoteAddress,
-          userAgent: req.headers['user-agent']
+          userAgent: req.headers['user-agent'],
         }),
         // duration을 초 단위로 변환
         formatters: {
@@ -129,7 +145,7 @@ export class LoggerConfigFactory {
               object.duration = `${(object.duration / 1000).toFixed(3)}s`;
             }
             return object;
-          }
+          },
         },
       },
       exclude: [
@@ -142,4 +158,3 @@ export class LoggerConfigFactory {
     };
   }
 }
-

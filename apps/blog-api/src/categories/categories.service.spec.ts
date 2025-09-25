@@ -134,8 +134,14 @@ describe('CategoriesService', () => {
       // Assert
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Tech');
-      expect(database.ilike).toHaveBeenCalledWith(database.categories.name, '%Tech%');
-      expect(database.ilike).toHaveBeenCalledWith(database.categories.description, '%Tech%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.categories.name,
+        '%Tech%',
+      );
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.categories.description,
+        '%Tech%',
+      );
       expect(mockQueryBuilder.having).toHaveBeenCalled();
     });
 
@@ -299,7 +305,9 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.findOneBySlug(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -446,7 +454,7 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.create(createCategoryDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'programming'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'programming'가 이미 존재합니다.`),
       );
     });
 
@@ -475,7 +483,7 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.create(createCategoryDto)).rejects.toThrow(
-        new ConflictException(`카테고리 이름 'Programming'이 이미 존재합니다.`)
+        new ConflictException(`카테고리 이름 'Programming'이 이미 존재합니다.`),
       );
     });
   });
@@ -560,7 +568,9 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateCategoryDto)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -597,7 +607,7 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateCategoryDto)).rejects.toThrow(
-        new ConflictException(`카테고리 이름 'Tech'이 이미 존재합니다.`)
+        new ConflictException(`카테고리 이름 'Tech'이 이미 존재합니다.`),
       );
     });
 
@@ -634,7 +644,7 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateCategoryDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'tech'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'tech'가 이미 존재합니다.`),
       );
     });
 
@@ -692,7 +702,7 @@ describe('CategoriesService', () => {
         expect.objectContaining({
           description: 'Updated description only',
           updatedAt: expect.any(Date),
-        })
+        }),
       );
     });
   });
@@ -742,7 +752,10 @@ describe('CategoriesService', () => {
 
       // Assert
       expect(mockDeleteBuilder.where).toHaveBeenCalled();
-      expect(database.eq).toHaveBeenCalledWith(database.categories.id, existingCategory.id);
+      expect(database.eq).toHaveBeenCalledWith(
+        database.categories.id,
+        existingCategory.id,
+      );
     });
 
     it('존재하지 않는 카테고리 삭제 시 NotFoundException을 던져야 함', async () => {
@@ -758,7 +771,9 @@ describe('CategoriesService', () => {
 
       // Act & Assert
       await expect(service.remove(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -797,8 +812,8 @@ describe('CategoriesService', () => {
       // Act & Assert
       await expect(service.remove(slug)).rejects.toThrow(
         new ConflictException(
-          `이 카테고리를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.`
-        )
+          `이 카테고리를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.`,
+        ),
       );
     });
   });
@@ -827,7 +842,10 @@ describe('CategoriesService', () => {
         postCount: 10,
         updatedAt: expect.any(Date),
       });
-      expect(database.eq).toHaveBeenCalledWith(database.categories.id, categoryId);
+      expect(database.eq).toHaveBeenCalledWith(
+        database.categories.id,
+        categoryId,
+      );
     });
 
     it('포스트가 없을 때 0으로 업데이트해야 함', async () => {
@@ -951,15 +969,17 @@ describe('CategoriesService', () => {
       // Mock for insert
       const mockInsertBuilder = {
         values: jest.fn().mockReturnThis(),
-        returning: jest.fn().mockResolvedValue([{
-          id: '1',
-          name: 'Test',
-          slug: 'test',
-          description: null,
-          postCount: 0,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        }]),
+        returning: jest.fn().mockResolvedValue([
+          {
+            id: '1',
+            name: 'Test',
+            slug: 'test',
+            description: null,
+            postCount: 0,
+            createdAt: new Date('2024-01-01'),
+            updatedAt: new Date('2024-01-01'),
+          },
+        ]),
       };
       mockDb.insert.mockReturnValue(mockInsertBuilder);
 

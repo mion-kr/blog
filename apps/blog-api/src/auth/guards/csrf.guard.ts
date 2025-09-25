@@ -1,8 +1,13 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 
 /**
  * CSRF 보호 가드
- * 
+ *
  * 요구사항:
  * - POST, PUT, DELETE 요청에 대해 CSRF 토큰 검증
  * - X-CSRF-Token 헤더 또는 _csrf 필드에서 토큰 확인
@@ -38,7 +43,7 @@ export class CsrfGuard implements CanActivate {
 
   /**
    * 요청에서 CSRF 토큰을 추출합니다.
-   * 
+   *
    * @param request Express 요청 객체
    * @returns CSRF 토큰 문자열 또는 null
    */

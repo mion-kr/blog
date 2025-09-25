@@ -8,7 +8,7 @@ import { DatabaseModule } from '../database';
 
 /**
  * Tags API Integration Tests
- * 
+ *
  * 실제 데이터베이스와 HTTP 요청/응답을 테스트하는 통합 테스트
  * - 전체 API 엔드포인트 테스트
  * - 실제 JWT 인증 테스트
@@ -47,10 +47,10 @@ describe('TagsController (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // 글로벌 프리픽스 설정 (실제 애플리케이션과 동일)
     app.setGlobalPrefix('api');
-    
+
     // ValidationPipe 설정 (실제 애플리케이션과 동일)
     app.useGlobalPipes(
       new ValidationPipe({
@@ -119,10 +119,14 @@ describe('TagsController (Integration)', () => {
     it('이름으로 태그를 검색할 수 있어야 함', async () => {
       // 여러 테스트 태그 생성
       await createTestTag(app, testTag, adminToken);
-      await createTestTag(app, { 
-        name: 'Vue.js', 
-        slug: 'vuejs' 
-      }, adminToken);
+      await createTestTag(
+        app,
+        {
+          name: 'Vue.js',
+          slug: 'vuejs',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/tags?search=Next')
@@ -136,10 +140,14 @@ describe('TagsController (Integration)', () => {
     it('정렬 기능이 동작해야 함', async () => {
       // 여러 태그 생성
       await createTestTag(app, testTag, adminToken);
-      await createTestTag(app, { 
-        name: 'Angular', 
-        slug: 'angular' 
-      }, adminToken);
+      await createTestTag(
+        app,
+        {
+          name: 'Angular',
+          slug: 'angular',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/tags?sortBy=name&sortOrder=asc')
@@ -154,10 +162,14 @@ describe('TagsController (Integration)', () => {
     it('postCount 내림차순 정렬이 가능해야 함', async () => {
       // 태그 생성 및 포스트 연결 시뮬레이션
       await createTestTag(app, testTag, adminToken);
-      await createTestTag(app, { 
-        name: 'Vue.js', 
-        slug: 'vuejs' 
-      }, adminToken);
+      await createTestTag(
+        app,
+        {
+          name: 'Vue.js',
+          slug: 'vuejs',
+        },
+        adminToken,
+      );
 
       const response = await request(app.getHttpServer())
         .get('/api/tags?sortBy=postCount&sortOrder=desc')
@@ -474,20 +486,24 @@ describe('TagsController (Integration)', () => {
     });
 
     it('동시성 테스트: 같은 슬러그로 동시 생성 시 하나만 성공해야 함', async () => {
-      const promises = Array(5).fill(null).map(() =>
-        request(app.getHttpServer())
-          .post('/api/tags')
-          .set('Authorization', `Bearer ${adminToken}`)
-          .set('X-CSRF-Token', 'test-csrf-token')
-          .send(testTag)
-      );
+      const promises = Array(5)
+        .fill(null)
+        .map(() =>
+          request(app.getHttpServer())
+            .post('/api/tags')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .set('X-CSRF-Token', 'test-csrf-token')
+            .send(testTag),
+        );
 
       const results = await Promise.allSettled(promises);
-      const successful = results.filter(result => 
-        result.status === 'fulfilled' && result.value.status === 201
+      const successful = results.filter(
+        (result) =>
+          result.status === 'fulfilled' && result.value.status === 201,
       );
-      const failed = results.filter(result => 
-        result.status === 'fulfilled' && result.value.status === 409
+      const failed = results.filter(
+        (result) =>
+          result.status === 'fulfilled' && result.value.status === 409,
       );
 
       expect(successful).toHaveLength(1);
@@ -496,20 +512,26 @@ describe('TagsController (Integration)', () => {
 
     it('대량 태그 처리 시 성능이 적절해야 함', async () => {
       const startTime = Date.now();
-      
+
       // 100개 태그 생성
-      const promises = Array(100).fill(null).map((_, index) =>
-        createTestTag(app, {
-          name: `Tag ${index}`,
-          slug: `tag-${index}`,
-        }, adminToken)
-      );
+      const promises = Array(100)
+        .fill(null)
+        .map((_, index) =>
+          createTestTag(
+            app,
+            {
+              name: `Tag ${index}`,
+              slug: `tag-${index}`,
+            },
+            adminToken,
+          ),
+        );
 
       await Promise.all(promises);
-      
+
       const endTime = Date.now();
       const duration = endTime - startTime;
-      
+
       // 성능 검증 (10초 이내)
       expect(duration).toBeLessThan(10000);
 
@@ -595,15 +617,15 @@ async function cleanupTags(app: INestApplication): Promise<void> {
  * 테스트 태그 생성
  */
 async function createTestTag(
-  app: INestApplication, 
-  tag: any, 
-  token: string
+  app: INestApplication,
+  tag: any,
+  token: string,
 ): Promise<any> {
   const response = await request(app.getHttpServer())
     .post('/api/tags')
     .set('Authorization', `Bearer ${token}`)
     .set('X-CSRF-Token', 'test-csrf-token')
     .send(tag);
-  
+
   return response.body.data;
 }

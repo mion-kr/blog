@@ -241,7 +241,9 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.findOneBySlug(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
     });
   });
@@ -312,7 +314,7 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.create(createTagDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'typescript'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'typescript'가 이미 존재합니다.`),
       );
     });
 
@@ -341,7 +343,7 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.create(createTagDto)).rejects.toThrow(
-        new ConflictException(`태그 이름 'TypeScript'이 이미 존재합니다.`)
+        new ConflictException(`태그 이름 'TypeScript'이 이미 존재합니다.`),
       );
     });
   });
@@ -422,7 +424,9 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateTagDto)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -458,7 +462,7 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateTagDto)).rejects.toThrow(
-        new ConflictException(`태그 이름 'React'이 이미 존재합니다.`)
+        new ConflictException(`태그 이름 'React'이 이미 존재합니다.`),
       );
     });
 
@@ -494,7 +498,7 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.update(slug, updateTagDto)).rejects.toThrow(
-        new ConflictException(`슬러그 'react'가 이미 존재합니다.`)
+        new ConflictException(`슬러그 'react'가 이미 존재합니다.`),
       );
     });
 
@@ -550,7 +554,7 @@ describe('TagsService', () => {
         expect.objectContaining({
           name: 'TypeScript Updated',
           updatedAt: expect.any(Date),
-        })
+        }),
       );
     });
   });
@@ -599,7 +603,10 @@ describe('TagsService', () => {
 
       // Assert
       expect(mockDeleteBuilder.where).toHaveBeenCalled();
-      expect(database.eq).toHaveBeenCalledWith(database.tags.id, existingTag.id);
+      expect(database.eq).toHaveBeenCalledWith(
+        database.tags.id,
+        existingTag.id,
+      );
     });
 
     it('존재하지 않는 태그 삭제 시 NotFoundException을 던져야 함', async () => {
@@ -615,7 +622,9 @@ describe('TagsService', () => {
 
       // Act & Assert
       await expect(service.remove(slug)).rejects.toThrow(
-        new NotFoundException(`슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`)
+        new NotFoundException(
+          `슬러그 '${slug}'에 해당하는 태그를 찾을 수 없습니다.`,
+        ),
       );
     });
 
@@ -653,8 +662,8 @@ describe('TagsService', () => {
       // Act & Assert
       await expect(service.remove(slug)).rejects.toThrow(
         new ConflictException(
-          `이 태그를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.`
-        )
+          `이 태그를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.`,
+        ),
       );
     });
   });
@@ -843,7 +852,10 @@ describe('TagsService', () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(database.ilike).toHaveBeenCalledWith(database.tags.name, '%Script%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.tags.name,
+        '%Script%',
+      );
       expect(mockQueryBuilder.having).toHaveBeenCalled();
     });
 
@@ -888,7 +900,10 @@ describe('TagsService', () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(database.ilike).toHaveBeenCalledWith(database.tags.name, '%REACT%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.tags.name,
+        '%REACT%',
+      );
     });
 
     it('한글 검색이 올바르게 동작해야 함', async () => {
@@ -1054,7 +1069,10 @@ describe('TagsService', () => {
 
       // Assert
       expect(result).toEqual([]);
-      expect(database.ilike).toHaveBeenCalledWith(database.tags.name, '%NonExistentTag%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.tags.name,
+        '%NonExistentTag%',
+      );
     });
 
     it('자동완성을 위한 prefix 검색이 가능해야 함', async () => {
@@ -1183,7 +1201,10 @@ describe('TagsService', () => {
 
       // Assert
       expect(result).toHaveLength(1);
-      expect(database.ilike).toHaveBeenCalledWith(database.tags.name, '%React%');
+      expect(database.ilike).toHaveBeenCalledWith(
+        database.tags.name,
+        '%React%',
+      );
     });
   });
 });
