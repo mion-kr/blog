@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,7 +21,13 @@ import {
   users,
 } from '@repo/database';
 
-import { PaginatedData, PaginationMeta } from '@repo/shared';
+import {
+  PaginatedData,
+  PaginationMeta,
+  generateSlug as sharedGenerateSlug,
+  generateEnglishSlug,
+  createUniqueSlug,
+} from '@repo/shared';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostResponseDto } from './dto/post-response.dto';
@@ -508,10 +513,7 @@ export class PostsService {
     } = createPostDto;
 
     // 제목에서 슬러그 생성
-    const slug = this.generateSlug(title);
-
-    // 슬러그 중복 확인
-    await this.validateSlugUniqueness(slug);
+    const slug = await this.createSlugFromTitle(title);
 
     // 카테고리 존재 확인
     await this.validateCategoryExists(categoryId);
@@ -583,10 +585,7 @@ export class PostsService {
     // 새 슬러그 생성 및 중복 확인 (제목이 변경된 경우)
     let newSlug = slug;
     if (title && title !== existingPost.title) {
-      newSlug = this.generateSlug(title);
-      if (newSlug !== slug) {
-        await this.validateSlugUniqueness(newSlug);
-      }
+      newSlug = await this.createSlugFromTitle(title, existingPost.id);
     }
 
     // 카테고리 존재 확인 (변경된 경우)
@@ -684,34 +683,37 @@ export class PostsService {
   }
 
   /**
-   * 제목에서 URL 친화적 슬러그 생성
+   * 제목을 기반으로 고유한 슬러그 생성
    */
-  private generateSlug(title: string): string {
-    return (
-      title
-        .toLowerCase()
-        .trim()
-        // 한글 및 특수문자를 하이픈으로 변환
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-    );
-  }
+  private async createSlugFromTitle(
+    title: string,
+    excludePostId?: string,
+  ): Promise<string> {
+    let baseSlug = sharedGenerateSlug(title);
 
-  /**
-   * 슬러그 중복 확인
-   */
-  private async validateSlugUniqueness(slug: string): Promise<void> {
-    const existingPost = await db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(eq(posts.slug, slug))
-      .limit(1);
-
-    if (existingPost.length > 0) {
-      throw new ConflictException(`슬러그 '${slug}'가 이미 존재합니다.`);
+    if (!baseSlug) {
+      baseSlug = generateEnglishSlug(title);
     }
+
+    if (!baseSlug) {
+      baseSlug = 'post';
+    }
+
+    const slugCondition = ilike(posts.slug, `${baseSlug}%`);
+    const whereClause =
+      excludePostId !== undefined
+        ? (and(slugCondition, sql`${posts.id} <> ${excludePostId}`) ??
+          slugCondition)
+        : slugCondition;
+
+    const existingSlugRows = await db
+      .select({ slug: posts.slug })
+      .from(posts)
+      .where(whereClause);
+
+    const existingSlugs = existingSlugRows.map((row) => row.slug);
+
+    return createUniqueSlug(baseSlug, existingSlugs);
   }
 
   /**

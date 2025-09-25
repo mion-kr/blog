@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -594,8 +590,7 @@ describe('PostsService', () => {
       // Mock for slug uniqueness check
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+        where: jest.fn().mockResolvedValue([]),
       };
 
       // Mock for category check
@@ -659,7 +654,7 @@ describe('PostsService', () => {
       expect(result.slug).toBe('new-post');
     });
 
-    it('슬러그가 중복될 때 ConflictException을 던져야 함', async () => {
+    it('슬러그가 중복되면 고유한 슬러그를 생성해야 함', async () => {
       // Arrange
       const createPostDto: CreatePostDto = {
         title: 'Existing Post',
@@ -671,18 +666,79 @@ describe('PostsService', () => {
 
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([{ id: 'existing-id' }]),
+        where: jest.fn().mockResolvedValue([{ slug: 'existing-post' }]),
       };
 
-      mockDb.select.mockReturnValue(mockSlugCheckBuilder);
+      const mockCategoryCheckBuilder = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ id: 'cat-1' }]),
+      };
 
-      // Act & Assert
-      await expect(
-        service.create(createPostDto, mockAuthorId),
-      ).rejects.toThrow(
-        new ConflictException(`슬러그 'existing-post'가 이미 존재합니다.`),
-      );
+      const mockCreatedPost = {
+        id: 'new-post-id',
+        title: 'Existing Post',
+        slug: 'existing-post-1',
+        content: 'Content',
+        excerpt: null,
+        coverImage: null,
+        published: false,
+        viewCount: 0,
+        categoryId: 'cat-1',
+        authorId: mockAuthorId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publishedAt: null,
+      };
+
+      const mockFindPostBuilder = {
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([mockCreatedPost]),
+      };
+
+      const mockFindTagsBuilder = {
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      let capturedSlug: string | undefined;
+
+      mockDb.select
+        .mockImplementationOnce(() => mockSlugCheckBuilder)
+        .mockImplementationOnce(() => mockCategoryCheckBuilder)
+        .mockImplementationOnce(() => mockFindPostBuilder)
+        .mockImplementationOnce(() => mockFindTagsBuilder);
+
+      mockDb.transaction.mockImplementation(async (callback) => {
+        const insertBuilder = {
+          values: jest.fn().mockImplementation(function (values) {
+            capturedSlug = values.slug;
+            return this;
+          }),
+          returning: jest.fn().mockResolvedValue([mockCreatedPost]),
+        };
+
+        const mockTx = {
+          insert: jest.fn().mockReturnValue(insertBuilder),
+        };
+
+        return callback(mockTx);
+      });
+
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+
+      // Act
+      const result = await service.create(createPostDto, mockAuthorId);
+
+      // Assert
+      expect(result.slug).toBe('existing-post-1');
+      expect(capturedSlug).toBe('existing-post-1');
     });
 
     it('카테고리가 존재하지 않을 때 BadRequestException을 던져야 함', async () => {
@@ -697,8 +753,7 @@ describe('PostsService', () => {
 
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+        where: jest.fn().mockResolvedValue([]),
       };
 
       const mockCategoryCheckBuilder = {
@@ -743,8 +798,7 @@ describe('PostsService', () => {
 
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+        where: jest.fn().mockResolvedValue([]),
       };
 
       const mockCategoryCheckBuilder = {
@@ -895,8 +949,7 @@ describe('PostsService', () => {
       // Mock for slug uniqueness check
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+        where: jest.fn().mockResolvedValue([]),
       };
 
       // Mock for category check
@@ -994,11 +1047,11 @@ describe('PostsService', () => {
       );
     });
 
-    it('새 슬러그가 중복될 때 ConflictException을 던져야 함', async () => {
+    it('새 슬러그가 중복되면 고유한 슬러그를 생성해야 함', async () => {
       // Arrange
       const slug = 'existing-post';
       const updatePostDto: UpdatePostDto = {
-        title: 'Another Existing Post', // 이미 존재하는 다른 포스트의 제목
+        title: 'Another Existing Post',
       };
 
       const existingPost = {
@@ -1018,26 +1071,69 @@ describe('PostsService', () => {
 
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([{ id: '2' }]), // 다른 포스트가 이미 사용 중
+        where: jest.fn().mockResolvedValue([{ slug: 'another-existing-post' }]),
       };
 
-      let selectCallCount = 0;
-      mockDb.select.mockImplementation(() => {
-        selectCallCount++;
-        if (selectCallCount === 1) return mockFindPostBuilder;
-        if (selectCallCount === 2) return mockSlugCheckBuilder;
-        return { from: jest.fn().mockReturnThis() };
+      const updatedPostAfterSave = {
+        ...existingPost,
+        ...updatePostDto,
+        slug: 'another-existing-post-1',
+      };
+
+      const afterUpdatePostBuilder = {
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([updatedPostAfterSave]),
+      };
+
+      const afterUpdateTagsBuilder = {
+        from: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      mockDb.select
+        .mockImplementationOnce(() => mockFindPostBuilder)
+        .mockImplementationOnce(() => mockSlugCheckBuilder)
+        .mockImplementationOnce(() => afterUpdatePostBuilder)
+        .mockImplementationOnce(() => afterUpdateTagsBuilder);
+
+      let capturedUpdateData: any;
+
+      mockDb.transaction.mockImplementation(async (callback) => {
+        const updateBuilder = {
+          set: jest.fn((data) => {
+            capturedUpdateData = data;
+            return { where: jest.fn().mockResolvedValue(undefined) };
+          }),
+          where: jest.fn().mockResolvedValue(undefined),
+        };
+
+        const mockTx = {
+          update: jest.fn().mockReturnValue(updateBuilder),
+          delete: jest.fn().mockReturnValue({
+            where: jest.fn().mockResolvedValue(undefined),
+          }),
+          insert: jest.fn().mockReturnValue({
+            values: jest.fn().mockResolvedValue(undefined),
+          }),
+        };
+
+        return callback(mockTx);
       });
 
-      // Act & Assert
-      await expect(
-        service.update(slug, updatePostDto, mockAuthorId),
-      ).rejects.toThrow(
-        new ConflictException(
-          `슬러그 'another-existing-post'가 이미 존재합니다.`,
-        ),
-      );
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+
+      // Act
+      const result = await service.update(slug, updatePostDto, mockAuthorId);
+
+      // Assert
+      expect(result.slug).toBe('another-existing-post-1');
+      expect(capturedUpdateData.slug).toBe('another-existing-post-1');
     });
 
     it('발행 상태 변경 시 publishedAt이 업데이트되어야 함', async () => {
@@ -1269,65 +1365,64 @@ describe('PostsService', () => {
   });
 
   describe('Private Methods', () => {
-    describe('generateSlug', () => {
-      it('제목에서 올바른 슬러그를 생성해야 함', () => {
-        // Arrange & Act & Assert
-        const testCases = [
-          { input: 'Hello World', expected: 'hello-world' },
-          { input: '  Trim Spaces  ', expected: 'trim-spaces' },
-          { input: 'Multiple   Spaces', expected: 'multiple-spaces' },
-          { input: 'Special!@#$%Characters', expected: 'specialcharacters' },
-          { input: '한글 제목 테스트', expected: '' }, // 한글은 제거됨
-          { input: 'Mix 한글 and English', expected: 'mix-and-english' },
-          { input: '123 Numbers 456', expected: '123-numbers-456' },
-          { input: '---Leading-Trailing---', expected: 'leading-trailing' },
-        ];
-
-        testCases.forEach(({ input, expected }) => {
-          // Private 메서드 테스트를 위한 우회 방법
-          const slug = (service as any).generateSlug(input);
-          expect(slug).toBe(expected);
-        });
-      });
-    });
-
-    describe('validateSlugUniqueness', () => {
-      it('슬러그가 유니크하면 통과해야 함', async () => {
+    describe('createSlugFromTitle', () => {
+      it('한글 제목도 slug로 유지해야 함', async () => {
         // Arrange
-        const slug = 'unique-slug';
-
         const mockSelectBuilder = {
           from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
+          where: jest.fn().mockResolvedValue([]),
         };
 
         mockDb.select.mockReturnValue(mockSelectBuilder);
 
-        // Act & Assert
-        await expect(
-          (service as any).validateSlugUniqueness(slug),
-        ).resolves.not.toThrow();
-      });
-
-      it('슬러그가 중복되면 ConflictException을 던져야 함', async () => {
-        // Arrange
-        const slug = 'duplicate-slug';
-
-        const mockSelectBuilder = {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([{ id: '1' }]),
-        };
-
-        mockDb.select.mockReturnValue(mockSelectBuilder);
-
-        // Act & Assert
-        await expect(
-          (service as any).validateSlugUniqueness(slug),
-        ).rejects.toThrow(
-          new ConflictException(`슬러그 '${slug}'가 이미 존재합니다.`),
+        // Act
+        const slug = await (service as any).createSlugFromTitle(
+          '한글 제목 테스트',
         );
+
+        // Assert
+        expect(slug).toBe('한글-제목-테스트');
+      });
+
+      it('중복된 슬러그가 있을 때 숫자 접미사를 추가해야 함', async () => {
+        // Arrange
+        const mockSelectBuilder = {
+          from: jest.fn().mockReturnThis(),
+          where: jest
+            .fn()
+            .mockResolvedValue([
+              { slug: 'duplicate-slug' },
+              { slug: 'duplicate-slug-1' },
+            ]),
+        };
+
+        mockDb.select.mockReturnValue(mockSelectBuilder);
+
+        // Act
+        const slug = await (service as any).createSlugFromTitle(
+          'Duplicate Slug',
+        );
+
+        // Assert
+        expect(slug).toBe('duplicate-slug-2');
+      });
+
+      it('유효한 문자가 없으면 기본 slug를 생성해야 함', async () => {
+        // Arrange
+        const mockSelectBuilder = {
+          from: jest.fn().mockReturnThis(),
+          where: jest
+            .fn()
+            .mockResolvedValue([{ slug: 'post' }, { slug: 'post-1' }]),
+        };
+
+        mockDb.select.mockReturnValue(mockSelectBuilder);
+
+        // Act
+        const slug = await (service as any).createSlugFromTitle('!!!!');
+
+        // Assert
+        expect(slug).toBe('post-2');
       });
     });
 
