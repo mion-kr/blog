@@ -60,6 +60,13 @@ describe('PostsController', () => {
     ],
   };
 
+  const mockUser = {
+    id: 'user-1',
+    email: 'admin@example.com',
+    name: '관리자',
+    role: 'ADMIN' as const,
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PostsController],
@@ -229,11 +236,11 @@ describe('PostsController', () => {
       mockPostsService.create.mockResolvedValue(createdPost);
 
       // Act
-      const result = await controller.create(createPostDto);
+      const result = await controller.create(mockUser, createPostDto);
 
       // Assert
       expect(result).toEqual(createdPost);
-      expect(service.create).toHaveBeenCalledWith(createPostDto);
+      expect(service.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
       expect(service.create).toHaveBeenCalledTimes(1);
     });
 
@@ -249,11 +256,11 @@ describe('PostsController', () => {
       mockPostsService.create.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.create(createPostDto);
+      const result = await controller.create(mockUser, createPostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.create).toHaveBeenCalledWith(createPostDto);
+      expect(service.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
     });
 
     it('MDX 콘텐츠를 포함한 포스트를 생성해야 함', async () => {
@@ -279,11 +286,11 @@ console.log(hello);
       mockPostsService.create.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.create(createPostDto);
+      const result = await controller.create(mockUser, createPostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.create).toHaveBeenCalledWith(createPostDto);
+      expect(service.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
     });
 
     it('서비스에서 에러가 발생하면 전파해야 함', async () => {
@@ -299,8 +306,10 @@ console.log(hello);
       mockPostsService.create.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.create(createPostDto)).rejects.toThrow(error);
-      expect(service.create).toHaveBeenCalledWith(createPostDto);
+      await expect(controller.create(mockUser, createPostDto)).rejects.toThrow(
+        error,
+      );
+      expect(service.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
     });
   });
 
@@ -317,11 +326,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(updatedPost);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(updatedPost);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
       expect(service.update).toHaveBeenCalledTimes(1);
     });
 
@@ -334,11 +347,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
     });
 
     it('발행 상태만 변경할 수 있어야 함', async () => {
@@ -350,11 +367,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
     });
 
     it('태그 목록을 업데이트할 수 있어야 함', async () => {
@@ -366,11 +387,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
     });
 
     it('카테고리를 변경할 수 있어야 함', async () => {
@@ -382,11 +407,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
     });
 
     it('모든 필드를 한 번에 업데이트할 수 있어야 함', async () => {
@@ -404,11 +433,15 @@ console.log(hello);
       mockPostsService.update.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.update(slug, updatePostDto);
+      const result = await controller.update(slug, mockUser, updatePostDto);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
+      );
     });
 
     it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
@@ -423,10 +456,14 @@ console.log(hello);
       mockPostsService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.update(slug, updatePostDto)).rejects.toThrow(
-        error,
+      await expect(
+        controller.update(slug, mockUser, updatePostDto),
+      ).rejects.toThrow(error);
+      expect(service.update).toHaveBeenCalledWith(
+        slug,
+        updatePostDto,
+        mockUser.id,
       );
-      expect(service.update).toHaveBeenCalledWith(slug, updatePostDto);
     });
   });
 
@@ -437,10 +474,10 @@ console.log(hello);
       mockPostsService.remove.mockResolvedValue(undefined);
 
       // Act
-      await controller.remove(slug);
+      await controller.remove(slug, mockUser);
 
       // Assert
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      expect(service.remove).toHaveBeenCalledWith(slug, mockUser.id);
       expect(service.remove).toHaveBeenCalledTimes(1);
     });
 
@@ -458,10 +495,10 @@ console.log(hello);
         mockPostsService.remove.mockResolvedValue(undefined);
 
         // Act
-        await controller.remove(slug);
+        await controller.remove(slug, mockUser);
 
         // Assert
-        expect(service.remove).toHaveBeenCalledWith(slug);
+        expect(service.remove).toHaveBeenCalledWith(slug, mockUser.id);
         expect(service.remove).toHaveBeenCalledTimes(1);
       }
     });
@@ -475,8 +512,8 @@ console.log(hello);
       mockPostsService.remove.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.remove(slug)).rejects.toThrow(error);
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
+      expect(service.remove).toHaveBeenCalledWith(slug, mockUser.id);
     });
 
     it('서비스에서 에러가 발생하면 전파해야 함', async () => {
@@ -486,8 +523,8 @@ console.log(hello);
       mockPostsService.remove.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.remove(slug)).rejects.toThrow(error);
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
+      expect(service.remove).toHaveBeenCalledWith(slug, mockUser.id);
     });
   });
 
@@ -552,7 +589,9 @@ console.log(hello);
       mockPostsService.create.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.create(createPostDto)).rejects.toThrow(error);
+      await expect(controller.create(mockUser, createPostDto)).rejects.toThrow(
+        error,
+      );
     });
 
     it('권한 에러를 처리해야 함', async () => {
@@ -562,7 +601,7 @@ console.log(hello);
       mockPostsService.remove.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.remove(slug)).rejects.toThrow(error);
+      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
     });
   });
 });

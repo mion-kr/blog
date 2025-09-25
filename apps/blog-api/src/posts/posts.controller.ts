@@ -36,6 +36,8 @@ import {
   ApiAdminDelete,
   ResponseMessage,
   PaginatedResponse,
+  User,
+  CurrentUser,
 } from '../common/decorators';
 
 /**
@@ -92,12 +94,15 @@ export class PostsController {
 
   /**
    * 포스트 생성 (ADMIN 권한 + CSRF 보호)
-   */
+  */
   @Post()
   @UseGuards(AdminGuard, CsrfGuard)
   @ApiAdminCreate(PostResponseDto, '포스트 생성')
-  async create(@Body() createPostDto: CreatePostDto): Promise<PostResponseDto> {
-    return this.postsService.create(createPostDto);
+  async create(
+    @User() user: CurrentUser,
+    @Body() createPostDto: CreatePostDto,
+  ): Promise<PostResponseDto> {
+    return this.postsService.create(createPostDto, user.id);
   }
 
   /**
@@ -108,9 +113,10 @@ export class PostsController {
   @ApiAdminUpdate(PostResponseDto, '포스트 수정', '포스트')
   async update(
     @Param('slug') slug: string,
+    @User() user: CurrentUser,
     @Body() updatePostDto: UpdatePostDto,
   ): Promise<PostResponseDto> {
-    return this.postsService.update(slug, updatePostDto);
+    return this.postsService.update(slug, updatePostDto, user.id);
   }
 
   /**
@@ -120,7 +126,10 @@ export class PostsController {
   @UseGuards(AdminGuard, CsrfGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAdminDelete('포스트 삭제', '포스트')
-  async remove(@Param('slug') slug: string): Promise<void> {
-    return this.postsService.remove(slug);
+  async remove(
+    @Param('slug') slug: string,
+    @User() user: CurrentUser,
+  ): Promise<void> {
+    return this.postsService.remove(slug, user.id);
   }
 }

@@ -493,7 +493,10 @@ export class PostsService {
   /**
    * 새 포스트 생성
    */
-  async create(createPostDto: CreatePostDto): Promise<PostResponseDto> {
+  async create(
+    createPostDto: CreatePostDto,
+    authorId: string,
+  ): Promise<PostResponseDto> {
     const {
       title,
       content,
@@ -529,7 +532,7 @@ export class PostsService {
           coverImage: coverImage ?? null,
           published,
           categoryId,
-          authorId: 'temp-user-id', // TODO: 실제 인증된 사용자 ID로 변경
+          authorId,
           publishedAt: published ? new Date() : null,
         })
         .returning();
@@ -557,6 +560,7 @@ export class PostsService {
   async update(
     slug: string,
     updatePostDto: UpdatePostDto,
+    _actorId: string,
   ): Promise<PostResponseDto> {
     // 기존 포스트 확인
     const existingPost = await this.findPostBySlug(slug);
@@ -647,7 +651,7 @@ export class PostsService {
   /**
    * 포스트 삭제
    */
-  async remove(slug: string): Promise<void> {
+  async remove(slug: string, _actorId: string): Promise<void> {
     // 포스트 존재 확인
     const existingPost = await this.findPostBySlug(slug);
     if (!existingPost) {

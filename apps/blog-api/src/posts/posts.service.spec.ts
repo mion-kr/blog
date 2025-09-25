@@ -69,6 +69,7 @@ jest.mock('@repo/database', () => ({
 describe('PostsService', () => {
   let service: PostsService;
   let mockDb: any;
+  const mockAuthorId = 'user-1';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -584,7 +585,7 @@ describe('PostsService', () => {
         published: true,
         viewCount: 0,
         categoryId: 'cat-1',
-        authorId: 'temp-user-id',
+        authorId: mockAuthorId,
         createdAt: new Date(),
         updatedAt: new Date(),
         publishedAt: new Date(),
@@ -650,7 +651,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      const result = await service.create(createPostDto);
+      const result = await service.create(createPostDto, mockAuthorId);
 
       // Assert
       expect(result.id).toBe('new-post-id');
@@ -677,7 +678,9 @@ describe('PostsService', () => {
       mockDb.select.mockReturnValue(mockSlugCheckBuilder);
 
       // Act & Assert
-      await expect(service.create(createPostDto)).rejects.toThrow(
+      await expect(
+        service.create(createPostDto, mockAuthorId),
+      ).rejects.toThrow(
         new ConflictException(`슬러그 'existing-post'가 이미 존재합니다.`),
       );
     });
@@ -719,7 +722,9 @@ describe('PostsService', () => {
       });
 
       // Act & Assert
-      await expect(service.create(createPostDto)).rejects.toThrow(
+      await expect(
+        service.create(createPostDto, mockAuthorId),
+      ).rejects.toThrow(
         new BadRequestException(
           `카테고리 ID 'non-existent-cat'를 찾을 수 없습니다.`,
         ),
@@ -763,7 +768,9 @@ describe('PostsService', () => {
       });
 
       // Act & Assert
-      await expect(service.create(createPostDto)).rejects.toThrow(
+      await expect(
+        service.create(createPostDto, mockAuthorId),
+      ).rejects.toThrow(
         new BadRequestException(
           `다음 태그 ID를 찾을 수 없습니다: non-existent-tag`,
         ),
@@ -790,7 +797,7 @@ describe('PostsService', () => {
         published: false,
         viewCount: 0,
         categoryId: 'cat-1',
-        authorId: 'temp-user-id',
+        authorId: mockAuthorId,
         createdAt: new Date(),
         updatedAt: new Date(),
         publishedAt: null,
@@ -848,7 +855,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      const result = await service.create(createPostDto);
+      const result = await service.create(createPostDto, mockAuthorId);
 
       // Assert
       expect(result.id).toBe('new-post-id');
@@ -954,7 +961,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      const result = await service.update(slug, updatePostDto);
+      const result = await service.update(slug, updatePostDto, mockAuthorId);
 
       // Assert
       expect(result.title).toBe('Updated Title');
@@ -978,7 +985,9 @@ describe('PostsService', () => {
       mockDb.select.mockReturnValue(mockFindPostBuilder);
 
       // Act & Assert
-      await expect(service.update(slug, updatePostDto)).rejects.toThrow(
+      await expect(
+        service.update(slug, updatePostDto, mockAuthorId),
+      ).rejects.toThrow(
         new NotFoundException(
           `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
         ),
@@ -1022,7 +1031,9 @@ describe('PostsService', () => {
       });
 
       // Act & Assert
-      await expect(service.update(slug, updatePostDto)).rejects.toThrow(
+      await expect(
+        service.update(slug, updatePostDto, mockAuthorId),
+      ).rejects.toThrow(
         new ConflictException(
           `슬러그 'another-existing-post'가 이미 존재합니다.`,
         ),
@@ -1104,7 +1115,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      await service.update(slug, updatePostDto);
+      await service.update(slug, updatePostDto, mockAuthorId);
 
       // Assert
       expect(capturedUpdateData.published).toBe(true);
@@ -1182,7 +1193,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      await service.update(slug, updatePostDto);
+      await service.update(slug, updatePostDto, mockAuthorId);
 
       // Assert
       expect(deleteWasCalled).toBe(true); // 기존 태그 관계 삭제
@@ -1229,7 +1240,7 @@ describe('PostsService', () => {
       });
 
       // Act
-      await service.remove(slug);
+      await service.remove(slug, mockAuthorId);
 
       // Assert
       expect(postTagsDeleted).toBe(true);
@@ -1249,7 +1260,7 @@ describe('PostsService', () => {
       mockDb.select.mockReturnValue(mockFindPostBuilder);
 
       // Act & Assert
-      await expect(service.remove(slug)).rejects.toThrow(
+      await expect(service.remove(slug, mockAuthorId)).rejects.toThrow(
         new NotFoundException(
           `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
         ),
