@@ -1,35 +1,32 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import {
-  db,
-  sql,
-  posts,
+  and,
+  asc,
   categories,
-  tags,
+  count,
+  db,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  posts,
   postTags,
+  sql,
+  tags,
   users,
 } from '@repo/database';
-import {
-  eq,
-  and,
-  or,
-  like,
-  desc,
-  asc,
-  ilike,
-  count,
-  inArray,
-} from '@repo/database';
 
+import { PaginatedData, PaginationMeta } from '@repo/shared';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostResponseDto } from './dto/post-response.dto';
-import { PaginatedData, PaginationMeta } from '@repo/shared';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 /**
  * 포스트 관련 비즈니스 로직을 처리하는 서비스
@@ -53,14 +50,46 @@ export class PostsService {
       sort = 'createdAt',
       order = 'desc',
       published,
-      categoryId,
-      tagId,
+      categorySlug,
+      tagSlug,
       search,
       authorId,
     } = query;
 
     // 페이징 계산
     const offset = (page - 1) * limit;
+
+    // slug를 사용한 ID 조회
+    let categoryId: string | undefined;
+    let tagId: string | undefined;
+
+    if (categorySlug) {
+      const categoryResult = await db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.slug, categorySlug))
+        .limit(1);
+      categoryId = categoryResult[0]?.id;
+      // 카테고리 슬러그가 존재하지 않으면 빈 결과 반환
+      if (!categoryId) {
+        const meta = PaginationMeta.create(0, page, limit);
+        return { items: [], meta };
+      }
+    }
+
+    if (tagSlug) {
+      const tagResult = await db
+        .select({ id: tags.id })
+        .from(tags)
+        .where(eq(tags.slug, tagSlug))
+        .limit(1);
+      tagId = tagResult[0]?.id;
+      // 태그 슬러그가 존재하지 않으면 빈 결과 반환
+      if (!tagId) {
+        const meta = PaginationMeta.create(0, page, limit);
+        return { items: [], meta };
+      }
+    }
 
     // 동적 WHERE 조건 구성
     const conditions: any[] = [];
@@ -332,6 +361,7 @@ export class PostsService {
         name: post.categoryName!,
         slug: post.categorySlug!,
         description: undefined,
+        postCount: 0, // 기본값 설정
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -440,6 +470,7 @@ export class PostsService {
         name: post.categoryName!,
         slug: post.categorySlug!,
         description: undefined,
+        postCount: 0, // 기본값 설정
         createdAt: new Date(),
         updatedAt: new Date(),
       },

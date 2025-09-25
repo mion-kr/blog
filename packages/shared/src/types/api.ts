@@ -1,6 +1,6 @@
 // API 응답 타입 정의
 
-import { PaginationMeta, ApiPaginationMeta } from "../utils/pagination";
+import { ApiPaginationMeta, PaginationMeta } from "../utils/pagination";
 
 /**
  * 모든 API 응답의 기본 구조
@@ -106,8 +106,8 @@ export interface PaginationQuery {
  */
 export interface PostsQuery extends PaginationQuery {
   published?: boolean;
-  categoryId?: string;
-  tagId?: string;
+  categorySlug?: string;
+  tagSlug?: string;
   search?: string; // 제목이나 내용에서 검색
   authorId?: string;
 }

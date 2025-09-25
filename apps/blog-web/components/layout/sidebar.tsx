@@ -14,8 +14,8 @@ interface BlogSidebarProps {
 
 export function BlogSidebar({ className }: BlogSidebarProps) {
   const searchParams = useSearchParams();
-  const currentCategoryId = searchParams.get('category');
-  const currentTagId = searchParams.get('tag');
+  const currentCategorySlug = searchParams.get('categorySlug') ?? searchParams.get('category');
+  const currentTagSlug = searchParams.get('tagSlug') ?? searchParams.get('tag');
 
   // State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -53,6 +53,35 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
     loadData();
   }, [loadData]);
 
+  const buildPostsHref = useCallback((updates: { categorySlug?: string | null; tagSlug?: string | null }) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'categorySlug')) {
+      params.delete('category');
+      const nextCategory = updates.categorySlug;
+      if (nextCategory) {
+        params.set('categorySlug', nextCategory);
+      } else {
+        params.delete('categorySlug');
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'tagSlug')) {
+      params.delete('tag');
+      const nextTag = updates.tagSlug;
+      if (nextTag) {
+        params.set('tagSlug', nextTag);
+      } else {
+        params.delete('tagSlug');
+      }
+    }
+
+    params.set('page', '1');
+
+    const query = params.toString();
+    return query ? `/posts?${query}` : '/posts';
+  }, [searchParams]);
+
   return (
     <div className={`space-y-6 ${className ?? ''}`}>
       {/* 카테고리 섹션 */}
@@ -74,9 +103,9 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
           <div className="space-y-2">
             {/* 전체 카테고리 링크 */}
             <Link
-              href="/posts"
+              href={buildPostsHref({ categorySlug: null })}
               className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                !currentCategoryId
+                !currentCategorySlug
                   ? 'bg-[var(--color-primary)] text-white'
                   : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-secondary)]'
               }`}
@@ -92,9 +121,9 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={`/posts?category=${category.id}`}
+                href={buildPostsHref({ categorySlug: category.slug })}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
-                  currentCategoryId === category.id
+                  currentCategorySlug === category.slug
                     ? 'bg-[var(--color-primary)] text-white'
                     : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-secondary)]'
                 }`}
@@ -107,7 +136,7 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
                 />
                 <span className="flex-1">{category.name}</span>
                 <span className={`text-xs rounded-full px-2 py-0.5 ${
-                  currentCategoryId === category.id
+                  currentCategorySlug === category.slug
                     ? 'bg-white/20 text-white'
                     : 'bg-[var(--color-secondary)] text-[var(--color-text-secondary)]'
                 }`}>
@@ -143,11 +172,11 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
             {tags.map((tag) => (
               <Link
                 key={tag.id}
-                href={`/posts?tag=${tag.id}`}
+                href={buildPostsHref({ tagSlug: currentTagSlug === tag.slug ? null : tag.slug })}
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  currentTagId === tag.id
+                  currentTagSlug === tag.slug
                     ? 'bg-[var(--color-primary)] text-white'
-                    : 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-primary)] hover:text-white'
+                    : 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-secondary-foreground)]'
                 }`}
               >
                 #{tag.name}
