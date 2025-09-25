@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "doppler -- next start",
     "lint": "next lint --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "doppler-setup": "doppler setup --no-interactive"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",

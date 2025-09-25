@@ -26,12 +26,7 @@
         "tsconfig.build.json",
         "tsup.config.ts"
       ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**",
-        "!dist/cache/**"
-      ],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "!dist/cache/**"],
       "outputLogs": "new-only",
       "env": ["NODE_ENV"]
     },
@@ -116,30 +111,16 @@
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
-      "inputs": [
-        "src/**",
-        "test/**",
-        "jest.config.*",
-        "vitest.config.*"
-      ]
+      "inputs": ["src/**", "test/**", "jest.config.*", "vitest.config.*"]
     },
     "test:e2e": {
       "dependsOn": ["build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "test/**",
-        "e2e/**",
-        "playwright.config.*"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "test/**", "e2e/**", "playwright.config.*"],
       "outputs": ["test-results/**", "playwright-report/**"],
       "outputLogs": "new-only"
     },
     "db:generate": {
-      "inputs": [
-        "src/schema/**",
-        "drizzle.config.ts",
-        "drizzle/**/*.sql"
-      ],
+      "inputs": ["src/schema/**", "drizzle.config.ts", "drizzle/**/*.sql"],
       "outputs": ["drizzle/**"],
       "outputLogs": "new-only"
     },
@@ -152,30 +133,27 @@
     "db:push": {
       "dependsOn": ["^build"],
       "cache": false,
-      "inputs": [
-        "src/schema/**",
-        "drizzle.config.ts"
-      ],
+      "inputs": ["src/schema/**", "drizzle.config.ts"],
       "outputLogs": "new-only"
     },
     "db:studio": {
       "cache": false,
       "persistent": true,
-      "inputs": [
-        "src/schema/**",
-        "drizzle.config.ts"
-      ]
+      "inputs": ["src/schema/**", "drizzle.config.ts"]
     },
     "db:seed": {
       "dependsOn": ["^build", "db:push"],
       "cache": false,
-      "inputs": [
-        "src/seed.ts",
-        "src/schema/**"
-      ],
+      "inputs": ["src/seed.ts", "src/schema/**"],
       "outputLogs": "new-only"
     },
     "clean": {
+      "cache": false,
+      "inputs": [],
+      "outputs": []
+    },
+    "doppler-setup": {
+      "dependsOn": ["^build"],
       "cache": false,
       "inputs": [],
       "outputs": []
