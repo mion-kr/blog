@@ -27,7 +27,7 @@ export function CategoryList({ categories, className }: CategoryListProps) {
         {categories.map((category) => (
           <li key={category.id} className="blog-sidebar-category-item">
             <Link
-              href={`/posts?category=${category.slug}`}
+              href={`/posts?categorySlug=${category.slug}`}
               className="blog-sidebar-category-link"
             >
               <div className="flex items-center gap-2 py-2 px-3 rounded-md transition-colors duration-200 hover:bg-[var(--color-secondary)] group">

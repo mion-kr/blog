@@ -1,16 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PostsQuery } from '@repo/shared';
+import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
+  IsIn,
   IsOptional,
   IsString,
-  IsBoolean,
   IsUUID,
-  IsNumberString,
-  IsIn,
-  Min,
   Max,
+  Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { PostsQuery } from '@repo/shared';
 
 export class PostQueryDto implements PostsQuery {
   @ApiPropertyOptional({
@@ -45,7 +44,8 @@ export class PostQueryDto implements PostsQuery {
   @IsOptional()
   @IsString()
   @IsIn(['createdAt', 'updatedAt', 'publishedAt', 'title', 'viewCount'], {
-    message: '정렬 기준은 createdAt, updatedAt, publishedAt, title, viewCount 중 하나여야 합니다.',
+    message:
+      '정렬 기준은 createdAt, updatedAt, publishedAt, title, viewCount 중 하나여야 합니다.',
   })
   sort?: string;
 
@@ -74,24 +74,20 @@ export class PostQueryDto implements PostsQuery {
   published?: boolean;
 
   @ApiPropertyOptional({
-    description: '카테고리 ID 필터 (UUID)',
-    example: '01234567-89ab-cdef-0123-456789abcdef',
-    format: 'uuid',
+    description: '카테고리 슬러그 필터',
+    example: 'development',
   })
   @IsOptional()
   @IsString()
-  @IsUUID('7', { message: '올바른 카테고리 UUIDv7 형식이어야 합니다.' })
-  categoryId?: string;
+  categorySlug?: string;
 
   @ApiPropertyOptional({
-    description: '태그 ID 필터 (UUID)',
-    example: '01234567-89ab-cdef-0123-456789abcdef',
-    format: 'uuid',
+    description: '태그 슬러그 필터',
+    example: 'nextjs',
   })
   @IsOptional()
   @IsString()
-  @IsUUID('7', { message: '올바른 태그 UUIDv7 형식이어야 합니다.' })
-  tagId?: string;
+  tagSlug?: string;
 
   @ApiPropertyOptional({
     description: '제목 또는 내용에서 검색할 키워드',

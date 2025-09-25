@@ -1,16 +1,36 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { db, sql, posts, categories, tags, postTags, users } from '@repo/database';
-import { eq, and, or, like, desc, asc, ilike, count, inArray } from '@repo/database';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  and,
+  asc,
+  categories,
+  count,
+  db,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  posts,
+  postTags,
+  sql,
+  tags,
+  users,
+} from '@repo/database';
 
+import { PaginatedData, PaginationMeta } from '@repo/shared';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostResponseDto } from './dto/post-response.dto';
-import { PaginatedData, PaginationMeta } from '@repo/shared';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 /**
  * 포스트 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * 주요 기능:
  * - 포스트 CRUD 작업
  * - 조회수 증가
@@ -24,20 +44,52 @@ export class PostsService {
    * 포스트 목록 조회 (페이징, 필터링, 정렬 지원)
    */
   async findAll(query: PostQueryDto): Promise<PaginatedData<PostResponseDto>> {
-    const { 
-      page = 1, 
-      limit = 10, 
-      sort = 'createdAt', 
+    const {
+      page = 1,
+      limit = 10,
+      sort = 'createdAt',
       order = 'desc',
       published,
-      categoryId,
-      tagId,
+      categorySlug,
+      tagSlug,
       search,
-      authorId 
+      authorId,
     } = query;
 
     // 페이징 계산
     const offset = (page - 1) * limit;
+
+    // slug를 사용한 ID 조회
+    let categoryId: string | undefined;
+    let tagId: string | undefined;
+
+    if (categorySlug) {
+      const categoryResult = await db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.slug, categorySlug))
+        .limit(1);
+      categoryId = categoryResult[0]?.id;
+      // 카테고리 슬러그가 존재하지 않으면 빈 결과 반환
+      if (!categoryId) {
+        const meta = PaginationMeta.create(0, page, limit);
+        return { items: [], meta };
+      }
+    }
+
+    if (tagSlug) {
+      const tagResult = await db
+        .select({ id: tags.id })
+        .from(tags)
+        .where(eq(tags.slug, tagSlug))
+        .limit(1);
+      tagId = tagResult[0]?.id;
+      // 태그 슬러그가 존재하지 않으면 빈 결과 반환
+      if (!tagId) {
+        const meta = PaginationMeta.create(0, page, limit);
+        return { items: [], meta };
+      }
+    }
 
     // 동적 WHERE 조건 구성
     const conditions: any[] = [];
@@ -62,7 +114,7 @@ export class PostsService {
       const searchConditions = or(
         ilike(posts.title, `%${search.trim()}%`),
         ilike(posts.content, `%${search.trim()}%`),
-        ilike(posts.excerpt, `%${search.trim()}%`)
+        ilike(posts.excerpt, `%${search.trim()}%`),
       );
       if (searchConditions) {
         conditions.push(searchConditions);
@@ -72,7 +124,7 @@ export class PostsService {
     // 5. 정렬 조건 설정
     const orderDirection = order === 'asc' ? asc : desc;
     let orderBy;
-    
+
     switch (sort) {
       case 'title':
         orderBy = orderDirection(posts.title);
@@ -97,7 +149,7 @@ export class PostsService {
 
     // 7. 쿼리 구성 - tagId가 있는지 없는지에 따라 다른 쿼리 구성
     let postsResult;
-    
+
     if (tagId && conditions.length > 0) {
       // tagId가 있고 조건이 있는 경우 - innerJoin 포함
       postsResult = await db
@@ -250,29 +302,30 @@ export class PostsService {
         .from(posts)
         .where(and(...conditions));
     } else {
-      totalCountResult = await db
-        .select({ count: count() })
-        .from(posts);
+      totalCountResult = await db.select({ count: count() }).from(posts);
     }
 
     const total = Number(totalCountResult[0]?.count ?? 0);
 
     // 9. 각 포스트의 태그 정보 조회
-    const postIds = postsResult.map(post => post.id);
-    const allPostTags = postIds.length > 0 ? await db
-      .select({
-        postId: postTags.postId,
-        tagId: tags.id,
-        tagName: tags.name,
-        tagSlug: tags.slug,
-      })
-      .from(postTags)
-      .leftJoin(tags, eq(postTags.tagId, tags.id))
-      .where(inArray(postTags.postId, postIds)) : [];
+    const postIds = postsResult.map((post) => post.id);
+    const allPostTags =
+      postIds.length > 0
+        ? await db
+            .select({
+              postId: postTags.postId,
+              tagId: tags.id,
+              tagName: tags.name,
+              tagSlug: tags.slug,
+            })
+            .from(postTags)
+            .leftJoin(tags, eq(postTags.tagId, tags.id))
+            .where(inArray(postTags.postId, postIds))
+        : [];
 
     // 10. 포스트별 태그 그룹핑
     const postTagsMap = new Map<string, any[]>();
-    allPostTags.forEach(tag => {
+    allPostTags.forEach((tag) => {
       if (!postTagsMap.has(tag.postId)) {
         postTagsMap.set(tag.postId, []);
       }
@@ -289,7 +342,7 @@ export class PostsService {
     });
 
     // 11. 최종 응답 데이터 구성
-    const items = postsResult.map(post => ({
+    const items = postsResult.map((post) => ({
       id: post.id,
       title: post.title,
       slug: post.slug,
@@ -308,6 +361,7 @@ export class PostsService {
         name: post.categoryName!,
         slug: post.categorySlug!,
         description: undefined,
+        postCount: 0, // 기본값 설정
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -364,7 +418,9 @@ export class PostsService {
       .limit(1);
 
     if (postResult.length === 0) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
     }
 
     const post = postResult[0];
@@ -384,9 +440,9 @@ export class PostsService {
     try {
       await db
         .update(posts)
-        .set({ 
+        .set({
           viewCount: sql`${posts.viewCount} + 1`,
-          updatedAt: new Date() 
+          updatedAt: new Date(),
         })
         .where(eq(posts.id, post.id));
     } catch (error) {
@@ -414,6 +470,7 @@ export class PostsService {
         name: post.categoryName!,
         slug: post.categorySlug!,
         description: undefined,
+        postCount: 0, // 기본값 설정
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -422,7 +479,7 @@ export class PostsService {
         name: post.authorName!,
         image: post.authorImage ?? undefined,
       },
-      tags: postTagsWithTags.map(tag => ({
+      tags: postTagsWithTags.map((tag) => ({
         id: tag.tagId!,
         name: tag.tagName!,
         slug: tag.tagSlug!,
@@ -437,7 +494,15 @@ export class PostsService {
    * 새 포스트 생성
    */
   async create(createPostDto: CreatePostDto): Promise<PostResponseDto> {
-    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = createPostDto;
+    const {
+      title,
+      content,
+      excerpt,
+      coverImage,
+      published,
+      categoryId,
+      tagIds,
+    } = createPostDto;
 
     // 제목에서 슬러그 생성
     const slug = this.generateSlug(title);
@@ -471,7 +536,7 @@ export class PostsService {
 
       // 태그 관계 설정
       if (tagIds.length > 0) {
-        const tagRelations = tagIds.map(tagId => ({
+        const tagRelations = tagIds.map((tagId) => ({
           postId: newPost.id,
           tagId,
         }));
@@ -489,14 +554,27 @@ export class PostsService {
   /**
    * 포스트 수정
    */
-  async update(slug: string, updatePostDto: UpdatePostDto): Promise<PostResponseDto> {
+  async update(
+    slug: string,
+    updatePostDto: UpdatePostDto,
+  ): Promise<PostResponseDto> {
     // 기존 포스트 확인
     const existingPost = await this.findPostBySlug(slug);
     if (!existingPost) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
     }
 
-    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = updatePostDto;
+    const {
+      title,
+      content,
+      excerpt,
+      coverImage,
+      published,
+      categoryId,
+      tagIds,
+    } = updatePostDto;
 
     // 새 슬러그 생성 및 중복 확인 (제목이 변경된 경우)
     let newSlug = slug;
@@ -552,7 +630,7 @@ export class PostsService {
 
         // 새 태그 관계 생성
         if (tagIds.length > 0) {
-          const tagRelations = tagIds.map(tagId => ({
+          const tagRelations = tagIds.map((tagId) => ({
             postId: existingPost.id,
             tagId,
           }));
@@ -573,7 +651,9 @@ export class PostsService {
     // 포스트 존재 확인
     const existingPost = await this.findPostBySlug(slug);
     if (!existingPost) {
-      throw new NotFoundException(`슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+      );
     }
 
     // 트랜잭션으로 포스트 및 관련 데이터 삭제
@@ -603,14 +683,16 @@ export class PostsService {
    * 제목에서 URL 친화적 슬러그 생성
    */
   private generateSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .trim()
-      // 한글 및 특수문자를 하이픈으로 변환
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+    return (
+      title
+        .toLowerCase()
+        .trim()
+        // 한글 및 특수문자를 하이픈으로 변환
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    );
   }
 
   /**
@@ -639,7 +721,9 @@ export class PostsService {
       .limit(1);
 
     if (category.length === 0) {
-      throw new BadRequestException(`카테고리 ID '${categoryId}'를 찾을 수 없습니다.`);
+      throw new BadRequestException(
+        `카테고리 ID '${categoryId}'를 찾을 수 없습니다.`,
+      );
     }
   }
 
@@ -655,9 +739,11 @@ export class PostsService {
       .where(sql`${tags.id} = ANY(${tagIds})`);
 
     if (existingTags.length !== tagIds.length) {
-      const existingTagIds = existingTags.map(tag => tag.id);
-      const missingTags = tagIds.filter(id => !existingTagIds.includes(id));
-      throw new BadRequestException(`다음 태그 ID를 찾을 수 없습니다: ${missingTags.join(', ')}`);
+      const existingTagIds = existingTags.map((tag) => tag.id);
+      const missingTags = tagIds.filter((id) => !existingTagIds.includes(id));
+      throw new BadRequestException(
+        `다음 태그 ID를 찾을 수 없습니다: ${missingTags.join(', ')}`,
+      );
     }
   }
 }

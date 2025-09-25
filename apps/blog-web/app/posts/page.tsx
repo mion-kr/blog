@@ -22,7 +22,9 @@ interface PostsPageProps {
     page?: string;
     limit?: string;
     search?: string;
+    categorySlug?: string;
     category?: string;
+    tagSlug?: string;
     tag?: string;
     sort?: string;
     order?: 'asc' | 'desc';

@@ -31,7 +31,9 @@ interface PostsContentProps {
     page?: string;
     limit?: string;
     search?: string;
+    categorySlug?: string;
     category?: string;
+    tagSlug?: string;
     tag?: string;
     sort?: string;
     order?: 'asc' | 'desc';
@@ -64,8 +66,8 @@ export function PostsContent({ searchParams }: PostsContentProps) {
     page: parseInt(searchParams.page ?? '1', 10),
     limit: parseInt(searchParams.limit ?? '12', 10),
     search: searchParams.search || undefined,
-    categoryId: searchParams.category || undefined,
-    tagId: searchParams.tag || undefined,
+    categorySlug: searchParams.categorySlug || searchParams.category || undefined,
+    tagSlug: searchParams.tagSlug || searchParams.tag || undefined,
     sort: searchParams.sort || 'publishedAt',
     order: searchParams.order || 'desc',
     published: true, // 발행된 포스트만 보여줌
@@ -82,6 +84,14 @@ export function PostsContent({ searchParams }: PostsContentProps) {
         params.delete(key);
       }
     });
+
+    // 이전 파라미터 키(`category`, `tag`)가 남아있다면 제거해 일관성 유지
+    if (Object.prototype.hasOwnProperty.call(newParams, 'categorySlug')) {
+      params.delete('category');
+    }
+    if (Object.prototype.hasOwnProperty.call(newParams, 'tagSlug')) {
+      params.delete('tag');
+    }
 
     // 페이지가 변경되지 않았다면 1페이지로 리셋
     if (!newParams.page) {
@@ -150,12 +160,12 @@ export function PostsContent({ searchParams }: PostsContentProps) {
     updateURL({ search, page: 1 });
   }, [updateURL]);
 
-  const handleCategoryChange = useCallback((categoryId: string) => {
-    updateURL({ categoryId: categoryId || undefined, page: 1 });
+  const handleCategoryChange = useCallback((categorySlug: string) => {
+    updateURL({ categorySlug: categorySlug || undefined, page: 1 });
   }, [updateURL]);
 
-  const handleTagChange = useCallback((tagId: string) => {
-    updateURL({ tagId: tagId || undefined, page: 1 });
+  const handleTagChange = useCallback((tagSlug: string) => {
+    updateURL({ tagSlug: tagSlug || undefined, page: 1 });
   }, [updateURL]);
 
   const handleSortChange = useCallback((sort: string, order: 'asc' | 'desc') => {
@@ -173,8 +183,8 @@ export function PostsContent({ searchParams }: PostsContentProps) {
   // 활성 필터 확인
   const hasActiveFilters = !!(
     currentQuery.search ||
-    currentQuery.categoryId ||
-    currentQuery.tagId
+    currentQuery.categorySlug ||
+    currentQuery.tagSlug
   );
 
   if (error) {
@@ -205,8 +215,8 @@ export function PostsContent({ searchParams }: PostsContentProps) {
           categories={categories}
           tags={tags}
           currentSearch={currentQuery.search ?? ''}
-          currentCategoryId={currentQuery.categoryId ?? ''}
-          currentTagId={currentQuery.tagId ?? ''}
+          currentCategorySlug={currentQuery.categorySlug ?? ''}
+          currentTagSlug={currentQuery.tagSlug ?? ''}
           currentSort={currentQuery.sort ?? 'publishedAt'}
           currentOrder={currentQuery.order ?? 'desc'}
           onSearch={handleSearch}

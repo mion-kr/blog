@@ -23,14 +23,14 @@ interface PostsFilterProps {
   categories: Category[];
   tags: Tag[];
   currentSearch: string;
-  currentCategoryId: string;
-  currentTagId: string;
+  currentCategorySlug: string;
+  currentTagSlug: string;
   currentSort: string;
   currentOrder: 'asc' | 'desc';
   hasActiveFilters: boolean;
   onSearch: (search: string) => void;
-  onCategoryChange: (categoryId: string) => void;
-  onTagChange: (tagId: string) => void;
+  onCategoryChange: (categorySlug: string) => void;
+  onTagChange: (tagSlug: string) => void;
   onSortChange: (sort: string, order: 'asc' | 'desc') => void;
   onClearFilters: () => void;
 }
@@ -51,8 +51,8 @@ export function PostsFilter({
   categories,
   tags,
   currentSearch,
-  currentCategoryId,
-  currentTagId,
+  currentCategorySlug,
+  currentTagSlug,
   currentSort,
   currentOrder,
   hasActiveFilters,
@@ -115,8 +115,8 @@ export function PostsFilter({
   }, []);
 
   // 현재 선택된 항목 정보
-  const selectedCategory = categories.find(cat => cat.id === currentCategoryId);
-  const selectedTag = tags.find(tag => tag.id === currentTagId);
+  const selectedCategory = categories.find(cat => cat.slug === currentCategorySlug);
+  const selectedTag = tags.find(tag => tag.slug === currentTagSlug);
   const selectedSort = SORT_OPTIONS.find(opt => opt.value === currentSort);
 
   return (
@@ -174,7 +174,7 @@ export function PostsFilter({
                 }}
                 className={cn(
                   "w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-secondary)] transition-colors",
-                  !currentCategoryId && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
+                  !currentCategorySlug && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
                 )}
               >
                 전체 카테고리
@@ -183,12 +183,12 @@ export function PostsFilter({
                 <button
                   key={category.id}
                   onClick={() => {
-                    onCategoryChange(category.id);
+                    onCategoryChange(category.slug);
                     setShowCategoryDropdown(false);
                   }}
                   className={cn(
                     "w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-secondary)] transition-colors",
-                    currentCategoryId === category.id && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
+                    currentCategorySlug === category.slug && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export function PostsFilter({
                 }}
                 className={cn(
                   "w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-secondary)] transition-colors",
-                  !currentTagId && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
+                  !currentTagSlug && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
                 )}
               >
                 전체 태그
@@ -242,12 +242,12 @@ export function PostsFilter({
                 <button
                   key={tag.id}
                   onClick={() => {
-                    onTagChange(tag.id);
+                    onTagChange(tag.slug);
                     setShowTagDropdown(false);
                   }}
                   className={cn(
                     "w-full px-4 py-2 text-left text-sm hover:bg-[var(--color-secondary)] transition-colors",
-                    currentTagId === tag.id && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
+                    currentTagSlug === tag.slug && "bg-[var(--color-secondary)] text-[var(--color-primary)]"
                   )}
                 >
                   #{tag.name}

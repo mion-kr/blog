@@ -58,7 +58,7 @@ export function TagCloud({ tags, className }: TagCloudProps) {
           return (
             <Link
               key={tag.id}
-              href={`/posts?tag=${tag.slug}`}
+              href={`/posts?tagSlug=${tag.slug}`}
               className="blog-sidebar-tag-item"
             >
               <span

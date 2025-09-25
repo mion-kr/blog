@@ -58,6 +58,13 @@ export class PostCategoryResponseDto {
   description?: string;
 
   @ApiProperty({
+    description: '카테고리에 속한 포스트 수',
+    example: 5,
+  })
+  @Expose()
+  postCount: number;
+
+  @ApiProperty({
     description: '생성 일시',
     example: '2024-01-01T00:00:00.000Z',
   })
