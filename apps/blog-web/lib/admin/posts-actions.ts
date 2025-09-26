@@ -1,17 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
-import type {
-  ApiResponse,
-  CreatePostDto,
-  PostResponseDto,
-  UpdatePostDto,
-} from '@repo/shared'
+import type { CreatePostDto, PostResponseDto, UpdatePostDto } from '@repo/shared'
 
 import { apiClient } from '../api-client'
 import { getAuthorizationToken, handleServerAuthError } from '../auth'
-import { ReauthenticationRequiredError } from '../api-errors'
+import { ApiError, ReauthenticationRequiredError } from '../api-errors'
 
 // 서버 액션에서 JWT가 없을 때 재인증 플로우로 넘겨주는 헬퍼
 async function requireTokenOrRedirect(returnTo: string): Promise<string> {
@@ -28,7 +24,7 @@ async function requireTokenOrRedirect(returnTo: string): Promise<string> {
 
 export async function createAdminPost(
   payload: CreatePostDto
-): Promise<ApiResponse<PostResponseDto>> {
+): Promise<void> {
   // 생성 페이지에서 호출되면 토큰이 없을 때 로그인 화면으로 안내
   const token = await requireTokenOrRedirect('/admin/posts/new')
 
@@ -42,17 +38,27 @@ export async function createAdminPost(
 
     // 목록과 관련 뷰 갱신
     revalidatePath('/admin/posts')
-    return response
-  } catch (error) {
-    // 인증 오류면 재로그인으로 리다이렉트, 아니면 상위에서 처리
-    handleServerAuthError(error, { returnTo: '/admin/posts/new' })
+    if (response?.success && response.data) {
+      redirect(`/admin/posts/${response.data.slug}/edit?status=created`)
+    }
+  } catch (error: unknown) {
+    if (error instanceof ReauthenticationRequiredError) {
+      handleServerAuthError(error, { returnTo: '/admin/posts/new' })
+    }
+
+    const message =
+      error instanceof ApiError || error instanceof Error
+        ? error.message
+        : '알 수 없는 오류가 발생했어요.'
+
+    redirect(`/admin/posts/new?status=error&message=${encodeURIComponent(message)}`)
   }
 }
 
 export async function updateAdminPost(
   slug: string,
   payload: UpdatePostDto
-): Promise<ApiResponse<PostResponseDto>> {
+): Promise<void> {
   const token = await requireTokenOrRedirect(`/admin/posts/${slug}/edit`)
 
   try {
@@ -64,22 +70,101 @@ export async function updateAdminPost(
 
     revalidatePath('/admin/posts')
     revalidatePath(`/admin/posts/${slug}`)
-    return response
-  } catch (error) {
-    handleServerAuthError(error, { returnTo: `/admin/posts/${slug}/edit` })
+    if (response?.success && response.data) {
+      redirect(`/admin/posts/${response.data.slug}/edit?status=updated`)
+    }
+  } catch (error: unknown) {
+    if (error instanceof ReauthenticationRequiredError) {
+      handleServerAuthError(error, { returnTo: `/admin/posts/${slug}/edit` })
+    }
+
+    const message =
+      error instanceof ApiError || error instanceof Error
+        ? error.message
+        : '알 수 없는 오류가 발생했어요.'
+
+    redirect(`/admin/posts/${slug}/edit?status=error&message=${encodeURIComponent(message)}`)
   }
 }
 
 export async function deleteAdminPost(
   slug: string
-): Promise<ApiResponse<null>> {
+): Promise<void> {
   const token = await requireTokenOrRedirect('/admin/posts')
 
   try {
-    const response = await apiClient.delete<null>(`/api/posts/${slug}`, { token })
+    await apiClient.delete<null>(`/api/posts/${slug}`, { token })
     revalidatePath('/admin/posts')
-    return response
-  } catch (error) {
-    handleServerAuthError(error, { returnTo: '/admin/posts' })
+    redirect('/admin/posts?status=deleted')
+  } catch (error: unknown) {
+    if (error instanceof ReauthenticationRequiredError) {
+      handleServerAuthError(error, { returnTo: '/admin/posts' })
+    }
+
+    const message =
+      error instanceof ApiError || error instanceof Error
+        ? error.message
+        : '삭제 중 오류가 발생했어요.'
+
+    redirect(`/admin/posts?status=error&message=${encodeURIComponent(message)}`)
   }
+}
+
+function parsePublished(value: FormDataEntryValue | null): boolean {
+  if (value === null) return false
+  const truthy = ['true', 'on', '1', 'yes']
+  return truthy.includes(String(value).toLowerCase())
+}
+
+function parseString(value: FormDataEntryValue | null | undefined): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+  const trimmed = String(value).trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+export async function createAdminPostAction(formData: FormData) {
+  const payload: CreatePostDto = {
+    title: String(formData.get('title') ?? ''),
+    content: String(formData.get('content') ?? ''),
+    excerpt: parseString(formData.get('excerpt')),
+    coverImage: parseString(formData.get('coverImage')),
+    published: parsePublished(formData.get('published')),
+    categoryId: String(formData.get('categoryId') ?? ''),
+    tagIds: formData.getAll('tagIds').map((value) => String(value)).filter(Boolean),
+  }
+
+  await createAdminPost(payload)
+}
+
+export async function updateAdminPostAction(formData: FormData) {
+  const slug = parseString(formData.get('slug'))
+  if (!slug) {
+    throw new Error('수정할 포스트의 slug가 필요합니다.')
+  }
+
+  const payload: UpdatePostDto = {
+    title: parseString(formData.get('title')),
+    content: parseString(formData.get('content')),
+    excerpt: parseString(formData.get('excerpt')),
+    coverImage: parseString(formData.get('coverImage')),
+    published: parsePublished(formData.get('published')),
+    categoryId: parseString(formData.get('categoryId')),
+    tagIds: formData
+      .getAll('tagIds')
+      .map((value) => String(value))
+      .filter(Boolean),
+  }
+
+  await updateAdminPost(slug, payload)
+}
+
+export async function deleteAdminPostAction(formData: FormData) {
+  const slug = parseString(formData.get('slug'))
+  if (!slug) {
+    throw new Error('삭제할 포스트의 slug가 필요합니다.')
+  }
+
+  await deleteAdminPost(slug)
 }
