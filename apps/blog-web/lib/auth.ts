@@ -3,11 +3,12 @@ import { getToken } from "next-auth/jwt"
 import type { JWT } from "next-auth/jwt"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { NextRequest } from "next/server"
 
 import { ReauthenticationRequiredError } from "./api-errors"
 import { authOptions } from "./auth-config"
 
-async function createRequestFromCookies(): Promise<Request | null> {
+async function createRequestFromCookies(): Promise<NextRequest | null> {
   const cookieStore = await cookies()
   const serialized = cookieStore
     .getAll()
@@ -19,7 +20,7 @@ async function createRequestFromCookies(): Promise<Request | null> {
   }
 
   const headers = new Headers({ cookie: serialized })
-  return new Request('http://localhost', { headers })
+  return new NextRequest('http://localhost', { headers })
 }
 
 // 서버 사이드에서 세션 가져오기
