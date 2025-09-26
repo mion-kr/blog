@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
+import { CategoriesModule } from '../categories/categories.module';
+import { TagsModule } from '../tags/tags.module';
 
 /**
  * 포스트 모듈
@@ -12,6 +14,7 @@ import { PostsService } from './posts.service';
  * - 관계 데이터 포함 (카테고리, 태그, 작성자)
  */
 @Module({
+  imports: [CategoriesModule, TagsModule],
   controllers: [PostsController],
   providers: [PostsService],
   exports: [PostsService],

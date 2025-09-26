@@ -32,6 +32,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostResponseDto } from './dto/post-response.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { CategoriesService } from '../categories/categories.service';
+import { TagsService } from '../tags/tags.service';
 
 /**
  * 포스트 관련 비즈니스 로직을 처리하는 서비스
@@ -45,6 +47,10 @@ import { UpdatePostDto } from './dto/update-post.dto';
  */
 @Injectable()
 export class PostsService {
+  constructor(
+    private readonly categoriesService: CategoriesService,
+    private readonly tagsService: TagsService,
+  ) {}
   /**
    * 포스트 목록 조회 (페이징, 필터링, 정렬 지원)
    */
@@ -552,6 +558,9 @@ export class PostsService {
       return newPost;
     });
 
+    await this.categoriesService.updatePostCount(categoryId);
+    await this.tagsService.updateMultiplePostCounts(tagIds);
+
     // 생성된 포스트 상세 정보 반환
     return this.findOneBySlug(result.slug);
   }
@@ -571,6 +580,8 @@ export class PostsService {
         `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
       );
     }
+
+    const existingTagIds = await this.findTagIdsByPostId(existingPost.id);
 
     const {
       title,
@@ -643,6 +654,23 @@ export class PostsService {
       }
     });
 
+    const categoriesToUpdate = new Set<string>();
+    categoriesToUpdate.add(existingPost.categoryId);
+    const updatedCategoryId = categoryId ?? existingPost.categoryId;
+    categoriesToUpdate.add(updatedCategoryId);
+
+    await Promise.all(
+      Array.from(categoriesToUpdate).map((category) =>
+        this.categoriesService.updatePostCount(category),
+      ),
+    );
+
+    const tagsToUpdate = new Set<string>(existingTagIds);
+    if (tagIds) {
+      tagIds.forEach((tagId) => tagsToUpdate.add(tagId));
+    }
+    await this.tagsService.updateMultiplePostCounts(Array.from(tagsToUpdate));
+
     // 수정된 포스트 상세 정보 반환
     return this.findOneBySlug(newSlug);
   }
@@ -659,6 +687,8 @@ export class PostsService {
       );
     }
 
+    const existingTagIds = await this.findTagIdsByPostId(existingPost.id);
+
     // 트랜잭션으로 포스트 및 관련 데이터 삭제
     await db.transaction(async (tx) => {
       // 포스트-태그 관계 삭제 (CASCADE로 자동 삭제되지만 명시적으로 처리)
@@ -667,6 +697,9 @@ export class PostsService {
       // 포스트 삭제
       await tx.delete(posts).where(eq(posts.id, existingPost.id));
     });
+
+    await this.categoriesService.updatePostCount(existingPost.categoryId);
+    await this.tagsService.updateMultiplePostCounts(existingTagIds);
   }
 
   /**
@@ -680,6 +713,18 @@ export class PostsService {
       .limit(1);
 
     return result[0] || null;
+  }
+
+  /**
+   * 포스트에 연결된 태그 ID 목록 조회
+   */
+  private async findTagIdsByPostId(postId: string): Promise<string[]> {
+    const rows = await db
+      .select({ tagId: postTags.tagId })
+      .from(postTags)
+      .where(eq(postTags.postId, postId));
+
+    return rows.map((row) => row.tagId);
   }
 
   /**

@@ -1,9 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { TestBed, Mocked } from '@suites/unit';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
+import { CategoriesService } from '../categories/categories.service';
+import { TagsService } from '../tags/tags.service';
 import * as database from '@repo/database';
 
 // Mock @repo/database module
@@ -64,19 +66,24 @@ jest.mock('@repo/database', () => ({
 
 describe('PostsService', () => {
   let service: PostsService;
-  let mockDb: any;
+  let mockDb: Mocked<typeof database.db>;
+  let categoriesService: Mocked<CategoriesService>;
+  let tagsService: Mocked<TagsService>;
   const mockAuthorId = 'user-1';
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [PostsService],
-    }).compile();
+  beforeAll(async () => {
+    const { unit, unitRef } = await TestBed.solitary(PostsService).compile();
 
-    service = module.get<PostsService>(PostsService);
-    mockDb = database.db;
+    service = unit;
+    categoriesService = unitRef.get(CategoriesService);
+    tagsService = unitRef.get(TagsService);
+    mockDb = database.db as Mocked<typeof database.db>;
+  });
 
-    // Reset all mocks before each test
+  beforeEach(() => {
     jest.clearAllMocks();
+    categoriesService.updatePostCount.mockResolvedValue(undefined);
+    tagsService.updateMultiplePostCounts.mockResolvedValue(undefined);
   });
 
   describe('findAll', () => {
@@ -224,10 +231,10 @@ describe('PostsService', () => {
       expect(database.or).toHaveBeenCalled();
     });
 
-    it('categoryId로 필터링이 올바르게 동작해야 함', async () => {
+    it('categorySlug로 필터링이 올바르게 동작해야 함', async () => {
       // Arrange
       const query: PostQueryDto = {
-        categoryId: 'cat-1',
+        categorySlug: 'development',
       };
 
       const mockPosts = [];
@@ -240,7 +247,17 @@ describe('PostsService', () => {
         offset: jest.fn().mockResolvedValue(mockPosts),
       };
 
-      mockDb.select.mockReturnValue(mockQueryBuilder);
+      const categoryLookupBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ id: 'cat-1' }]),
+          }),
+        }),
+      };
+
+      mockDb.select
+        .mockImplementationOnce(() => categoryLookupBuilder)
+        .mockReturnValue(mockQueryBuilder);
 
       // Act
       await service.findAll(query);
@@ -252,10 +269,10 @@ describe('PostsService', () => {
       );
     });
 
-    it('tagId로 필터링이 올바르게 동작해야 함', async () => {
+    it('tagSlug로 필터링이 올바르게 동작해야 함', async () => {
       // Arrange
       const query: PostQueryDto = {
-        tagId: 'tag-1',
+        tagSlug: 'nextjs',
       };
 
       const mockPosts = [];
@@ -269,7 +286,17 @@ describe('PostsService', () => {
         offset: jest.fn().mockResolvedValue(mockPosts),
       };
 
-      mockDb.select.mockReturnValue(mockQueryBuilder);
+      const tagLookupBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ id: 'tag-1' }]),
+          }),
+        }),
+      };
+
+      mockDb.select
+        .mockImplementationOnce(() => tagLookupBuilder)
+        .mockReturnValue(mockQueryBuilder);
 
       // Act
       await service.findAll(query);
@@ -355,7 +382,7 @@ describe('PostsService', () => {
       // Arrange
       const query: PostQueryDto = {
         published: true,
-        categoryId: 'cat-1',
+        categorySlug: 'development',
         authorId: 'user-1',
         search: 'Next.js',
         page: 2,
@@ -372,7 +399,17 @@ describe('PostsService', () => {
         offset: jest.fn().mockResolvedValue(mockPosts),
       };
 
-      mockDb.select.mockReturnValue(mockQueryBuilder);
+      const categoryLookupBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue([{ id: 'cat-1' }]),
+          }),
+        }),
+      };
+
+      mockDb.select
+        .mockImplementationOnce(() => categoryLookupBuilder)
+        .mockReturnValue(mockQueryBuilder);
 
       // Act
       await service.findAll(query);
@@ -652,6 +689,12 @@ describe('PostsService', () => {
       expect(result.id).toBe('new-post-id');
       expect(result.title).toBe('New Post');
       expect(result.slug).toBe('new-post');
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith(
+        createPostDto.categoryId,
+      );
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(
+        createPostDto.tagIds,
+      );
     });
 
     it('슬러그가 중복되면 고유한 슬러그를 생성해야 함', async () => {
@@ -739,6 +782,8 @@ describe('PostsService', () => {
       // Assert
       expect(result.slug).toBe('existing-post-1');
       expect(capturedSlug).toBe('existing-post-1');
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1');
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([]);
     });
 
     it('카테고리가 존재하지 않을 때 BadRequestException을 던져야 함', async () => {
@@ -784,6 +829,8 @@ describe('PostsService', () => {
           `카테고리 ID 'non-existent-cat'를 찾을 수 없습니다.`,
         ),
       );
+      expect(categoriesService.updatePostCount).not.toHaveBeenCalled();
+      expect(tagsService.updateMultiplePostCounts).not.toHaveBeenCalled();
     });
 
     it('태그가 존재하지 않을 때 BadRequestException을 던져야 함', async () => {
@@ -829,6 +876,8 @@ describe('PostsService', () => {
           `다음 태그 ID를 찾을 수 없습니다: non-existent-tag`,
         ),
       );
+      expect(categoriesService.updatePostCount).not.toHaveBeenCalled();
+      expect(tagsService.updateMultiplePostCounts).not.toHaveBeenCalled();
     });
 
     it('태그 없이 포스트를 생성할 수 있어야 함', async () => {
@@ -875,8 +924,7 @@ describe('PostsService', () => {
         if (selectCallCount === 1) {
           return {
             from: jest.fn().mockReturnThis(),
-            where: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockResolvedValue([]),
+            where: jest.fn().mockResolvedValue([]),
           };
         }
         if (selectCallCount === 2) {
@@ -915,6 +963,10 @@ describe('PostsService', () => {
       expect(result.id).toBe('new-post-id');
       expect(result.published).toBe(false);
       expect(result.publishedAt).toBeUndefined();
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith(
+        createPostDto.categoryId,
+      );
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([]);
     });
   });
 
@@ -939,30 +991,32 @@ describe('PostsService', () => {
         categoryId: 'cat-1',
       };
 
-      // Mock for finding existing post
       const mockFindPostBuilder = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
 
-      // Mock for slug uniqueness check
       const mockSlugCheckBuilder = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([]),
       };
 
-      // Mock for category check
       const mockCategoryCheckBuilder = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         limit: jest.fn().mockResolvedValue([{ id: 'cat-2' }]),
       };
 
-      // Mock for tags check
       const mockTagsCheckBuilder = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([{ id: 'tag-3' }]),
+      };
+
+      const mockExistingTagIdsBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([{ tagId: 'tag-1' }]),
+        }),
       };
 
       const afterUpdatePostBuilder = {
@@ -978,17 +1032,24 @@ describe('PostsService', () => {
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([]),
       };
-      let selectCallCount = 0;
-      mockDb.select.mockImplementation(() => {
-        selectCallCount++;
-        if (selectCallCount === 1) return mockFindPostBuilder;
-        if (selectCallCount === 2) return mockSlugCheckBuilder;
-        if (selectCallCount === 3) return mockCategoryCheckBuilder;
-        if (selectCallCount === 4) return mockTagsCheckBuilder;
-        if (selectCallCount === 5) return afterUpdatePostBuilder;
-        if (selectCallCount === 6) return afterUpdateTagsBuilder;
-        return { from: jest.fn().mockReturnThis() };
-      });
+
+      const selectQueue = [
+        mockFindPostBuilder,
+        mockExistingTagIdsBuilder,
+        mockSlugCheckBuilder,
+        mockCategoryCheckBuilder,
+        mockTagsCheckBuilder,
+        afterUpdatePostBuilder,
+        afterUpdateTagsBuilder,
+      ];
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
 
       // Mock transaction
       mockDb.transaction.mockImplementation(async (callback) => {
@@ -1007,7 +1068,6 @@ describe('PostsService', () => {
         return callback(mockTx);
       });
 
-      // Mock for view count update
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(undefined),
@@ -1020,6 +1080,16 @@ describe('PostsService', () => {
       expect(result.title).toBe('Updated Title');
       expect(result.content).toBe('Updated content');
       expect(result.published).toBe(true);
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1');
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-2');
+      expect(categoriesService.updatePostCount).toHaveBeenCalledTimes(2);
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledTimes(1);
+      const updatedTagsArg =
+        tagsService.updateMultiplePostCounts.mock.calls[0][0];
+      expect(updatedTagsArg).toEqual(
+        expect.arrayContaining(['tag-1', 'tag-3']),
+      );
+      expect(updatedTagsArg).toHaveLength(2);
     });
 
     it('존재하지 않는 포스트 수정 시 NotFoundException을 던져야 함', async () => {
@@ -1092,12 +1162,27 @@ describe('PostsService', () => {
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([]),
       };
+      const mockExistingTagIdsBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([]),
+        }),
+      };
 
-      mockDb.select
-        .mockImplementationOnce(() => mockFindPostBuilder)
-        .mockImplementationOnce(() => mockSlugCheckBuilder)
-        .mockImplementationOnce(() => afterUpdatePostBuilder)
-        .mockImplementationOnce(() => afterUpdateTagsBuilder);
+      const selectQueue = [
+        mockFindPostBuilder,
+        mockExistingTagIdsBuilder,
+        mockSlugCheckBuilder,
+        afterUpdatePostBuilder,
+        afterUpdateTagsBuilder,
+      ];
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
 
       let capturedUpdateData: any;
 
@@ -1159,7 +1244,11 @@ describe('PostsService', () => {
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
 
-      mockDb.select.mockImplementationOnce(() => mockFindPostBuilder);
+      const mockExistingTagIdsBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([]),
+        }),
+      };
 
       // Mock transaction
       let capturedUpdateData: any;
@@ -1197,13 +1286,20 @@ describe('PostsService', () => {
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([]),
       };
-      let afterFindCall = 0;
-      mockDb.select.mockImplementation(() => {
-        afterFindCall++;
-        if (afterFindCall === 1) return updatedPostBuilder; // posts findOne
-        if (afterFindCall === 2) return updatedTagsBuilder; // tags for post
-        return { from: jest.fn().mockReturnThis() };
-      });
+      const selectQueue = [
+        mockFindPostBuilder,
+        mockExistingTagIdsBuilder,
+        updatedPostBuilder,
+        updatedTagsBuilder,
+      ];
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
 
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnThis(),
@@ -1240,7 +1336,11 @@ describe('PostsService', () => {
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
 
-      mockDb.select.mockImplementationOnce(() => mockFindPostBuilder);
+      const mockExistingTagIdsBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([{ tagId: 'tag-1' }, { tagId: 'tag-2' }]),
+        }),
+      };
 
       // Mock transaction
       let deleteWasCalled = false;
@@ -1275,13 +1375,20 @@ describe('PostsService', () => {
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue([]),
       };
-      let remSelectIdx = 0;
-      mockDb.select.mockImplementation(() => {
-        remSelectIdx++;
-        if (remSelectIdx === 1) return remAfterPostBuilder; // posts findOne
-        if (remSelectIdx === 2) return remAfterTagsBuilder; // tags for post
-        return { from: jest.fn().mockReturnThis() };
-      });
+      const selectQueue = [
+        mockFindPostBuilder,
+        mockExistingTagIdsBuilder,
+        remAfterPostBuilder,
+        remAfterTagsBuilder,
+      ];
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
 
       mockDb.update.mockReturnValue({
         set: jest.fn().mockReturnThis(),
@@ -1315,8 +1422,20 @@ describe('PostsService', () => {
         where: jest.fn().mockReturnThis(),
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
+      const mockExistingTagsBuilder = {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([{ tagId: 'tag-1' }]),
+        }),
+      };
 
-      mockDb.select.mockReturnValue(mockFindPostBuilder);
+      const selectQueue = [mockFindPostBuilder, mockExistingTagsBuilder];
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+        },
+      );
 
       // Mock transaction
       let postTagsDeleted = false;
@@ -1341,6 +1460,12 @@ describe('PostsService', () => {
       // Assert
       expect(postTagsDeleted).toBe(true);
       expect(postDeleted).toBe(true);
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith(
+        existingPost.categoryId,
+      );
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([
+        'tag-1',
+      ]);
     });
 
     it('존재하지 않는 포스트 삭제 시 NotFoundException을 던져야 함', async () => {
@@ -1361,6 +1486,9 @@ describe('PostsService', () => {
           `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
         ),
       );
+
+      expect(categoriesService.updatePostCount).not.toHaveBeenCalled();
+      expect(tagsService.updateMultiplePostCounts).not.toHaveBeenCalled();
     });
   });
 
