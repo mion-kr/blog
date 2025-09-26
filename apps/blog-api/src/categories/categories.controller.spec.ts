@@ -1,39 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { TestBed, Mocked } from '@suites/unit';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryResponseDto } from './dto/category-response.dto';
-import { NotFoundException, ConflictException } from '@nestjs/common';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
-  let service: CategoriesService;
+  let categoriesService: Mocked<CategoriesService>;
 
-  const mockCategoriesService = {
-    findAll: jest.fn(),
-    findOneBySlug: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
-  };
+  beforeAll(async () => {
+    const { unit, unitRef } = await TestBed.solitary(CategoriesController).compile();
+    controller = unit;
+    categoriesService = unitRef.get(CategoriesService);
+  });
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [CategoriesController],
-      providers: [
-        {
-          provide: CategoriesService,
-          useValue: mockCategoriesService,
-        },
-      ],
-    }).compile();
-
-    controller = module.get<CategoriesController>(CategoriesController);
-    service = module.get<CategoriesService>(CategoriesService);
-
-    // Reset all mocks before each test
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -67,15 +51,15 @@ describe('CategoriesController', () => {
         },
       ];
 
-      mockCategoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue(mockCategories);
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
       expect(result).toEqual(mockCategories);
-      expect(service.findAll).toHaveBeenCalledWith(query);
-      expect(service.findAll).toHaveBeenCalledTimes(1);
+      expect(categoriesService.findAll).toHaveBeenCalledWith(query);
+      expect(categoriesService.findAll).toHaveBeenCalledTimes(1);
     });
 
     it('빈 쿼리 파라미터로 호출할 수 있어야 함', async () => {
@@ -83,14 +67,14 @@ describe('CategoriesController', () => {
       const query: CategoryQueryDto = {};
       const mockCategories: CategoryResponseDto[] = [];
 
-      mockCategoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue(mockCategories);
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
       expect(result).toEqual(mockCategories);
-      expect(service.findAll).toHaveBeenCalledWith(query);
+      expect(categoriesService.findAll).toHaveBeenCalledWith(query);
     });
 
     it('검색 쿼리를 서비스에 전달해야 함', async () => {
@@ -111,14 +95,14 @@ describe('CategoriesController', () => {
         },
       ];
 
-      mockCategoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue(mockCategories);
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
       expect(result).toEqual(mockCategories);
-      expect(service.findAll).toHaveBeenCalledWith(query);
+      expect(categoriesService.findAll).toHaveBeenCalledWith(query);
     });
   });
 
@@ -136,21 +120,21 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockCategoriesService.findOneBySlug.mockResolvedValue(mockCategory);
+      categoriesService.findOneBySlug.mockResolvedValue(mockCategory);
 
       // Act
       const result = await controller.findOne(slug);
 
       // Assert
       expect(result).toEqual(mockCategory);
-      expect(service.findOneBySlug).toHaveBeenCalledWith(slug);
-      expect(service.findOneBySlug).toHaveBeenCalledTimes(1);
+      expect(categoriesService.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(categoriesService.findOneBySlug).toHaveBeenCalledTimes(1);
     });
 
     it('존재하지 않는 카테고리에 대해 NotFoundException을 전파해야 함', async () => {
       // Arrange
       const slug = 'non-existent';
-      mockCategoriesService.findOneBySlug.mockRejectedValue(
+      categoriesService.findOneBySlug.mockRejectedValue(
         new NotFoundException(
           `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
         ),
@@ -158,7 +142,7 @@ describe('CategoriesController', () => {
 
       // Act & Assert
       await expect(controller.findOne(slug)).rejects.toThrow(NotFoundException);
-      expect(service.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(categoriesService.findOneBySlug).toHaveBeenCalledWith(slug);
     });
 
     it('특수 문자가 포함된 슬러그를 처리할 수 있어야 함', async () => {
@@ -174,14 +158,14 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockCategoriesService.findOneBySlug.mockResolvedValue(mockCategory);
+      categoriesService.findOneBySlug.mockResolvedValue(mockCategory);
 
       // Act
       const result = await controller.findOne(slug);
 
       // Assert
       expect(result).toEqual(mockCategory);
-      expect(service.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(categoriesService.findOneBySlug).toHaveBeenCalledWith(slug);
     });
   });
 
@@ -203,15 +187,15 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-01'),
       };
 
-      mockCategoriesService.create.mockResolvedValue(mockCreatedCategory);
+      categoriesService.create.mockResolvedValue(mockCreatedCategory);
 
       // Act
       const result = await controller.create(createDto);
 
       // Assert
       expect(result).toEqual(mockCreatedCategory);
-      expect(service.create).toHaveBeenCalledWith(createDto);
-      expect(service.create).toHaveBeenCalledTimes(1);
+      expect(categoriesService.create).toHaveBeenCalledWith(createDto);
+      expect(categoriesService.create).toHaveBeenCalledTimes(1);
     });
 
     it('description 없이 카테고리를 생성할 수 있어야 함', async () => {
@@ -229,14 +213,14 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-01'),
       };
 
-      mockCategoriesService.create.mockResolvedValue(mockCreatedCategory);
+      categoriesService.create.mockResolvedValue(mockCreatedCategory);
 
       // Act
       const result = await controller.create(createDto);
 
       // Assert
       expect(result).toEqual(mockCreatedCategory);
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(categoriesService.create).toHaveBeenCalledWith(createDto);
     });
 
     it('슬러그 중복 시 ConflictException을 전파해야 함', async () => {
@@ -245,7 +229,7 @@ describe('CategoriesController', () => {
         name: 'Duplicate',
         slug: 'existing-slug',
       };
-      mockCategoriesService.create.mockRejectedValue(
+      categoriesService.create.mockRejectedValue(
         new ConflictException(`슬러그 'existing-slug'가 이미 존재합니다.`),
       );
 
@@ -253,7 +237,7 @@ describe('CategoriesController', () => {
       await expect(controller.create(createDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(categoriesService.create).toHaveBeenCalledWith(createDto);
     });
 
     it('이름 중복 시 ConflictException을 전파해야 함', async () => {
@@ -262,7 +246,7 @@ describe('CategoriesController', () => {
         name: 'Existing Name',
         slug: 'new-slug',
       };
-      mockCategoriesService.create.mockRejectedValue(
+      categoriesService.create.mockRejectedValue(
         new ConflictException(
           `카테고리 이름 'Existing Name'이 이미 존재합니다.`,
         ),
@@ -272,7 +256,7 @@ describe('CategoriesController', () => {
       await expect(controller.create(createDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(categoriesService.create).toHaveBeenCalledWith(createDto);
     });
   });
 
@@ -295,15 +279,15 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockCategoriesService.update.mockResolvedValue(mockUpdatedCategory);
+      categoriesService.update.mockResolvedValue(mockUpdatedCategory);
 
       // Act
       const result = await controller.update(slug, updateDto);
 
       // Assert
       expect(result).toEqual(mockUpdatedCategory);
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
-      expect(service.update).toHaveBeenCalledTimes(1);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledTimes(1);
     });
 
     it('부분 업데이트를 할 수 있어야 함', async () => {
@@ -322,14 +306,14 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockCategoriesService.update.mockResolvedValue(mockUpdatedCategory);
+      categoriesService.update.mockResolvedValue(mockUpdatedCategory);
 
       // Act
       const result = await controller.update(slug, updateDto);
 
       // Assert
       expect(result).toEqual(mockUpdatedCategory);
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
     });
 
     it('존재하지 않는 카테고리 수정 시 NotFoundException을 전파해야 함', async () => {
@@ -338,7 +322,7 @@ describe('CategoriesController', () => {
       const updateDto: UpdateCategoryDto = {
         name: 'Updated Name',
       };
-      mockCategoriesService.update.mockRejectedValue(
+      categoriesService.update.mockRejectedValue(
         new NotFoundException(
           `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
         ),
@@ -348,7 +332,7 @@ describe('CategoriesController', () => {
       await expect(controller.update(slug, updateDto)).rejects.toThrow(
         NotFoundException,
       );
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
     });
 
     it('새 슬러그 중복 시 ConflictException을 전파해야 함', async () => {
@@ -357,7 +341,7 @@ describe('CategoriesController', () => {
       const updateDto: UpdateCategoryDto = {
         slug: 'existing-slug',
       };
-      mockCategoriesService.update.mockRejectedValue(
+      categoriesService.update.mockRejectedValue(
         new ConflictException(`슬러그 'existing-slug'가 이미 존재합니다.`),
       );
 
@@ -365,7 +349,7 @@ describe('CategoriesController', () => {
       await expect(controller.update(slug, updateDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
     });
 
     it('새 이름 중복 시 ConflictException을 전파해야 함', async () => {
@@ -374,7 +358,7 @@ describe('CategoriesController', () => {
       const updateDto: UpdateCategoryDto = {
         name: 'Existing Name',
       };
-      mockCategoriesService.update.mockRejectedValue(
+      categoriesService.update.mockRejectedValue(
         new ConflictException(
           `카테고리 이름 'Existing Name'이 이미 존재합니다.`,
         ),
@@ -384,7 +368,7 @@ describe('CategoriesController', () => {
       await expect(controller.update(slug, updateDto)).rejects.toThrow(
         ConflictException,
       );
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
     });
 
     it('빈 업데이트 DTO를 처리할 수 있어야 함', async () => {
@@ -401,14 +385,14 @@ describe('CategoriesController', () => {
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockCategoriesService.update.mockResolvedValue(mockUpdatedCategory);
+      categoriesService.update.mockResolvedValue(mockUpdatedCategory);
 
       // Act
       const result = await controller.update(slug, updateDto);
 
       // Assert
       expect(result).toEqual(mockUpdatedCategory);
-      expect(service.update).toHaveBeenCalledWith(slug, updateDto);
+      expect(categoriesService.update).toHaveBeenCalledWith(slug, updateDto);
     });
   });
 
@@ -416,21 +400,21 @@ describe('CategoriesController', () => {
     it('카테고리를 삭제해야 함', async () => {
       // Arrange
       const slug = 'unused-category';
-      mockCategoriesService.remove.mockResolvedValue(undefined);
+      categoriesService.remove.mockResolvedValue(undefined);
 
       // Act
       const result = await controller.remove(slug);
 
       // Assert
       expect(result).toBeUndefined();
-      expect(service.remove).toHaveBeenCalledWith(slug);
-      expect(service.remove).toHaveBeenCalledTimes(1);
+      expect(categoriesService.remove).toHaveBeenCalledWith(slug);
+      expect(categoriesService.remove).toHaveBeenCalledTimes(1);
     });
 
     it('존재하지 않는 카테고리 삭제 시 NotFoundException을 전파해야 함', async () => {
       // Arrange
       const slug = 'non-existent';
-      mockCategoriesService.remove.mockRejectedValue(
+      categoriesService.remove.mockRejectedValue(
         new NotFoundException(
           `슬러그 '${slug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
         ),
@@ -438,13 +422,13 @@ describe('CategoriesController', () => {
 
       // Act & Assert
       await expect(controller.remove(slug)).rejects.toThrow(NotFoundException);
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      expect(categoriesService.remove).toHaveBeenCalledWith(slug);
     });
 
     it('포스트가 있는 카테고리 삭제 시 ConflictException을 전파해야 함', async () => {
       // Arrange
       const slug = 'used-category';
-      mockCategoriesService.remove.mockRejectedValue(
+      categoriesService.remove.mockRejectedValue(
         new ConflictException(
           `이 카테고리를 사용하는 포스트가 5개 있어 삭제할 수 없습니다.`,
         ),
@@ -452,20 +436,20 @@ describe('CategoriesController', () => {
 
       // Act & Assert
       await expect(controller.remove(slug)).rejects.toThrow(ConflictException);
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      expect(categoriesService.remove).toHaveBeenCalledWith(slug);
     });
 
     it('특수 문자가 포함된 슬러그를 처리할 수 있어야 함', async () => {
       // Arrange
       const slug = 'tech-and-programming';
-      mockCategoriesService.remove.mockResolvedValue(undefined);
+      categoriesService.remove.mockResolvedValue(undefined);
 
       // Act
       const result = await controller.remove(slug);
 
       // Assert
       expect(result).toBeUndefined();
-      expect(service.remove).toHaveBeenCalledWith(slug);
+      expect(categoriesService.remove).toHaveBeenCalledWith(slug);
     });
   });
 
@@ -527,7 +511,7 @@ describe('CategoriesController', () => {
     it('서비스에서 예상치 못한 에러 발생 시 전파해야 함', async () => {
       // Arrange
       const error = new Error('Database connection failed');
-      mockCategoriesService.findAll.mockRejectedValue(error);
+      categoriesService.findAll.mockRejectedValue(error);
 
       // Act & Assert
       await expect(controller.findAll({})).rejects.toThrow(error);
@@ -536,7 +520,7 @@ describe('CategoriesController', () => {
     it('잘못된 형식의 슬러그에 대해 적절히 처리해야 함', async () => {
       // Arrange
       const invalidSlug = '';
-      mockCategoriesService.findOneBySlug.mockRejectedValue(
+      categoriesService.findOneBySlug.mockRejectedValue(
         new NotFoundException(
           `슬러그 '${invalidSlug}'에 해당하는 카테고리를 찾을 수 없습니다.`,
         ),

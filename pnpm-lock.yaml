@@ -105,6 +105,15 @@ importers:
       '@nestjs/testing':
         specifier: ^11.0.1
         version: 11.1.6(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.6)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.6(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6))
+      '@suites/di.nestjs':
+        specifier: ^3.0.1
+        version: 3.0.1(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
+      '@suites/doubles.jest':
+        specifier: ^3.0.1
+        version: 3.0.1(jest@30.1.3(@types/node@22.15.3)(esbuild-register@3.6.0(esbuild@0.25.9))(ts-node@10.9.2(@types/node@22.15.3)(typescript@5.9.2)))
+      '@suites/unit':
+        specifier: ^3.0.1
+        version: 3.0.1
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0
@@ -1846,6 +1855,38 @@ packages:
 
   '@sinonjs/fake-timers@13.0.5':
     resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
+
+  '@suites/core.unit@3.0.1':
+    resolution: {integrity: sha512-X5xNg5EK1zAKXo4WS1fyBcViyvWvUWCEaA1fv/3ow5mD9AkKnIQajqm9pLAkUl/BM73baLQv9biLnmEHje1ghA==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
+  '@suites/di.nestjs@3.0.1':
+    resolution: {integrity: sha512-mcXq9GgaE1hC/5Qu69tJZrhSE7dcWJAWHzRvnRyx6UV9XP2Ze6aRK4/uCkviG84A1il4QLNQy+NvhOf0LooDgA==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+    peerDependencies:
+      '@nestjs/common': '>= 8.0'
+      reflect-metadata: <1.0.0
+
+  '@suites/doubles.jest@3.0.1':
+    resolution: {integrity: sha512-ioGi5QP2kSa0bAehz1NA0kXfyKUfjRuKQV7SP0YnXHO2j9X712xDOqF4cGrLU74A6HYFWjbyK/NLJOUpCz1yLw==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+    peerDependencies:
+      jest: '> 26.0'
+
+  '@suites/types.common@3.0.0':
+    resolution: {integrity: sha512-+kCWmVAyEI01P4d/t3LbrOCq1xXQlh3SsPstn1uBuC/MDMW/pENHkU5xVC9G8VOW/pkXh53KXwbHIxpJImp4Zw==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
+  '@suites/types.di@3.0.0':
+    resolution: {integrity: sha512-RzvgfTsjg3KrJ3SRbo9J84g5mRfkMZMzinLTjAQO+yCBBz+YMhbwaUXDBX70RcFGiAHjTNPg0jWjis3FHPH8Dg==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
+  '@suites/types.doubles@3.0.0':
+    resolution: {integrity: sha512-B5sHH98qU7Fq+ozA42J3LLv846xRJn2ndx1xfLr0oaKxEG6Xud/vmdJpH65F/2P7DNMJkxWo/VDIqXrN4UDcvg==}
+
+  '@suites/unit@3.0.1':
+    resolution: {integrity: sha512-28RLtgxG8NH6zcBvfiMGqbToWNTs2WnTPa9GWQ2k1laXueGILDTTRjQrsApIAlbtRF5lGuGPynRFEMBAL+90Mw==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -4106,6 +4147,10 @@ packages:
 
   lodash.isboolean@3.0.3:
     resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
+
+  lodash.isequal@4.5.0:
+    resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isinteger@4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -7126,6 +7171,41 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
+  '@suites/core.unit@3.0.1':
+    dependencies:
+      '@suites/types.common': 3.0.0
+      '@suites/types.di': 3.0.0
+      lodash.isequal: 4.5.0
+
+  '@suites/di.nestjs@3.0.1(@nestjs/common@11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)':
+    dependencies:
+      '@nestjs/common': 11.1.6(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@suites/types.common': 3.0.0
+      '@suites/types.di': 3.0.0
+      reflect-metadata: 0.2.2
+
+  '@suites/doubles.jest@3.0.1(jest@30.1.3(@types/node@22.15.3)(esbuild-register@3.6.0(esbuild@0.25.9))(ts-node@10.9.2(@types/node@22.15.3)(typescript@5.9.2)))':
+    dependencies:
+      '@suites/core.unit': 3.0.1
+      '@suites/types.common': 3.0.0
+      '@suites/types.doubles': 3.0.0
+      jest: 30.1.3(@types/node@22.15.3)(esbuild-register@3.6.0(esbuild@0.25.9))(ts-node@10.9.2(@types/node@22.15.3)(typescript@5.9.2))
+
+  '@suites/types.common@3.0.0': {}
+
+  '@suites/types.di@3.0.0':
+    dependencies:
+      '@suites/types.common': 3.0.0
+
+  '@suites/types.doubles@3.0.0': {}
+
+  '@suites/unit@3.0.1':
+    dependencies:
+      '@suites/core.unit': 3.0.1
+      '@suites/types.common': 3.0.0
+      '@suites/types.di': 3.0.0
+      '@suites/types.doubles': 3.0.0
+
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
@@ -9795,6 +9875,8 @@ snapshots:
   lodash.includes@4.3.0: {}
 
   lodash.isboolean@3.0.3: {}
+
+  lodash.isequal@4.5.0: {}
 
   lodash.isinteger@4.0.4: {}
 

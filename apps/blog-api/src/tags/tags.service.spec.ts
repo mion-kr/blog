@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { TestBed, Mocked } from '@suites/unit';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -28,17 +28,15 @@ jest.mock('@repo/database', () => ({
 
 describe('TagsService', () => {
   let service: TagsService;
-  let mockDb: any;
+  let mockDb: Mocked<typeof database.db>;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [TagsService],
-    }).compile();
+  beforeAll(async () => {
+    const { unit } = await TestBed.solitary(TagsService).compile();
+    service = unit;
+    mockDb = database.db as Mocked<typeof database.db>;
+  });
 
-    service = module.get<TagsService>(TagsService);
-    mockDb = database.db;
-
-    // Reset all mocks before each test
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 

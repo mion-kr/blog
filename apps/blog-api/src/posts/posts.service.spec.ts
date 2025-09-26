@@ -8,65 +8,49 @@ import { CategoriesService } from '../categories/categories.service';
 import { TagsService } from '../tags/tags.service';
 import * as database from '@repo/database';
 
-// Mock @repo/database module
-jest.mock('@repo/database', () => ({
-  db: {
-    select: jest.fn(),
-    insert: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    transaction: jest.fn(),
-  },
-  posts: {
-    id: 'posts.id',
-    title: 'posts.title',
-    slug: 'posts.slug',
-    content: 'posts.content',
-    excerpt: 'posts.excerpt',
-    coverImage: 'posts.coverImage',
-    published: 'posts.published',
-    viewCount: 'posts.viewCount',
-    createdAt: 'posts.createdAt',
-    updatedAt: 'posts.updatedAt',
-    publishedAt: 'posts.publishedAt',
-    categoryId: 'posts.categoryId',
-    authorId: 'posts.authorId',
-  },
-  categories: {
-    id: 'categories.id',
-    name: 'categories.name',
-    slug: 'categories.slug',
-  },
-  tags: {
-    id: 'tags.id',
-    name: 'tags.name',
-    slug: 'tags.slug',
-  },
-  postTags: {
-    postId: 'postTags.postId',
-    tagId: 'postTags.tagId',
-  },
-  users: {
-    id: 'users.id',
-    name: 'users.name',
-    image: 'users.image',
-    email: 'users.email',
-  },
-  eq: jest.fn((a, b) => ({ type: 'eq', a, b })),
-  desc: jest.fn((field) => ({ type: 'desc', field })),
-  asc: jest.fn((field) => ({ type: 'asc', field })),
-  count: jest.fn((field) => ({ type: 'count', field })),
-  ilike: jest.fn((field, pattern) => ({ type: 'ilike', field, pattern })),
-  like: jest.fn((field, pattern) => ({ type: 'like', field, pattern })),
-  and: jest.fn((...conditions) => ({ type: 'and', conditions })),
-  or: jest.fn((...conditions) => ({ type: 'or', conditions })),
-  sql: jest.fn((template, ...values) => ({ type: 'sql', template, values })),
-  inArray: jest.fn((field, values) => ({ type: 'inArray', field, values })),
-}));
+// Suites auto-mocking: leverage Jest's automatic module mock to turn all exports into jest.fn
+jest.mock('@repo/database', () => {
+  const actual = jest.requireActual<typeof import('@repo/database')>('@repo/database');
+  const mocked = jest.createMockFromModule<typeof import('@repo/database')>('@repo/database');
+
+  return {
+    __esModule: true,
+    ...mocked,
+    posts: actual.posts,
+    categories: actual.categories,
+    tags: actual.tags,
+    postTags: actual.postTags,
+    users: actual.users,
+    db: {
+      select: jest.fn(),
+      insert: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      transaction: jest.fn(),
+    },
+    eq: jest.fn((a, b) => ({ type: 'eq', a, b })),
+    desc: jest.fn((field) => ({ type: 'desc', field })),
+    asc: jest.fn((field) => ({ type: 'asc', field })),
+    count: jest.fn((field) => ({ type: 'count', field })),
+    ilike: jest.fn((field, pattern) => ({ type: 'ilike', field, pattern })),
+    like: jest.fn((field, pattern) => ({ type: 'like', field, pattern })),
+    and: jest.fn((...conditions) => ({ type: 'and', conditions })),
+    or: jest.fn((...conditions) => ({ type: 'or', conditions })),
+    sql: jest.fn((template, ...values) => ({ type: 'sql', template, values })),
+    inArray: jest.fn((field, values) => ({ type: 'inArray', field, values })),
+  } satisfies Partial<typeof actual>;
+});
 
 describe('PostsService', () => {
   let service: PostsService;
-  let mockDb: Mocked<typeof database.db>;
+  let databaseMock: jest.Mocked<typeof database>;
+  let mockDb: {
+    select: jest.Mock;
+    insert: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+    transaction: jest.Mock;
+  };
   let categoriesService: Mocked<CategoriesService>;
   let tagsService: Mocked<TagsService>;
   const mockAuthorId = 'user-1';
@@ -77,7 +61,8 @@ describe('PostsService', () => {
     service = unit;
     categoriesService = unitRef.get(CategoriesService);
     tagsService = unitRef.get(TagsService);
-    mockDb = database.db as Mocked<typeof database.db>;
+    databaseMock = jest.mocked(database);
+    mockDb = databaseMock.db as typeof mockDb;
   });
 
   beforeEach(() => {
