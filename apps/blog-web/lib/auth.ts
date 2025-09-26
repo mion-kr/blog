@@ -7,13 +7,7 @@ import { redirect } from "next/navigation"
 import { ReauthenticationRequiredError } from "./api-errors"
 import { authOptions } from "./auth-config"
 
-type MinimalRequest = {
-  headers: {
-    cookie: string
-  }
-}
-
-async function createRequestFromCookies(): Promise<MinimalRequest | null> {
+async function createRequestFromCookies(): Promise<Request | null> {
   const cookieStore = await cookies()
   const serialized = cookieStore
     .getAll()
@@ -24,7 +18,8 @@ async function createRequestFromCookies(): Promise<MinimalRequest | null> {
     return null
   }
 
-  return { headers: { cookie: serialized } }
+  const headers = new Headers({ cookie: serialized })
+  return new Request('http://localhost', { headers })
 }
 
 // 서버 사이드에서 세션 가져오기
@@ -40,7 +35,7 @@ export async function getJwt(): Promise<JWT | null> {
   }
 
   return (await getToken({
-    req: req as unknown as any,
+    req,
     secret: process.env.NEXTAUTH_SECRET,
   })) as JWT | null
 }
@@ -53,7 +48,7 @@ export async function getAuthorizationToken(): Promise<string | null> {
   }
 
   const token = await getToken({
-    req: req as unknown as any,
+    req,
     secret: process.env.NEXTAUTH_SECRET,
     raw: true,
   })

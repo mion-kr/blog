@@ -29,7 +29,7 @@ export interface ApiRequestOptions {
 /**
  * 기본 API 요청 함수
  */
-async function apiRequest<T>(
+export async function request<T>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
@@ -51,13 +51,47 @@ async function apiRequest<T>(
     headers: requestHeaders,
   };
 
-  if (body && method !== 'GET') {
+  if (body !== undefined && method !== 'GET') {
     config.body = JSON.stringify(body);
   }
 
   try {
     const response = await fetch(url, config);
-    const data = (await response.json()) as ApiResponse<T>;
+    const hasBody = response.status !== 204;
+    const contentType = response.headers.get('content-type') ?? '';
+
+    let data: ApiResponse<T> | undefined;
+
+    if (hasBody && contentType.includes('application/json')) {
+      data = (await response.json()) as ApiResponse<T>;
+    } else if (hasBody) {
+      const text = await response.text();
+      if (text) {
+        data = JSON.parse(text) as ApiResponse<T>;
+      }
+    }
+
+    if (!data) {
+      data = response.ok
+        ? {
+            success: true,
+            message: '요청이 성공했어요.',
+            timestamp: new Date().toISOString(),
+            path: endpoint,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data: undefined as any,
+          }
+        : {
+            success: false,
+            message: '서버 응답이 비어 있습니다.',
+            timestamp: new Date().toISOString(),
+            path: endpoint,
+            error: {
+              code: 'UNKNOWN_ERROR',
+              statusCode: response.status,
+            },
+          };
+    }
 
     if (!response.ok) {
       const errorData = data as ApiResponse<unknown>;
@@ -98,6 +132,12 @@ async function apiRequest<T>(
 /**
  * 쿼리 파라미터를 URL 검색 파라미터로 변환
  */
+function ensureAuthToken(token: string | undefined, context: string) {
+  if (!token) {
+    throw new ApiError(401, 'MISSING_TOKEN', `${context} 호출에 인증 토큰이 필요합니다.`);
+  }
+}
+
 function buildQueryParams(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
 
@@ -123,7 +163,7 @@ export const postsApi = {
     options: ApiRequestOptions = {}
   ): Promise<PaginatedResponse<PostResponseDto>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<PostResponseDto[]>(
+    const response = await request<PostResponseDto[]>(
       `/api/posts${queryString}`,
       options
     );
@@ -138,7 +178,7 @@ export const postsApi = {
     slug: string,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<PostResponseDto>> {
-    return apiRequest<PostResponseDto>(`/api/posts/${slug}`, options);
+    return request<PostResponseDto>(`/api/posts/${slug}`, options);
   },
 
   /**
@@ -148,7 +188,32 @@ export const postsApi = {
     id: string,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<PostResponseDto>> {
-    return apiRequest<PostResponseDto>(`/api/posts/id/${id}`, options);
+    return request<PostResponseDto>(`/api/posts/id/${id}`, options);
+  },
+
+  async createPost(
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<PostResponseDto>> {
+    ensureAuthToken(options.token, 'POST /api/posts');
+    return apiClient.post<PostResponseDto>('/api/posts', payload, options);
+  },
+
+  async updatePost(
+    slug: string,
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<PostResponseDto>> {
+    ensureAuthToken(options.token, `PUT /api/posts/${slug}`);
+    return apiClient.put<PostResponseDto>(`/api/posts/${slug}`, payload, options);
+  },
+
+  async deletePost(
+    slug: string,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<null>> {
+    ensureAuthToken(options.token, `DELETE /api/posts/${slug}`);
+    return apiClient.delete<null>(`/api/posts/${slug}`, options);
   },
 
 };
@@ -165,7 +230,7 @@ export const categoriesApi = {
     options: ApiRequestOptions = {}
   ): Promise<PaginatedResponse<Category>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<Category[]>(
+    const response = await request<Category[]>(
       `/api/categories${queryString}`,
       options
     );
@@ -180,7 +245,7 @@ export const categoriesApi = {
     slug: string,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<Category>> {
-    return apiRequest<Category>(`/api/categories/${slug}`, options);
+    return request<Category>(`/api/categories/${slug}`, options);
   },
 };
 
@@ -196,7 +261,7 @@ export const tagsApi = {
     options: ApiRequestOptions = {}
   ): Promise<PaginatedResponse<Tag>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<Tag[]>(`/api/tags${queryString}`, options);
+    const response = await request<Tag[]>(`/api/tags${queryString}`, options);
 
     return response as PaginatedResponse<Tag>;
   },
@@ -208,7 +273,7 @@ export const tagsApi = {
     slug: string,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<Tag>> {
-    return apiRequest<Tag>(`/api/tags/${slug}`, options);
+    return request<Tag>(`/api/tags/${slug}`, options);
   },
 };
 
@@ -216,6 +281,36 @@ export const tagsApi = {
  * API 클라이언트 메인 객체
  */
 export const apiClient = {
+  request,
+  get<T>(endpoint: string, options: ApiRequestOptions = {}) {
+    return request<T>(endpoint, { ...options, method: 'GET' });
+  },
+  post<T>(endpoint: string, body: unknown, options: ApiRequestOptions) {
+    ensureAuthToken(options.token, `POST ${endpoint}`);
+    return request<T>(endpoint, { ...options, method: 'POST', body });
+  },
+  put<T>(endpoint: string, body: unknown, options: ApiRequestOptions) {
+    ensureAuthToken(options.token, `PUT ${endpoint}`);
+    return request<T>(endpoint, { ...options, method: 'PUT', body });
+  },
+  delete<T>(endpoint: string, options: ApiRequestOptions) {
+    ensureAuthToken(options.token, `DELETE ${endpoint}`);
+    return request<T>(endpoint, { ...options, method: 'DELETE' });
+  },
+  withToken(token: string) {
+    return {
+      request: <T>(endpoint: string, options: ApiRequestOptions = {}) =>
+        request<T>(endpoint, { ...options, token }),
+      get: <T>(endpoint: string, options: ApiRequestOptions = {}) =>
+        request<T>(endpoint, { ...options, token, method: 'GET' }),
+      post: <T>(endpoint: string, body: unknown, options: ApiRequestOptions = {}) =>
+        request<T>(endpoint, { ...options, token, method: 'POST', body }),
+      put: <T>(endpoint: string, body: unknown, options: ApiRequestOptions = {}) =>
+        request<T>(endpoint, { ...options, token, method: 'PUT', body }),
+      delete: <T>(endpoint: string, options: ApiRequestOptions = {}) =>
+        request<T>(endpoint, { ...options, token, method: 'DELETE' }),
+    };
+  },
   posts: postsApi,
   categories: categoriesApi,
   tags: tagsApi,
