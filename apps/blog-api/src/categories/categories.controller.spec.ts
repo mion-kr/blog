@@ -454,7 +454,7 @@ describe('CategoriesController', () => {
   });
 
   describe('Guard Application', () => {
-    it('create 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('create 메서드는 AdminGuard를 사용해야 함', () => {
       // Arrange & Act
       const guards = Reflect.getMetadata('__guards__', controller.create);
 
@@ -464,7 +464,7 @@ describe('CategoriesController', () => {
       // Note: 실제 가드 인스턴스 검증은 통합 테스트에서 수행
     });
 
-    it('update 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('update 메서드는 AdminGuard를 사용해야 함', () => {
       // Arrange & Act
       const guards = Reflect.getMetadata('__guards__', controller.update);
 
@@ -472,7 +472,7 @@ describe('CategoriesController', () => {
       expect(guards).toBeDefined();
     });
 
-    it('remove 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('remove 메서드는 AdminGuard를 사용해야 함', () => {
       // Arrange & Act
       const guards = Reflect.getMetadata('__guards__', controller.remove);
 

@@ -222,7 +222,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(testTag)
         .expect(201);
 
@@ -246,16 +245,6 @@ describe('TagsController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 태그 생성 시 403 에러를 반환해야 함', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/tags')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send(testTag)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('잘못된 데이터로 태그 생성 시 400 에러를 반환해야 함', async () => {
       const invalidTag = {
         name: '', // 빈 이름
@@ -265,7 +254,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidTag)
         .expect(400);
 
@@ -281,7 +269,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send({
           ...testTag,
           name: '다른 이름',
@@ -301,7 +288,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(incompleteTag)
         .expect(400);
 
@@ -317,7 +303,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(longNameTag)
         .expect(400);
 
@@ -334,7 +319,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/tags/${testTag.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateTag)
         .expect(200);
 
@@ -349,7 +333,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put('/api/tags/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateTag)
         .expect(404);
 
@@ -365,21 +348,10 @@ describe('TagsController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 태그 수정 시 403 에러를 반환해야 함', async () => {
-      const response = await request(app.getHttpServer())
-        .put(`/api/tags/${testTag.slug}`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send(updateTag)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('빈 데이터로 태그 수정 시도는 성공해야 함 (변경 없음)', async () => {
       const response = await request(app.getHttpServer())
         .put(`/api/tags/${testTag.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send({})
         .expect(200);
 
@@ -395,7 +367,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/tags/${testTag.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidUpdate)
         .expect(400);
 
@@ -412,7 +383,6 @@ describe('TagsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/tags/${testTag.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 삭제 확인
@@ -425,7 +395,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .delete('/api/tags/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -439,22 +408,12 @@ describe('TagsController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 태그 삭제 시 403 에러를 반환해야 함', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/api/tags/${testTag.slug}`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('연관된 포스트가 있는 태그도 삭제할 수 있어야 함 (soft delete)', async () => {
       // 포스트와 연관된 태그 생성 및 삭제 테스트
       // 실제 구현에서는 cascade 옵션에 따라 처리
       await request(app.getHttpServer())
         .delete(`/api/tags/${testTag.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
     });
   });
@@ -492,7 +451,6 @@ describe('TagsController (Integration)', () => {
           request(app.getHttpServer())
             .post('/api/tags')
             .set('Authorization', `Bearer ${adminToken}`)
-            .set('X-CSRF-Token', 'test-csrf-token')
             .send(testTag),
         );
 
@@ -554,7 +512,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(specialTag)
         .expect(201);
 
@@ -570,7 +527,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(unicodeTag)
         .expect(201);
 
@@ -586,7 +542,6 @@ describe('TagsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/tags')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(mixedCaseTag)
         .expect(400);
 
@@ -624,7 +579,6 @@ async function createTestTag(
   const response = await request(app.getHttpServer())
     .post('/api/tags')
     .set('Authorization', `Bearer ${token}`)
-    .set('X-CSRF-Token', 'test-csrf-token')
     .send(tag);
 
   return response.body.data;

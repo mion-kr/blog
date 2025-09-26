@@ -506,19 +506,19 @@ console.log(hello);
   });
 
   describe('Guards', () => {
-    it('create 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('create 메서드는 AdminGuard를 사용해야 함', () => {
       // Guards는 이미 모듈 설정에서 override되어 있음
       // 여기서는 guards가 적용되었는지 메타데이터를 확인할 수 있음
       const guards = Reflect.getMetadata('__guards__', controller.create);
       expect(guards).toBeDefined();
     });
 
-    it('update 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('update 메서드는 AdminGuard를 사용해야 함', () => {
       const guards = Reflect.getMetadata('__guards__', controller.update);
       expect(guards).toBeDefined();
     });
 
-    it('remove 메서드는 AdminGuard와 CsrfGuard를 사용해야 함', () => {
+    it('remove 메서드는 AdminGuard를 사용해야 함', () => {
       const guards = Reflect.getMetadata('__guards__', controller.remove);
       expect(guards).toBeDefined();
     });

@@ -15,7 +15,6 @@ import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CsrfGuard } from '../auth/guards/csrf.guard';
 
 import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -96,7 +95,7 @@ export class PostsController {
    * 포스트 생성 (ADMIN 권한 + CSRF 보호)
   */
   @Post()
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminCreate(PostResponseDto, '포스트 생성')
   async create(
     @User() user: CurrentUser,
@@ -109,7 +108,7 @@ export class PostsController {
    * 포스트 수정 (ADMIN 권한 + CSRF 보호)
    */
   @Put(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminUpdate(PostResponseDto, '포스트 수정', '포스트')
   async update(
     @Param('slug') slug: string,
@@ -123,7 +122,7 @@ export class PostsController {
    * 포스트 삭제 (ADMIN 권한 + CSRF 보호)
    */
   @Delete(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAdminDelete('포스트 삭제', '포스트')
   async remove(

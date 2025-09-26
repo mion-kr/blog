@@ -204,7 +204,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/categories')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(testCategory)
         .expect(201);
 
@@ -230,16 +229,6 @@ describe('CategoriesController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 카테고리 생성 시 403 에러를 반환해야 함', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send(testCategory)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('잘못된 데이터로 카테고리 생성 시 400 에러를 반환해야 함', async () => {
       const invalidCategory = {
         name: '', // 빈 이름
@@ -250,7 +239,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/categories')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidCategory)
         .expect(400);
 
@@ -266,7 +254,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/categories')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send({
           ...testCategory,
           name: '다른 이름',
@@ -286,7 +273,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/categories')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(incompleteCategory)
         .expect(400);
 
@@ -303,7 +289,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/categories/${testCategory.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateCategory)
         .expect(200);
 
@@ -320,7 +305,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put('/api/categories/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateCategory)
         .expect(404);
 
@@ -344,7 +328,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/categories/${testCategory.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(partialUpdate)
         .expect(200);
 
@@ -363,7 +346,6 @@ describe('CategoriesController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/categories/${testCategory.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 삭제 확인
@@ -376,7 +358,6 @@ describe('CategoriesController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .delete('/api/categories/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -410,7 +391,6 @@ describe('CategoriesController (Integration)', () => {
           request(app.getHttpServer())
             .post('/api/categories')
             .set('Authorization', `Bearer ${adminToken}`)
-            .set('X-CSRF-Token', 'test-csrf-token')
             .send(testCategory),
         );
 
@@ -460,7 +440,6 @@ async function createTestCategory(
   const response = await request(app.getHttpServer())
     .post('/api/categories')
     .set('Authorization', `Bearer ${token}`)
-    .set('X-CSRF-Token', 'test-csrf-token')
     .send(category);
 
   return response.body.data;

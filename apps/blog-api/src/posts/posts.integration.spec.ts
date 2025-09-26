@@ -371,7 +371,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -404,22 +403,6 @@ describe('PostsController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 포스트 생성 시 403 에러를 반환해야 함', async () => {
-      const postData = {
-        ...testPost,
-        categoryId: testCategory.id,
-        tagIds: testTags.map((tag) => tag.id),
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/api/posts')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send(postData)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('잘못된 데이터로 포스트 생성 시 400 에러를 반환해야 함', async () => {
       const invalidPost = {
         title: '', // 빈 제목
@@ -432,7 +415,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidPost)
         .expect(400);
 
@@ -450,7 +432,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(400);
 
@@ -467,7 +448,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(400);
 
@@ -486,7 +466,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(minimalPost)
         .expect(201);
 
@@ -507,7 +486,6 @@ describe('PostsController (Integration)', () => {
       const response1 = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -515,7 +493,6 @@ describe('PostsController (Integration)', () => {
       const response2 = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -534,7 +511,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updatePost)
         .expect(200);
 
@@ -551,7 +527,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put('/api/posts/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updatePost)
         .expect(404);
 
@@ -576,7 +551,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateData)
         .expect(200);
 
@@ -592,7 +566,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(partialUpdate)
         .expect(200);
 
@@ -609,7 +582,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidUpdate)
         .expect(400);
 
@@ -628,7 +600,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 삭제 확인
@@ -641,7 +612,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .delete('/api/posts/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -659,7 +629,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 태그는 여전히 존재해야 함
@@ -701,7 +670,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       const afterResponse = await request(app.getHttpServer())
@@ -793,7 +761,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(longPost)
         .expect(201);
 
@@ -812,7 +779,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(specialPost)
         .expect(201);
 
@@ -853,7 +819,6 @@ const test = () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(mdxPost)
         .expect(201);
 
@@ -907,7 +872,6 @@ async function createTestPost(
   const response = await request(app.getHttpServer())
     .post('/api/posts')
     .set('Authorization', `Bearer ${token}`)
-    .set('X-CSRF-Token', 'test-csrf-token')
     .send(postData);
 
   return response.body.data;
