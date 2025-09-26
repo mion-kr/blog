@@ -8,32 +8,22 @@ import {
   CategoriesQuery,
   TagsQuery,
 } from '@repo/shared';
+import {
+  ApiError,
+  ReauthenticationRequiredError,
+  isReauthenticationResponse,
+} from './api-errors';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 /**
  * API 요청 설정 인터페이스
  */
-interface ApiRequestOptions {
+export interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
   body?: unknown;
   token?: string;
-}
-
-/**
- * API 클라이언트 에러 클래스
- */
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-    public details?: unknown
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
 }
 
 /**
@@ -67,11 +57,20 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json() as ApiResponse<T>;
+    const data = (await response.json()) as ApiResponse<T>;
 
     if (!response.ok) {
       const errorData = data as ApiResponse<unknown>;
       const isError = isErrorResponse(errorData);
+
+      if (isReauthenticationResponse(errorData, response.status)) {
+        throw new ReauthenticationRequiredError(
+          response.status,
+          errorData.message ?? '세션이 만료되었어요. 다시 로그인해 주세요.',
+          isError ? errorData.error.details : undefined,
+          response.status === 403 ? 'FORBIDDEN' : 'SESSION_EXPIRED'
+        );
+      }
 
       throw new ApiError(
         response.status,
@@ -119,9 +118,15 @@ export const postsApi = {
   /**
    * 포스트 목록 조회
    */
-  async getPosts(query: PostsQuery = {}): Promise<PaginatedResponse<PostResponseDto>> {
+  async getPosts(
+    query: PostsQuery = {},
+    options: ApiRequestOptions = {}
+  ): Promise<PaginatedResponse<PostResponseDto>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<PostResponseDto[]>(`/api/posts${queryString}`);
+    const response = await apiRequest<PostResponseDto[]>(
+      `/api/posts${queryString}`,
+      options
+    );
 
     return response as PaginatedResponse<PostResponseDto>;
   },
@@ -129,15 +134,21 @@ export const postsApi = {
   /**
    * 특정 포스트 조회 (슬러그 기반)
    */
-  async getPostBySlug(slug: string): Promise<ApiResponse<PostResponseDto>> {
-    return apiRequest<PostResponseDto>(`/api/posts/${slug}`);
+  async getPostBySlug(
+    slug: string,
+    options: ApiRequestOptions = {}
+  ): Promise<ApiResponse<PostResponseDto>> {
+    return apiRequest<PostResponseDto>(`/api/posts/${slug}`, options);
   },
 
   /**
    * 특정 포스트 조회 (ID 기반)
    */
-  async getPostById(id: string): Promise<ApiResponse<PostResponseDto>> {
-    return apiRequest<PostResponseDto>(`/api/posts/id/${id}`);
+  async getPostById(
+    id: string,
+    options: ApiRequestOptions = {}
+  ): Promise<ApiResponse<PostResponseDto>> {
+    return apiRequest<PostResponseDto>(`/api/posts/id/${id}`, options);
   },
 
 };
@@ -149,9 +160,15 @@ export const categoriesApi = {
   /**
    * 카테고리 목록 조회
    */
-  async getCategories(query: CategoriesQuery = {}): Promise<PaginatedResponse<Category>> {
+  async getCategories(
+    query: CategoriesQuery = {},
+    options: ApiRequestOptions = {}
+  ): Promise<PaginatedResponse<Category>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<Category[]>(`/api/categories${queryString}`);
+    const response = await apiRequest<Category[]>(
+      `/api/categories${queryString}`,
+      options
+    );
 
     return response as PaginatedResponse<Category>;
   },
@@ -159,8 +176,11 @@ export const categoriesApi = {
   /**
    * 슬러그 기반 카테고리 상세 조회
    */
-  async getCategoryBySlug(slug: string): Promise<ApiResponse<Category>> {
-    return apiRequest<Category>(`/api/categories/${slug}`);
+  async getCategoryBySlug(
+    slug: string,
+    options: ApiRequestOptions = {}
+  ): Promise<ApiResponse<Category>> {
+    return apiRequest<Category>(`/api/categories/${slug}`, options);
   },
 };
 
@@ -171,9 +191,12 @@ export const tagsApi = {
   /**
    * 태그 목록 조회
    */
-  async getTags(query: TagsQuery = {}): Promise<PaginatedResponse<Tag>> {
+  async getTags(
+    query: TagsQuery = {},
+    options: ApiRequestOptions = {}
+  ): Promise<PaginatedResponse<Tag>> {
     const queryString = buildQueryParams(query as Record<string, unknown>);
-    const response = await apiRequest<Tag[]>(`/api/tags${queryString}`);
+    const response = await apiRequest<Tag[]>(`/api/tags${queryString}`, options);
 
     return response as PaginatedResponse<Tag>;
   },
@@ -181,8 +204,11 @@ export const tagsApi = {
   /**
    * 슬러그 기반 태그 상세 조회
    */
-  async getTagBySlug(slug: string): Promise<ApiResponse<Tag>> {
-    return apiRequest<Tag>(`/api/tags/${slug}`);
+  async getTagBySlug(
+    slug: string,
+    options: ApiRequestOptions = {}
+  ): Promise<ApiResponse<Tag>> {
+    return apiRequest<Tag>(`/api/tags/${slug}`, options);
   },
 };
 
