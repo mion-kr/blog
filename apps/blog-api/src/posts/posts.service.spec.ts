@@ -953,6 +953,119 @@ describe('PostsService', () => {
       );
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([]);
     });
+
+    it('전달된 authorId로 포스트를 생성해야 함', async () => {
+      // Arrange
+      const createPostDto: CreatePostDto = {
+        title: 'Author Aware Post',
+        content: 'Author aware content',
+        excerpt: undefined,
+        coverImage: undefined,
+        published: true,
+        categoryId: 'cat-1',
+        tagIds: ['tag-1'],
+      };
+
+      const mockNewPost = {
+        id: 'new-post-id',
+        title: 'Author Aware Post',
+        slug: 'author-aware-post',
+        content: 'Author aware content',
+        excerpt: null,
+        coverImage: null,
+        published: true,
+        viewCount: 0,
+        categoryId: 'cat-1',
+        authorId: mockAuthorId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publishedAt: new Date(),
+      };
+
+      const selectQueue = [
+        {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([]),
+        }, // slug 중복 검사
+        {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([{ id: 'cat-1' }]),
+        }, // 카테고리 존재 확인
+        {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([{ id: 'tag-1' }]),
+        }, // 태그 존재 확인
+        {
+          from: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([mockNewPost]),
+        }, // findOneBySlug - post
+        {
+          from: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([
+            { tagId: 'tag-1', tagName: 'Tag 1', tagSlug: 'tag-1' },
+          ]),
+        }, // findOneBySlug - tags
+      ];
+
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
+
+      let capturedValues: any;
+      mockDb.transaction.mockImplementation(async (callback) => {
+        const postInsertBuilder = {
+          values: jest.fn().mockImplementation(function (values) {
+            capturedValues = values;
+            return {
+              returning: jest.fn().mockResolvedValue([mockNewPost]),
+            };
+          }),
+        };
+
+        const postTagsInsertBuilder = {
+          values: jest.fn().mockResolvedValue(undefined),
+        };
+
+        const mockTx = {
+          insert: jest.fn((table) => {
+            if (table === database.posts) {
+              return postInsertBuilder;
+            }
+            if (table === database.postTags) {
+              return postTagsInsertBuilder;
+            }
+            throw new Error('Unexpected table insert');
+          }),
+        } as unknown as typeof database.db;
+
+        return callback(mockTx);
+      });
+
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+
+      // Act
+      await service.create(createPostDto, mockAuthorId);
+
+      // Assert
+      expect(capturedValues.authorId).toBe(mockAuthorId);
+      expect(capturedValues.title).toBe(createPostDto.title);
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1');
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([
+        'tag-1',
+      ]);
+    });
   });
 
   describe('update', () => {
@@ -1297,6 +1410,95 @@ describe('PostsService', () => {
       // Assert
       expect(capturedUpdateData.published).toBe(true);
       expect(capturedUpdateData.publishedAt).toBeInstanceOf(Date);
+    });
+
+    it('카테고리를 유지하고 태그 목록을 수정하지 않아도 카운트를 갱신해야 함', async () => {
+      // Arrange
+      const slug = 'post-with-same-category';
+      const updatePostDto: UpdatePostDto = {
+        content: 'Updated content only',
+      };
+
+      const existingPost = {
+        id: '1',
+        title: 'Original Title',
+        slug: slug,
+        content: 'Original content',
+        published: false,
+        categoryId: 'cat-1',
+      };
+
+      const updatedPost = {
+        ...existingPost,
+        content: updatePostDto.content,
+      };
+
+      const selectQueue = [
+        {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([existingPost]),
+        }, // findPostBySlug
+        {
+          from: jest.fn().mockReturnValue({
+            where: jest
+              .fn()
+              .mockResolvedValue([{ tagId: 'tag-1' }, { tagId: 'tag-2' }]),
+          }),
+        }, // findTagIdsByPostId
+        {
+          from: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([updatedPost]),
+        }, // findOneBySlug - post
+        {
+          from: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([
+            { tagId: 'tag-1', tagName: 'Tag 1', tagSlug: 'tag-1' },
+            { tagId: 'tag-2', tagName: 'Tag 2', tagSlug: 'tag-2' },
+          ]),
+        }, // findOneBySlug - tags
+      ];
+
+      mockDb.select.mockImplementation(() =>
+        selectQueue.shift() || {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([]),
+          leftJoin: jest.fn().mockReturnThis(),
+        },
+      );
+
+      mockDb.transaction.mockImplementation(async (callback) => {
+        const mockTx = {
+          update: jest.fn().mockReturnValue({
+            set: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        };
+
+        return callback(mockTx);
+      });
+
+      mockDb.update.mockReturnValue({
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+
+      // Act
+      await service.update(slug, updatePostDto, mockAuthorId);
+
+      // Assert
+      expect(categoriesService.updatePostCount).toHaveBeenCalledTimes(1);
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1');
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledTimes(1);
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith([
+        'tag-1',
+        'tag-2',
+      ]);
     });
 
     it('태그를 빈 배열로 업데이트할 수 있어야 함', async () => {
