@@ -247,6 +247,31 @@ export const categoriesApi = {
   ): Promise<ApiResponse<Category>> {
     return request<Category>(`/api/categories/${slug}`, options);
   },
+
+  async createCategory(
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<Category>> {
+    ensureAuthToken(options.token, 'POST /api/categories');
+    return apiClient.post<Category>('/api/categories', payload, options);
+  },
+
+  async updateCategory(
+    slug: string,
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<Category>> {
+    ensureAuthToken(options.token, `PUT /api/categories/${slug}`);
+    return apiClient.put<Category>(`/api/categories/${slug}`, payload, options);
+  },
+
+  async deleteCategory(
+    slug: string,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<null>> {
+    ensureAuthToken(options.token, `DELETE /api/categories/${slug}`);
+    return apiClient.delete<null>(`/api/categories/${slug}`, options);
+  },
 };
 
 /**
@@ -274,6 +299,31 @@ export const tagsApi = {
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<Tag>> {
     return request<Tag>(`/api/tags/${slug}`, options);
+  },
+
+  async createTag(
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<Tag>> {
+    ensureAuthToken(options.token, 'POST /api/tags');
+    return apiClient.post<Tag>('/api/tags', payload, options);
+  },
+
+  async updateTag(
+    slug: string,
+    payload: unknown,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<Tag>> {
+    ensureAuthToken(options.token, `PUT /api/tags/${slug}`);
+    return apiClient.put<Tag>(`/api/tags/${slug}`, payload, options);
+  },
+
+  async deleteTag(
+    slug: string,
+    options: ApiRequestOptions
+  ): Promise<ApiResponse<null>> {
+    ensureAuthToken(options.token, `DELETE /api/tags/${slug}`);
+    return apiClient.delete<null>(`/api/tags/${slug}`, options);
   },
 };
 

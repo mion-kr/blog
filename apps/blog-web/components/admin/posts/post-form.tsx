@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react"
 
 import type { Category, Tag } from "@repo/shared"
 import { cn } from "@/lib/utils"
+import { TagMultiSelect } from "./tag-multi-select"
 
 interface PostFormProps {
   action: (formData: FormData) => Promise<void>
@@ -147,23 +148,11 @@ export function PostForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-200" htmlFor="tagIds">
-            태그 (복수 선택 가능)
+          <label className="text-sm font-medium text-slate-200" htmlFor="tag-search">
+            태그 선택 (자동완성)
           </label>
-          <select
-            id="tagIds"
-            name="tagIds"
-            multiple
-            defaultValue={defaultValues?.tagIds ?? []}
-            className="h-32 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
-          >
-            {tagOptions.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-500">⌘/Ctrl 키를 누른 상태에서 여러 태그를 선택할 수 있어요.</p>
+          <TagMultiSelect tags={tagOptions} name="tagIds" defaultValues={defaultValues?.tagIds ?? []} />
+          <p className="text-xs text-slate-500">태그 이름을 입력하면 추천 목록이 나타나요.</p>
         </div>
       </div>
 
