@@ -1,9 +1,9 @@
-import GoogleProvider from "next-auth/providers/google"
-import type { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 
 // Mion 계정 구분 함수 - 요구사항 문서 기준
 function getUserRole(email: string): "ADMIN" | "USER" {
-  return email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER"
+  return email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER";
 }
 
 export const authOptions: NextAuthOptions = {
@@ -21,19 +21,19 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // 첫 로그인 시 사용자 정보를 토큰에 저장
       if (account && user) {
-        token.googleId = account.providerAccountId
-        token.role = getUserRole(user.email!)
+        token.googleId = account.providerAccountId;
+        token.role = getUserRole(user.email!);
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       // 세션에 추가 정보 포함
       if (session.user) {
-        session.user.id = token.sub!
-        session.user.googleId = token.googleId as string
-        session.user.role = token.role as "ADMIN" | "USER"
+        session.user.id = token.sub!;
+        session.user.googleId = token.googleId as string;
+        session.user.role = token.role as "ADMIN" | "USER";
       }
-      return session
+      return session;
     },
   },
   cookies: {
@@ -43,7 +43,8 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        // secure: process.env.NODE_ENV === "production",
+        secure: true,
       },
     },
     sessionToken: {
@@ -51,7 +52,8 @@ export const authOptions: NextAuthOptions = {
       options: {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        // secure: process.env.NODE_ENV === "production",
+        secure: true,
       },
     },
   },
@@ -60,4 +62,4 @@ export const authOptions: NextAuthOptions = {
     maxAge: 7 * 24 * 60 * 60, // 7일
   },
   secret: process.env.NEXTAUTH_SECRET,
-}
+};
