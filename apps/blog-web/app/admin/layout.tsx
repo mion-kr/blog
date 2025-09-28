@@ -72,18 +72,20 @@ export default async function AdminLayout({
         <AdminSidebar items={NAV_ITEMS} user={session.user} />
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-6 py-4 backdrop-blur">
-            <div>
-              <h1 className="text-lg font-semibold text-slate-100">
-                관리자 콘솔
-              </h1>
-              <p className="text-sm text-slate-400">
-                콘텐츠와 메타데이터를 한 곳에서 관리하세요.
-              </p>
-            </div>
-            <div className="hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-300 md:block">
-              <span className="font-medium text-emerald-200">관리자</span>{" "}
-              권한으로 접속 중
+          <header className="border-b border-slate-800 bg-slate-950/60 px-4 py-4 backdrop-blur sm:px-6">
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+              <div>
+                <h1 className="text-lg font-semibold text-slate-100">
+                  관리자 콘솔
+                </h1>
+                <p className="text-sm text-slate-400">
+                  콘텐츠와 메타데이터를 한 곳에서 관리하세요.
+                </p>
+              </div>
+              <div className="hidden rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-300 md:block">
+                <span className="font-medium text-emerald-200">관리자</span>{" "}
+                권한으로 접속 중
+              </div>
             </div>
           </header>
 
@@ -96,7 +98,10 @@ export default async function AdminLayout({
             </div>
           ) : null}
 
-          <main className="flex-1 overflow-y-auto bg-slate-950 px-4 py-6 sm:px-6 lg:px-8">
+          <main
+            id="main"
+            className="flex-1 overflow-y-auto bg-slate-950 px-4 py-6 sm:px-6 lg:px-8"
+          >
             <div className="mx-auto w-full max-w-6xl space-y-6">{children}</div>
           </main>
         </div>

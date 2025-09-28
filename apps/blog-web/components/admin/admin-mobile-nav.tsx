@@ -18,7 +18,7 @@ export function AdminMobileNav({ items }: AdminMobileNavProps) {
   const pathname = usePathname()
 
   return (
-    <nav className="grid gap-2 px-4 py-4 lg:hidden">
+    <nav className="mx-auto grid w-full max-w-6xl gap-2 px-4 py-4 lg:hidden">
       {items.map((item) => {
         const Icon = getAdminNavIcon(item.icon)
         const isActive = isAdminNavActive(pathname, item.href)
