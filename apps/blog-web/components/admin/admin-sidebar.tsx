@@ -2,15 +2,55 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import type { LucideIcon } from "lucide-react"
+import {
+  BarChart3,
+  FileText,
+  LayoutDashboard,
+  Settings,
+  Tags,
+  type LucideIcon,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+const NAV_ICON_MAP = {
+  dashboard: LayoutDashboard,
+  posts: FileText,
+  categories: BarChart3,
+  tags: Tags,
+  settings: Settings,
+} as const satisfies Record<string, LucideIcon>
+
+export type AdminNavIcon = keyof typeof NAV_ICON_MAP
 
 export interface AdminNavItem {
   label: string
   description?: string
   href: string
-  icon: LucideIcon
+  icon: AdminNavIcon
+}
+
+export function getAdminNavIcon(icon: AdminNavIcon): LucideIcon {
+  return NAV_ICON_MAP[icon] ?? LayoutDashboard
+}
+
+export function isAdminNavActive(
+  pathname: string | null,
+  href: string
+): boolean {
+  if (!pathname) {
+    return false
+  }
+
+  if (pathname === href || pathname === `${href}/`) {
+    return true
+  }
+
+  if (href === '/admin') {
+    return false
+  }
+
+  return pathname.startsWith(`${href}/`)
 }
 
 interface AdminSidebarProps {
@@ -41,8 +81,8 @@ export function AdminSidebar({ items, user }: AdminSidebarProps) {
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {items.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+          const Icon = getAdminNavIcon(item.icon)
+          const isActive = isAdminNavActive(pathname, item.href)
 
           return (
             <Link

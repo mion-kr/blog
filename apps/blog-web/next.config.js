@@ -7,6 +7,15 @@ const nextConfig = {
   
   // 워크스페이스 패키지 트랜스파일 설정
   transpilePackages: ['@repo/shared', '@repo/ui'],
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
+  },
   
   // 실험적 기능들
   experimental: {

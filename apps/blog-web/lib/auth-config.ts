@@ -1,6 +1,8 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // Mion 계정 구분 함수 - 요구사항 문서 기준
 function getUserRole(email: string): "ADMIN" | "USER" {
   return email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER";
@@ -38,22 +40,25 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     csrfToken: {
-      name: `__Secure-next-auth.csrf-token`,
+      name: isProduction
+        ? `__Secure-next-auth.csrf-token`
+        : `next-auth.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        // secure: process.env.NODE_ENV === "production",
-        secure: true,
+        secure: isProduction,
       },
     },
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      name: isProduction
+        ? `__Secure-next-auth.session-token`
+        : `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
-        // secure: process.env.NODE_ENV === "production",
-        secure: true,
+        path: "/",
+        secure: isProduction,
       },
     },
   },

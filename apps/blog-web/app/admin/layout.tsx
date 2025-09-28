@@ -1,10 +1,3 @@
-import {
-  BarChart3,
-  FileText,
-  LayoutDashboard,
-  Settings,
-  Tags,
-} from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -16,27 +9,27 @@ const NAV_ITEMS: AdminNavItem[] = [
   {
     label: "대시보드",
     href: "/admin",
-    icon: LayoutDashboard,
+    icon: "dashboard",
   },
   {
     label: "포스트 관리",
     href: "/admin/posts",
-    icon: FileText,
+    icon: "posts",
   },
   {
     label: "카테고리",
     href: "/admin/categories",
-    icon: BarChart3,
+    icon: "categories",
   },
   {
     label: "태그",
     href: "/admin/tags",
-    icon: Tags,
+    icon: "tags",
   },
   {
     label: "설정",
     href: "/admin/settings",
-    icon: Settings,
+    icon: "settings",
   },
 ];
 

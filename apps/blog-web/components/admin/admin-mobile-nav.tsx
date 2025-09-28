@@ -3,7 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-import type { AdminNavItem } from "./admin-sidebar"
+import {
+  getAdminNavIcon,
+  isAdminNavActive,
+  type AdminNavItem,
+} from "./admin-sidebar"
 import { cn } from "@/lib/utils"
 
 interface AdminMobileNavProps {
@@ -16,8 +20,8 @@ export function AdminMobileNav({ items }: AdminMobileNavProps) {
   return (
     <nav className="grid gap-2 px-4 py-4 lg:hidden">
       {items.map((item) => {
-        const Icon = item.icon
-        const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+        const Icon = getAdminNavIcon(item.icon)
+        const isActive = isAdminNavActive(pathname, item.href)
 
         return (
           <Link
