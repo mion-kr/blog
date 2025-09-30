@@ -5,14 +5,18 @@ import { getAuthorizationToken } from "@/lib/auth"
 import { AdminStatusBanner, PostForm } from "@/components/admin"
 import { createAdminPostAction } from "@/lib/admin/posts-actions"
 
-interface AdminNewPostPageProps {
-  searchParams?: {
-    status?: string
-    message?: string
-  }
+interface AdminNewPostPageSearchParams {
+  status?: string
+  message?: string
 }
 
-export default async function AdminNewPostPage({ searchParams }: AdminNewPostPageProps) {
+interface AdminNewPostPageProps {
+  searchParams?: Promise<AdminNewPostPageSearchParams>
+}
+
+export default async function AdminNewPostPage({
+  searchParams,
+}: AdminNewPostPageProps) {
   const token = await getAuthorizationToken()
 
   const [categoriesRes, tagsRes] = await Promise.all([
@@ -23,8 +27,9 @@ export default async function AdminNewPostPage({ searchParams }: AdminNewPostPag
   const categories = categoriesRes.data ?? []
   const tags = tagsRes.data ?? []
 
-  const statusParam = searchParams?.status
-  const messageParam = searchParams?.message
+  const params = searchParams ? await searchParams : undefined
+  const statusParam = params?.status
+  const messageParam = params?.message
 
   return (
     <div className="space-y-6">

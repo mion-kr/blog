@@ -2,16 +2,19 @@ import Link from "next/link";
 
 import { AdminSignInButton } from "@/components/auth/admin-signin-button";
 
-interface SignInPageProps {
-  searchParams?: {
-    callbackUrl?: string;
-    error?: string;
-  };
+interface SignInSearchParams {
+  callbackUrl?: string;
+  error?: string;
 }
 
-export default function SignInPage({ searchParams }: SignInPageProps) {
-  const callbackUrl = searchParams?.callbackUrl ?? "/admin";
-  const errorMessage = searchParams?.error;
+interface SignInPageProps {
+  searchParams?: Promise<SignInSearchParams>;
+}
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  const callbackUrl = params?.callbackUrl ?? "/admin";
+  const errorMessage = params?.error;
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
