@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFormStatus } from "react-dom"
+import { useRouter } from "next/navigation"
+import { useActionState } from "react"
 import Link from "next/link"
 import { Loader2, Wand2 } from "lucide-react"
 
@@ -10,7 +12,10 @@ import { generateSlug } from "@repo/shared"
 import { cn } from "@/lib/utils"
 
 interface CategoryFormProps {
-  action: (formData: FormData) => Promise<void>
+  action: (
+    prevState: { success: boolean; error?: string },
+    formData: FormData
+  ) => Promise<{ success: boolean; error?: string }>
   defaultValues?: Partial<CreateCategoryDto> & { slug?: string }
   submitLabel?: string
   cancelHref?: string
@@ -37,9 +42,18 @@ export function CategoryForm({
   submitLabel = '저장하기',
   cancelHref,
 }: CategoryFormProps) {
+  const router = useRouter()
+  const [state, formAction] = useActionState(action, { success: false })
   const [nameValue, setNameValue] = useState(defaultValues?.name ?? '')
   const [slugValue, setSlugValue] = useState(defaultValues?.slug ?? '')
   const [slugEdited, setSlugEdited] = useState(Boolean(defaultValues?.slug))
+
+  useEffect(() => {
+    if (state.success) {
+      const message = defaultValues?.slug ? '카테고리가 수정되었어요.' : '카테고리가 생성되었어요.'
+      router.push(`/admin/categories?status=${defaultValues?.slug ? 'updated' : 'created'}&message=${encodeURIComponent(message)}`)
+    }
+  }, [state.success, router, defaultValues?.slug])
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
@@ -62,7 +76,7 @@ export function CategoryForm({
 
   return (
     <form
-      action={action}
+      action={formAction}
       className={cn('space-y-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-sm shadow-slate-950')}
     >
       {defaultValues?.slug ? (
@@ -137,6 +151,12 @@ export function CategoryForm({
         />
         <p className="text-xs text-slate-500">카테고리 배지에 사용될 색상을 지정할 수 있어요.</p>
       </div>
+
+      {state.error ? (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {state.error}
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-3">
         <SubmitButton label={submitLabel} />

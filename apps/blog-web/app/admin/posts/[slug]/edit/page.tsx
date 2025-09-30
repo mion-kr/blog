@@ -19,8 +19,8 @@ type AdminPostEditRouteParams = {
 }
 
 interface AdminPostEditPageProps {
-  params: AdminPostEditRouteParams | Promise<AdminPostEditRouteParams>
-  searchParams?: AdminPostEditSearchParams | Promise<AdminPostEditSearchParams>
+  params: Promise<AdminPostEditRouteParams>
+  searchParams?: Promise<AdminPostEditSearchParams>
 }
 
 export default async function AdminPostEditPage({
@@ -29,8 +29,7 @@ export default async function AdminPostEditPage({
 }: AdminPostEditPageProps) {
   const token = await getAuthorizationToken()
 
-  const resolvedParams =
-    params instanceof Promise ? await params : params
+  const resolvedParams = await params
 
   if (!resolvedParams?.slug) {
     notFound()

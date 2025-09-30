@@ -1,4 +1,5 @@
 // Slug 생성 및 관리 유틸리티
+import { Romanize } from 'hangul-romanize';
 
 /**
  * 제목을 URL 친화적인 slug로 변환
@@ -6,11 +7,14 @@
  * @returns slug 문자열
  */
 export function generateSlug(title: string): string {
-  return title
+  // 한글을 로마자로 변환
+  const romanized = Romanize.from(title);
+
+  return romanized
     .toLowerCase() // 소문자 변환
     .trim() // 앞뒤 공백 제거
-    .replace(/[^\w\s가-힣-]/g, '') // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈만)
-    .replace(/[\s_-]+/g, '-') // 공백과 언더스코어를 하이픈으로
+    .replace(/[^\w\s-]/g, '') // 특수문자 제거 (영문, 숫자, 공백, 하이픈만)
+    .replace(/[\s_]+/g, '-') // 공백과 언더스코어를 하이픈으로
     .replace(/^-+|-+$/g, '') // 앞뒤 하이픈 제거
     .substring(0, 100); // 길이 제한
 }

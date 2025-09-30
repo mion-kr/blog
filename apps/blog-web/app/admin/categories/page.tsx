@@ -17,26 +17,33 @@ import {
   updateAdminCategoryAction,
 } from "@/lib/admin/categories-actions"
 
+type CategoriesSearchParams = {
+  page?: string
+  search?: string
+  status?: string
+  message?: string
+  modal?: string
+  slug?: string
+}
+
 interface CategoriesPageProps {
-  searchParams?: {
-    page?: string
-    search?: string
-    status?: string
-    message?: string
-    modal?: string
-    slug?: string
-  }
+  searchParams?: Promise<CategoriesSearchParams>
 }
 
 export default async function AdminCategoriesPage({ searchParams }: CategoriesPageProps) {
   const token = await getAuthorizationToken()
 
-  const page = Number(searchParams?.page ?? '1') || 1
-  const search = searchParams?.search?.trim() ?? ''
-  const statusParam = searchParams?.status
-  const messageParam = searchParams?.message
-  const modal = searchParams?.modal
-  const modalSlug = searchParams?.slug
+  const resolvedSearchParams = searchParams ? await searchParams : {}
+
+  const pageParam = resolvedSearchParams.page
+  const searchParam = resolvedSearchParams.search
+  const statusParam = resolvedSearchParams.status
+  const messageParam = resolvedSearchParams.message
+  const modal = resolvedSearchParams.modal
+  const modalSlug = resolvedSearchParams.slug
+
+  const page = Number(pageParam ?? '1') || 1
+  const search = searchParam?.trim() ?? ''
 
   const query: CategoriesQuery = {
     page,

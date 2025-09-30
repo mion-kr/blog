@@ -16,7 +16,7 @@ type PostsSearchParams = {
 }
 
 interface PostsPageProps {
-  searchParams?: PostsSearchParams | Promise<PostsSearchParams>
+  searchParams?: Promise<PostsSearchParams>
 }
 
 function parseBoolean(value: string | undefined): boolean | undefined {
@@ -34,8 +34,7 @@ function formatDate(dateLike: string | Date, options?: Intl.DateTimeFormatOption
 export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
   const token = await getAuthorizationToken()
 
-  const resolvedSearchParams =
-    searchParams instanceof Promise ? await searchParams : searchParams ?? {}
+  const resolvedSearchParams = searchParams ? await searchParams : {}
 
   const pageParam = resolvedSearchParams.page
   const searchParam = resolvedSearchParams.search

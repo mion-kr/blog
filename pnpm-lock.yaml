@@ -358,6 +358,10 @@ importers:
         version: 8.40.0(eslint@9.34.0(jiti@2.5.1))(typescript@5.9.2)
 
   packages/shared:
+    dependencies:
+      hangul-romanize:
+        specifier: ^0.3.2
+        version: 0.3.2
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -3562,6 +3566,12 @@ packages:
     resolution: {integrity: sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ==}
     engines: {node: '>=0.4.7'}
     hasBin: true
+
+  hangul-romanize@0.3.2:
+    resolution: {integrity: sha512-1pAOMc+nvb1Zhma/kcIUd2ba9fwF7IBSZLScn1EeFW3254HG2t1ro0JwPnTWrbjxej+KNPQZM/CUhwVs1tyUcw==}
+
+  hangulx@0.6.5:
+    resolution: {integrity: sha512-b5JqtAmQTzgz5F0JeMAPgKL39O9pQlPNZrJ/uy6xleEYI6k56HmctpVPLgNkmCPBY0JKeuz0KosLXWlfuqS4tg==}
 
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
@@ -9129,6 +9139,12 @@ snapshots:
       wordwrap: 1.0.0
     optionalDependencies:
       uglify-js: 3.19.3
+
+  hangul-romanize@0.3.2:
+    dependencies:
+      hangulx: 0.6.5
+
+  hangulx@0.6.5: {}
 
   has-bigints@1.1.0: {}
 

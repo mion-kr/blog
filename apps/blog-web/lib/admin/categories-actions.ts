@@ -20,46 +20,53 @@ async function requireTokenOrRedirect(returnTo: string): Promise<string> {
   )
 }
 
-export async function createAdminCategory(payload: CreateCategoryDto): Promise<void> {
-  const token = await requireTokenOrRedirect('/admin/categories/new')
+export async function createAdminCategory(
+  payload: CreateCategoryDto
+): Promise<{ success: boolean; error?: string }> {
+  const token = await requireTokenOrRedirect('/admin/categories')
 
   try {
     const response = await apiClient.categories.createCategory(payload, { token })
     revalidatePath('/admin/categories')
     if (response?.success && response.data) {
-      redirect(`/admin/categories/${response.data.slug}/edit?status=created`)
+      return { success: true }
     }
+    return { success: false, error: '카테고리 생성에 실패했어요.' }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
-      handleServerAuthError(error, { returnTo: '/admin/categories/new' })
+      handleServerAuthError(error, { returnTo: '/admin/categories' })
     }
     const message =
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '카테고리 생성 중 오류가 발생했어요.'
-    redirect(`/admin/categories/new?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
-export async function updateAdminCategory(slug: string, payload: UpdateCategoryDto): Promise<void> {
-  const token = await requireTokenOrRedirect(`/admin/categories/${slug}/edit`)
+export async function updateAdminCategory(
+  slug: string,
+  payload: UpdateCategoryDto
+): Promise<{ success: boolean; error?: string }> {
+  const token = await requireTokenOrRedirect('/admin/categories')
 
   try {
     const response = await apiClient.categories.updateCategory(slug, payload, { token })
     revalidatePath('/admin/categories')
     revalidatePath(`/admin/categories/${slug}`)
     if (response?.success && response.data) {
-      redirect(`/admin/categories/${response.data.slug}/edit?status=updated`)
+      return { success: true }
     }
+    return { success: false, error: '카테고리 수정에 실패했어요.' }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
-      handleServerAuthError(error, { returnTo: `/admin/categories/${slug}/edit` })
+      handleServerAuthError(error, { returnTo: '/admin/categories' })
     }
     const message =
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '카테고리 수정 중 오류가 발생했어요.'
-    redirect(`/admin/categories/${slug}/edit?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
@@ -88,7 +95,10 @@ function parseString(value: FormDataEntryValue | null | undefined): string | und
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-export async function createAdminCategoryAction(formData: FormData) {
+export async function createAdminCategoryAction(
+  _prevState: { success: boolean; error?: string },
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const payload: CreateCategoryDto = {
     name: String(formData.get('name') ?? ''),
     slug: String(formData.get('slug') ?? ''),
@@ -96,13 +106,16 @@ export async function createAdminCategoryAction(formData: FormData) {
     color: parseString(formData.get('color')),
   }
 
-  await createAdminCategory(payload)
+  return await createAdminCategory(payload)
 }
 
-export async function updateAdminCategoryAction(formData: FormData) {
+export async function updateAdminCategoryAction(
+  _prevState: { success: boolean; error?: string },
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const slug = parseString(formData.get('slug'))
   if (!slug) {
-    throw new Error('수정할 카테고리의 slug가 필요합니다.')
+    return { success: false, error: '수정할 카테고리의 slug가 필요합니다.' }
   }
 
   const payload: UpdateCategoryDto = {
@@ -112,7 +125,7 @@ export async function updateAdminCategoryAction(formData: FormData) {
     color: parseString(formData.get('color')),
   }
 
-  await updateAdminCategory(slug, payload)
+  return await updateAdminCategory(slug, payload)
 }
 
 export async function deleteAdminCategoryAction(formData: FormData) {

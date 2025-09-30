@@ -18,25 +18,27 @@ import {
 } from "@/lib/admin/tags-actions"
 
 interface TagsPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string
     search?: string
     status?: string
     message?: string
     modal?: string
     slug?: string
-  }
+  }>
 }
 
 export default async function AdminTagsPage({ searchParams }: TagsPageProps) {
   const token = await getAuthorizationToken()
 
-  const page = Number(searchParams?.page ?? '1') || 1
-  const search = searchParams?.search?.trim() ?? ''
-  const statusParam = searchParams?.status
-  const messageParam = searchParams?.message
-  const modal = searchParams?.modal
-  const modalSlug = searchParams?.slug
+  const resolvedSearchParams = searchParams ? await searchParams : {}
+
+  const page = Number(resolvedSearchParams.page ?? '1') || 1
+  const search = resolvedSearchParams.search?.trim() ?? ''
+  const statusParam = resolvedSearchParams.status
+  const messageParam = resolvedSearchParams.message
+  const modal = resolvedSearchParams.modal
+  const modalSlug = resolvedSearchParams.slug
 
   const query: TagsQuery = {
     page,
