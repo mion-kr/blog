@@ -17,7 +17,7 @@ export default async function AdminNewPostPage({ searchParams }: AdminNewPostPag
 
   const [categoriesRes, tagsRes] = await Promise.all([
     apiClient.categories.getCategories({ limit: 100 }, token ? { token } : undefined),
-    apiClient.tags.getTags({ limit: 200 }, token ? { token } : undefined),
+    apiClient.tags.getTags({ limit: 100 }, token ? { token } : undefined),
   ])
 
   const categories = categoriesRes.data ?? []

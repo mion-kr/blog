@@ -72,7 +72,7 @@ export function AuthButton({ className }: AuthButtonProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <Link
-        href={isAdmin ? "/admin/posts" : "/posts"}
+        href={isAdmin ? "/admin" : "/posts"}
         className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:text-[var(--color-primary)]"
       >
         {user?.image ? (
