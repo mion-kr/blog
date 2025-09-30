@@ -8,6 +8,7 @@ import {
   MinLength,
   MaxLength,
   IsUrl,
+  ArrayMinSize,
 } from 'class-validator';
 import { CreatePostDto as ICreatePostDto } from '@repo/shared';
 
@@ -70,15 +71,17 @@ export class CreatePostDto implements ICreatePostDto {
   categoryId: string;
 
   @ApiProperty({
-    description: '태그 ID 배열 (UUID 배열)',
+    description: '태그 ID 배열 (UUID 배열, 최소 1개 필수)',
     example: [
       '01234567-89ab-cdef-0123-456789abcdef',
       '12345678-9abc-def0-1234-56789abcdef0',
     ],
     type: [String],
     isArray: true,
+    minItems: 1,
   })
   @IsArray()
+  @ArrayMinSize(1, { message: '최소 1개 이상의 태그를 선택해야 합니다.' })
   @IsUUID('7', {
     each: true,
     message: '모든 태그 ID는 올바른 UUIDv7 형식이어야 합니다.',

@@ -51,13 +51,25 @@ export function PostForm({
   cancelHref,
 }: PostFormProps) {
   const [published, setPublished] = useState<boolean>(defaultValues?.published ?? false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(defaultValues?.tagIds ?? [])
+  const [tagError, setTagError] = useState<string>("")
 
   const categoryOptions = categories.sort((a, b) => a.name.localeCompare(b.name))
   const tagOptions = tags.sort((a, b) => a.name.localeCompare(b.name))
 
+  const handleSubmit = async (formData: FormData) => {
+    // 태그 필수 검증
+    if (selectedTagIds.length === 0) {
+      setTagError("최소 1개 이상의 태그를 선택해야 합니다.")
+      return
+    }
+    setTagError("")
+    await action(formData)
+  }
+
   return (
     <form
-      action={action}
+      action={handleSubmit}
       className={cn(
         "space-y-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-sm shadow-slate-950"
       )}
@@ -149,10 +161,16 @@ export function PostForm({
 
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-200" htmlFor="tag-search">
-            태그 선택 (자동완성)
+            태그 선택 (필수)
           </label>
-          <TagMultiSelect tags={tagOptions} name="tagIds" defaultValues={defaultValues?.tagIds ?? []} />
-          <p className="text-xs text-slate-500">태그 이름을 입력하면 추천 목록이 나타나요.</p>
+          <TagMultiSelect
+            tags={tagOptions}
+            name="tagIds"
+            defaultValues={defaultValues?.tagIds ?? []}
+            onChange={setSelectedTagIds}
+            error={tagError}
+          />
+          <p className="text-xs text-slate-500">최소 1개 이상의 태그를 선택해주세요.</p>
         </div>
       </div>
 

@@ -787,7 +787,7 @@ export class PostsService {
     const existingTags = await db
       .select({ id: tags.id })
       .from(tags)
-      .where(sql`${tags.id} = ANY(${tagIds})`);
+      .where(inArray(tags.id, tagIds));
 
     if (existingTags.length !== tagIds.length) {
       const existingTagIds = existingTags.map((tag) => tag.id);

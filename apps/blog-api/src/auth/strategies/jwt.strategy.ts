@@ -5,6 +5,10 @@ import { Strategy as CustomStrategy } from 'passport-custom';
 import type { Request } from 'express';
 import { jwtDecrypt, type JWTPayload } from 'jose';
 import hkdf from '@panva/hkdf';
+import { db, users, eq } from '@repo/database';
+
+type UserRecord = typeof users.$inferSelect;
+type UserInsert = typeof users.$inferInsert;
 
 /**
  * JWT 페이로드 인터페이스
@@ -152,16 +156,104 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
       throw new UnauthorizedException('Token payload is missing subject or email');
     }
 
-    // 5. 사용자 정보 반환
-    const name = (payload.name as string | undefined) ?? email;
-    const role = (payload.role as 'ADMIN' | 'USER' | undefined) ?? 'USER';
+    const googleId = (payload.googleId as string | undefined) ?? subject;
+    if (!googleId) {
+      throw new UnauthorizedException('Token payload is missing Google account identifier');
+    }
+
+    const nameFromToken = (payload.name as string | undefined) ?? email;
+    const imageFromToken = payload.picture as string | undefined;
+    const roleFromToken = (payload.role as 'ADMIN' | 'USER' | undefined) ?? 'USER';
+
+    const userRecord = await this.ensureUserExists({
+      googleId,
+      email,
+      name: nameFromToken,
+      role: roleFromToken,
+      image: imageFromToken,
+    });
 
     return {
-      id: subject,
-      email,
-      name,
-      role,
+      id: userRecord.id,
+      email: userRecord.email,
+      name: userRecord.name,
+      role: userRecord.role,
       tokenPayload: payload as JwtPayload, // 원본 페이로드도 포함
     };
+  }
+
+  private async ensureUserExists(user: {
+    googleId: string;
+    email: string;
+    name: string;
+    role: 'ADMIN' | 'USER';
+    image?: string;
+  }) {
+    const existing = await db
+      .select()
+      .from(users)
+      .where(eq(users.googleId, user.googleId))
+      .limit(1);
+
+    if (existing.length > 0) {
+      const record = existing[0];
+      const updates: Partial<UserInsert> = {};
+
+      if (record.name !== user.name) {
+        updates.name = user.name;
+      }
+
+      if (user.image && record.image !== user.image) {
+        updates.image = user.image;
+      }
+
+      if (record.role !== user.role) {
+        updates.role = user.role;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await db
+          .update(users)
+          .set({
+            ...updates,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, record.id));
+
+        return {
+          ...record,
+          ...updates,
+        } as UserRecord;
+      }
+
+      return record as UserRecord;
+    }
+
+    try {
+      const [created] = await db
+        .insert(users)
+        .values({
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          googleId: user.googleId,
+          role: user.role,
+        })
+        .returning();
+
+      return created as UserRecord;
+    } catch (error) {
+      const fallback = await db
+        .select()
+        .from(users)
+        .where(eq(users.googleId, user.googleId))
+        .limit(1);
+
+      if (fallback.length === 0) {
+        throw error;
+      }
+
+      return fallback[0] as UserRecord;
+    }
   }
 }
