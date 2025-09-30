@@ -9,26 +9,41 @@ import {
   updateAdminPostAction,
 } from "@/lib/admin/posts-actions"
 
-interface AdminPostEditPageProps {
-  params: {
-    slug: string
-  }
-  searchParams?: {
-    status?: string
-    message?: string
-  }
+type AdminPostEditSearchParams = {
+  status?: string
+  message?: string
 }
 
-export default async function AdminPostEditPage({ params, searchParams }: AdminPostEditPageProps) {
+type AdminPostEditRouteParams = {
+  slug: string
+}
+
+interface AdminPostEditPageProps {
+  params: AdminPostEditRouteParams | Promise<AdminPostEditRouteParams>
+  searchParams?: AdminPostEditSearchParams | Promise<AdminPostEditSearchParams>
+}
+
+export default async function AdminPostEditPage({
+  params,
+  searchParams,
+}: AdminPostEditPageProps) {
   const token = await getAuthorizationToken()
-  const slug = decodeURIComponent(params.slug)
+
+  const resolvedParams =
+    params instanceof Promise ? await params : params
+
+  if (!resolvedParams?.slug) {
+    notFound()
+  }
+
+  const slug = decodeURIComponent(resolvedParams.slug)
 
   const [postRes, categoriesRes, tagsRes] = await Promise.all([
     token
       ? apiClient.posts.getPostBySlug(slug, { token })
       : apiClient.posts.getPostBySlug(slug),
     apiClient.categories.getCategories({ limit: 100 }, token ? { token } : undefined),
-    apiClient.tags.getTags({ limit: 200 }, token ? { token } : undefined),
+    apiClient.tags.getTags({ limit: 100 }, token ? { token } : undefined),
   ])
 
   if (!postRes || !isSuccessResponse(postRes) || !postRes.data) {
@@ -38,8 +53,10 @@ export default async function AdminPostEditPage({ params, searchParams }: AdminP
   const post = postRes.data
   const categories = categoriesRes.data ?? []
   const tags = tagsRes.data ?? []
-  const statusParam = searchParams?.status
-  const messageParam = searchParams?.message
+  const resolvedSearchParams =
+    searchParams instanceof Promise ? await searchParams : searchParams ?? {}
+  const statusParam = resolvedSearchParams.status
+  const messageParam = resolvedSearchParams.message
 
   return (
     <div className="space-y-6">

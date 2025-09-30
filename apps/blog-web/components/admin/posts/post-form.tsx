@@ -64,7 +64,7 @@ export function PostForm({
       return
     }
     setTagError("")
-    await action(formData)
+    return action(formData)
   }
 
   return (
@@ -136,8 +136,8 @@ export function PostForm({
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
+      <div className="grid gap-4 md:grid-cols-2 md:items-start">
+        <div className="flex h-full flex-col gap-2">
           <label className="text-sm font-medium text-slate-200" htmlFor="categoryId">
             카테고리
           </label>
@@ -159,7 +159,7 @@ export function PostForm({
           </select>
         </div>
 
-        <div className="grid gap-2">
+        <div className="flex h-full flex-col gap-2">
           <label className="text-sm font-medium text-slate-200" htmlFor="tag-search">
             태그 선택 (필수)
           </label>
@@ -168,11 +168,16 @@ export function PostForm({
             name="tagIds"
             defaultValues={defaultValues?.tagIds ?? []}
             onChange={setSelectedTagIds}
+            className="flex-1"
             error={tagError}
+            inputId="tag-search"
           />
-          <p className="text-xs text-slate-500">최소 1개 이상의 태그를 선택해주세요.</p>
         </div>
       </div>
+
+      <p className="text-xs text-slate-500">
+        최소 1개 이상의 태그를 선택해주세요.
+      </p>
 
       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-4 py-3">
         <label className="flex items-center gap-3 text-sm text-slate-200" htmlFor="published">

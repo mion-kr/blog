@@ -594,10 +594,7 @@ export class PostsService {
     } = updatePostDto;
 
     // 새 슬러그 생성 및 중복 확인 (제목이 변경된 경우)
-    let newSlug = slug;
-    if (title && title !== existingPost.title) {
-      newSlug = await this.createSlugFromTitle(title, existingPost.id);
-    }
+    const newSlug = slug;
 
     // 카테고리 존재 확인 (변경된 경우)
     if (categoryId && categoryId !== existingPost.categoryId) {

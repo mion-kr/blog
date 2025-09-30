@@ -11,9 +11,19 @@ interface TagMultiSelectProps {
   defaultValues?: string[]
   onChange?: (tagIds: string[]) => void
   error?: string
+  className?: string
+  inputId?: string
 }
 
-export function TagMultiSelect({ tags, name, defaultValues = [], onChange, error }: TagMultiSelectProps) {
+export function TagMultiSelect({
+  tags,
+  name,
+  defaultValues = [],
+  onChange,
+  error,
+  className,
+  inputId,
+}: TagMultiSelectProps) {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string[]>(defaultValues)
   const [isDropdownOpen, setDropdownOpen] = useState(false)
@@ -46,7 +56,7 @@ export function TagMultiSelect({ tags, name, defaultValues = [], onChange, error
   }
 
   return (
-    <div className="space-y-2">
+    <div className={cn("flex h-full flex-col gap-2", className)}>
       <div className="flex flex-wrap gap-2 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2">
         {selected.length === 0 ? (
           <span className="text-xs text-slate-500">선택된 태그가 없습니다.</span>
@@ -71,6 +81,7 @@ export function TagMultiSelect({ tags, name, defaultValues = [], onChange, error
 
       <div className="relative">
         <input
+          id={inputId}
           type="text"
           value={query}
           onChange={(event) => {

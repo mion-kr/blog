@@ -7,14 +7,16 @@ import { apiClient, isSuccessResponse } from "@/lib/api-client"
 import { getAuthorizationToken } from "@/lib/auth"
 import { AdminStatusBanner } from "@/components/admin"
 
+type PostsSearchParams = {
+  page?: string
+  search?: string
+  published?: string
+  status?: string
+  message?: string
+}
+
 interface PostsPageProps {
-  searchParams?: {
-    page?: string
-    search?: string
-    published?: string
-    status?: string
-    message?: string
-  }
+  searchParams?: PostsSearchParams | Promise<PostsSearchParams>
 }
 
 function parseBoolean(value: string | undefined): boolean | undefined {
@@ -32,11 +34,18 @@ function formatDate(dateLike: string | Date, options?: Intl.DateTimeFormatOption
 export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
   const token = await getAuthorizationToken()
 
-  const page = Number(searchParams?.page ?? '1') || 1
-  const search = searchParams?.search?.trim() ?? ''
-  const published = parseBoolean(searchParams?.published)
-  const statusParam = searchParams?.status
-  const messageParam = searchParams?.message
+  const resolvedSearchParams =
+    searchParams instanceof Promise ? await searchParams : searchParams ?? {}
+
+  const pageParam = resolvedSearchParams.page
+  const searchParam = resolvedSearchParams.search
+  const publishedParam = resolvedSearchParams.published
+  const statusParam = resolvedSearchParams.status
+  const messageParam = resolvedSearchParams.message
+
+  const page = Number(pageParam ?? '1') || 1
+  const search = searchParam?.trim() ?? ''
+  const published = parseBoolean(publishedParam)
 
   const query: PostsQuery = {
     page,

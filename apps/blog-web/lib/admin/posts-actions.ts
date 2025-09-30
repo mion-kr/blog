@@ -58,7 +58,7 @@ export async function createAdminPost(
 export async function updateAdminPost(
   slug: string,
   payload: UpdatePostDto
-): Promise<void> {
+): Promise<PostResponseDto> {
   const token = await requireTokenOrRedirect(`/admin/posts/${slug}/edit`)
 
   try {
@@ -71,7 +71,7 @@ export async function updateAdminPost(
     revalidatePath('/admin/posts')
     revalidatePath(`/admin/posts/${slug}`)
     if (response?.success && response.data) {
-      redirect(`/admin/posts/${response.data.slug}/edit?status=updated`)
+      return response.data
     }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
@@ -85,6 +85,8 @@ export async function updateAdminPost(
 
     redirect(`/admin/posts/${slug}/edit?status=error&message=${encodeURIComponent(message)}`)
   }
+
+  throw new Error('포스트 수정 결과를 가져오지 못했습니다.')
 }
 
 export async function deleteAdminPost(
