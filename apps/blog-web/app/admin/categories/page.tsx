@@ -261,10 +261,13 @@ export default async function AdminCategoriesPage({ searchParams }: CategoriesPa
             <div className="flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs text-red-200">
               <span>삭제하면 연결된 포스트에서 카테고리가 제거됩니다.</span>
               <DeleteConfirmButton
+                action={deleteAdminCategoryAction}
                 formId="delete-category-form"
                 label="카테고리 삭제"
                 confirmLabel="삭제하기"
                 description="카테고리를 삭제하면 되돌릴 수 없어요. 계속하시겠습니까?"
+                redirectUrl="/admin/categories"
+                successMessage="카테고리가 삭제되었어요."
               />
             </div>
           </div>

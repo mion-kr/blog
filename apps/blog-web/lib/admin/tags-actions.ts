@@ -20,56 +20,65 @@ async function requireTokenOrRedirect(returnTo: string): Promise<string> {
   )
 }
 
-export async function createAdminTag(payload: CreateTagDto): Promise<void> {
-  const token = await requireTokenOrRedirect('/admin/tags/new')
+export async function createAdminTag(
+  payload: CreateTagDto
+): Promise<{ success: boolean; error?: string }> {
+  const token = await requireTokenOrRedirect('/admin/tags')
 
   try {
     const response = await apiClient.tags.createTag(payload, { token })
     revalidatePath('/admin/tags')
     if (response?.success && response.data) {
-      redirect(`/admin/tags/${response.data.slug}/edit?status=created`)
+      return { success: true }
     }
+    return { success: false, error: '태그 생성에 실패했어요.' }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
-      handleServerAuthError(error, { returnTo: '/admin/tags/new' })
+      handleServerAuthError(error, { returnTo: '/admin/tags' })
     }
     const message =
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '태그 생성 중 오류가 발생했어요.'
-    redirect(`/admin/tags/new?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
-export async function updateAdminTag(slug: string, payload: UpdateTagDto): Promise<void> {
-  const token = await requireTokenOrRedirect(`/admin/tags/${slug}/edit`)
+export async function updateAdminTag(
+  slug: string,
+  payload: UpdateTagDto
+): Promise<{ success: boolean; error?: string }> {
+  const token = await requireTokenOrRedirect('/admin/tags')
 
   try {
     const response = await apiClient.tags.updateTag(slug, payload, { token })
     revalidatePath('/admin/tags')
     revalidatePath(`/admin/tags/${slug}`)
     if (response?.success && response.data) {
-      redirect(`/admin/tags/${response.data.slug}/edit?status=updated`)
+      return { success: true }
     }
+    return { success: false, error: '태그 수정에 실패했어요.' }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
-      handleServerAuthError(error, { returnTo: `/admin/tags/${slug}/edit` })
+      handleServerAuthError(error, { returnTo: '/admin/tags' })
     }
     const message =
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '태그 수정 중 오류가 발생했어요.'
-    redirect(`/admin/tags/${slug}/edit?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
-export async function deleteAdminTag(slug: string): Promise<void> {
+export async function deleteAdminTag(
+  slug: string
+): Promise<{ success: boolean; error?: string }> {
   const token = await requireTokenOrRedirect('/admin/tags')
 
   try {
     await apiClient.tags.deleteTag(slug, { token })
     revalidatePath('/admin/tags')
-    redirect('/admin/tags?status=deleted')
+    return { success: true }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
       handleServerAuthError(error, { returnTo: '/admin/tags' })
@@ -78,7 +87,7 @@ export async function deleteAdminTag(slug: string): Promise<void> {
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '태그 삭제 중 오류가 발생했어요.'
-    redirect(`/admin/tags?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
@@ -88,19 +97,25 @@ function parseString(value: FormDataEntryValue | null | undefined): string | und
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-export async function createAdminTagAction(formData: FormData) {
+export async function createAdminTagAction(
+  _prevState: { success: boolean; error?: string },
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const payload: CreateTagDto = {
     name: String(formData.get('name') ?? ''),
     slug: String(formData.get('slug') ?? ''),
   }
 
-  await createAdminTag(payload)
+  return await createAdminTag(payload)
 }
 
-export async function updateAdminTagAction(formData: FormData) {
+export async function updateAdminTagAction(
+  _prevState: { success: boolean; error?: string },
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const slug = parseString(formData.get('slug'))
   if (!slug) {
-    throw new Error('수정할 태그의 slug가 필요합니다.')
+    return { success: false, error: '수정할 태그의 slug가 필요합니다.' }
   }
 
   const payload: UpdateTagDto = {
@@ -108,14 +123,16 @@ export async function updateAdminTagAction(formData: FormData) {
     slug: parseString(formData.get('nextSlug')),
   }
 
-  await updateAdminTag(slug, payload)
+  return await updateAdminTag(slug, payload)
 }
 
-export async function deleteAdminTagAction(formData: FormData) {
+export async function deleteAdminTagAction(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const slug = parseString(formData.get('slug'))
   if (!slug) {
-    throw new Error('삭제할 태그의 slug가 필요합니다.')
+    return { success: false, error: '삭제할 태그의 slug가 필요합니다.' }
   }
 
-  await deleteAdminTag(slug)
+  return await deleteAdminTag(slug)
 }

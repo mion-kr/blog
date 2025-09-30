@@ -70,13 +70,15 @@ export async function updateAdminCategory(
   }
 }
 
-export async function deleteAdminCategory(slug: string): Promise<void> {
+export async function deleteAdminCategory(
+  slug: string
+): Promise<{ success: boolean; error?: string }> {
   const token = await requireTokenOrRedirect('/admin/categories')
 
   try {
     await apiClient.categories.deleteCategory(slug, { token })
     revalidatePath('/admin/categories')
-    redirect('/admin/categories?status=deleted')
+    return { success: true }
   } catch (error: unknown) {
     if (error instanceof ReauthenticationRequiredError) {
       handleServerAuthError(error, { returnTo: '/admin/categories' })
@@ -85,7 +87,7 @@ export async function deleteAdminCategory(slug: string): Promise<void> {
       error instanceof ApiError || error instanceof Error
         ? error.message
         : '카테고리 삭제 중 오류가 발생했어요.'
-    redirect(`/admin/categories?status=error&message=${encodeURIComponent(message)}`)
+    return { success: false, error: message }
   }
 }
 
@@ -128,11 +130,13 @@ export async function updateAdminCategoryAction(
   return await updateAdminCategory(slug, payload)
 }
 
-export async function deleteAdminCategoryAction(formData: FormData) {
+export async function deleteAdminCategoryAction(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
   const slug = parseString(formData.get('slug'))
   if (!slug) {
-    throw new Error('삭제할 카테고리의 slug가 필요합니다.')
+    return { success: false, error: '삭제할 카테고리의 slug가 필요합니다.' }
   }
 
-  await deleteAdminCategory(slug)
+  return await deleteAdminCategory(slug)
 }

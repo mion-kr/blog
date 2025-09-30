@@ -228,10 +228,13 @@ export default async function AdminTagsPage({ searchParams }: TagsPageProps) {
             <div className="flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs text-red-200">
               <span>삭제하면 해당 태그가 연결된 포스트에서 제거됩니다.</span>
               <DeleteConfirmButton
+                action={deleteAdminTagAction}
                 formId="delete-tag-form"
                 label="태그 삭제"
                 confirmLabel="삭제하기"
                 description="태그를 삭제하면 되돌릴 수 없어요. 계속하시겠습니까?"
+                redirectUrl="/admin/tags"
+                successMessage="태그가 삭제되었어요."
               />
             </div>
           </div>

@@ -1,33 +1,62 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useId, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 
 interface DeleteConfirmButtonProps {
+  action: (formData: FormData) => Promise<{ success: boolean; error?: string }>
   formId: string
   label?: string
   confirmLabel?: string
   cancelLabel?: string
   className?: string
   description?: string
+  redirectUrl?: string
+  successMessage?: string
 }
 
 export function DeleteConfirmButton({
+  action,
   formId,
   label = '삭제',
   confirmLabel = '삭제하기',
   cancelLabel = '취소',
   className,
   description,
+  redirectUrl,
+  successMessage = '삭제되었어요.',
 }: DeleteConfirmButtonProps) {
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const descriptionId = useId()
+  const router = useRouter()
 
   const handleConfirm = () => {
     const form = document.getElementById(formId) as HTMLFormElement | null
-    form?.requestSubmit()
-    setOpen(false)
+    if (!form) return
+
+    const formData = new FormData(form)
+
+    startTransition(async () => {
+      try {
+        const result = await action(formData)
+
+        if (result?.success) {
+          setOpen(false)
+          if (redirectUrl) {
+            router.push(`${redirectUrl}?status=deleted&message=${encodeURIComponent(successMessage)}`)
+          }
+        } else if (result?.error) {
+          alert(result.error)
+          setOpen(false)
+        }
+      } catch (error) {
+        console.error('Delete failed:', error)
+        setOpen(false)
+      }
+    })
   }
 
   return (
@@ -61,9 +90,10 @@ export function DeleteConfirmButton({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="rounded-lg bg-red-500 px-3 py-1.5 font-medium text-red-950 transition hover:bg-red-400"
+                disabled={isPending}
+                className="rounded-lg bg-red-500 px-3 py-1.5 font-medium text-red-950 transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {confirmLabel}
+                {isPending ? '삭제 중...' : confirmLabel}
               </button>
             </div>
           </div>
