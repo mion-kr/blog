@@ -9,7 +9,8 @@
     "start": "doppler -- next start",
     "lint": "next lint --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "test:e2e": "playwright test",
+    "test:e2e": "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3100} NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://127.0.0.1:3001} pnpm exec playwright test --workers=1",
+    "test:ui": "pnpm exec playwright install --with-deps && PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3100} NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://127.0.0.1:3001} pnpm exec playwright test --workers=1 --grep \"\\[UI\\]\"",
     "doppler-setup": "doppler setup --no-interactive"
   },
   "dependencies": {
