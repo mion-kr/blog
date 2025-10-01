@@ -1098,11 +1098,6 @@ describe('PostsService', () => {
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
 
-      const mockSlugCheckBuilder = {
-        from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockResolvedValue([]),
-      };
-
       const mockCategoryCheckBuilder = {
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -1137,7 +1132,6 @@ describe('PostsService', () => {
       const selectQueue = [
         mockFindPostBuilder,
         mockExistingTagIdsBuilder,
-        mockSlugCheckBuilder,
         mockCategoryCheckBuilder,
         mockTagsCheckBuilder,
         afterUpdatePostBuilder,
@@ -1219,7 +1213,7 @@ describe('PostsService', () => {
       );
     });
 
-    it('새 슬러그가 중복되면 고유한 슬러그를 생성해야 함', async () => {
+    it('제목을 변경해도 기존 슬러그를 유지해야 함', async () => {
       // Arrange
       const slug = 'existing-post';
       const updatePostDto: UpdatePostDto = {
@@ -1241,15 +1235,9 @@ describe('PostsService', () => {
         limit: jest.fn().mockResolvedValue([existingPost]),
       };
 
-      const mockSlugCheckBuilder = {
-        from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockResolvedValue([{ slug: 'another-existing-post' }]),
-      };
-
       const updatedPostAfterSave = {
         ...existingPost,
         ...updatePostDto,
-        slug: 'another-existing-post-1',
       };
 
       const afterUpdatePostBuilder = {
@@ -1273,7 +1261,6 @@ describe('PostsService', () => {
       const selectQueue = [
         mockFindPostBuilder,
         mockExistingTagIdsBuilder,
-        mockSlugCheckBuilder,
         afterUpdatePostBuilder,
         afterUpdateTagsBuilder,
       ];
@@ -1320,8 +1307,9 @@ describe('PostsService', () => {
       const result = await service.update(slug, updatePostDto, mockAuthorId);
 
       // Assert
-      expect(result.slug).toBe('another-existing-post-1');
-      expect(capturedUpdateData.slug).toBe('another-existing-post-1');
+      expect(result.slug).toBe(existingPost.slug);
+      expect(result.title).toBe(updatePostDto.title);
+      expect(capturedUpdateData.slug).toBeUndefined();
     });
 
     it('발행 상태 변경 시 publishedAt이 업데이트되어야 함', async () => {
@@ -1692,7 +1680,7 @@ describe('PostsService', () => {
 
   describe('Private Methods', () => {
     describe('createSlugFromTitle', () => {
-      it('한글 제목도 slug로 유지해야 함', async () => {
+      it('한글 제목은 자동으로 로마자 슬러그로 변환해야 함', async () => {
         // Arrange
         const mockSelectBuilder = {
           from: jest.fn().mockReturnThis(),
@@ -1707,7 +1695,7 @@ describe('PostsService', () => {
         );
 
         // Assert
-        expect(slug).toBe('한글-제목-테스트');
+        expect(slug).toBe('hangeul-jemok-teseuteu');
       });
 
       it('중복된 슬러그가 있을 때 숫자 접미사를 추가해야 함', async () => {
