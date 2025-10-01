@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 import type { CreatePostDto, PostResponseDto, UpdatePostDto } from '@repo/shared'
 
@@ -39,9 +40,15 @@ export async function createAdminPost(
     // 목록과 관련 뷰 갱신
     revalidatePath('/admin/posts')
     if (response?.success && response.data) {
-      redirect(`/admin/posts/${response.data.slug}/edit?status=created`)
+      redirect('/admin/posts?status=created')
     }
+
+    const failureMessage = response?.message ?? '포스트 생성에 실패했어요.'
+    redirect(`/admin/posts/new?status=error&message=${encodeURIComponent(failureMessage)}`)
   } catch (error: unknown) {
+    if (isRedirectError(error)) {
+      throw error
+    }
     if (error instanceof ReauthenticationRequiredError) {
       handleServerAuthError(error, { returnTo: '/admin/posts/new' })
     }
@@ -99,6 +106,9 @@ export async function deleteAdminPost(
     revalidatePath('/admin/posts')
     redirect('/admin/posts?status=deleted')
   } catch (error: unknown) {
+    if (isRedirectError(error)) {
+      throw error
+    }
     if (error instanceof ReauthenticationRequiredError) {
       handleServerAuthError(error, { returnTo: '/admin/posts' })
     }
@@ -160,6 +170,8 @@ export async function updateAdminPostAction(formData: FormData) {
   }
 
   await updateAdminPost(slug, payload)
+
+  redirect('/admin/posts?status=updated')
 }
 
 export async function deleteAdminPostAction(formData: FormData) {
