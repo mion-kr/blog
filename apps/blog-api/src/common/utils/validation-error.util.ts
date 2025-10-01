@@ -10,11 +10,16 @@ export function formatValidationErrors(
   const formatted: ApiValidationError[] = [];
 
   const traverse = (error: ValidationError, parentPath?: string) => {
-    const fieldPath = parentPath ? `${parentPath}.${error.property}` : error.property;
+    const fieldPath = parentPath
+      ? `${parentPath}.${error.property}`
+      : error.property;
 
     if (error.constraints) {
       Object.values(error.constraints)
-        .filter((message): message is string => typeof message === 'string' && message.length > 0)
+        .filter(
+          (message): message is string =>
+            typeof message === 'string' && message.length > 0,
+        )
         .forEach((message) => {
           formatted.push({
             field: fieldPath,

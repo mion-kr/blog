@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
+
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
+import { DrizzleCategoriesRepository } from './repositories/drizzle-categories.repository';
+import { CATEGORIES_REPOSITORY } from './repositories/categories.repository';
 
 /**
  * 카테고리 모듈
@@ -13,7 +16,13 @@ import { CategoriesService } from './categories.service';
  */
 @Module({
   controllers: [CategoriesController],
-  providers: [CategoriesService],
+  providers: [
+    CategoriesService,
+    {
+      provide: CATEGORIES_REPOSITORY,
+      useClass: DrizzleCategoriesRepository,
+    },
+  ],
   exports: [CategoriesService],
 })
 export class CategoriesModule {}

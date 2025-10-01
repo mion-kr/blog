@@ -153,7 +153,7 @@ export class LoggerConfigFactory {
         { method: RequestMethod.GET, path: '/health' },
         { method: RequestMethod.GET, path: '/api/health' },
       ],
-      forRoutes: ['*'],
+      forRoutes: [{ path: '/*path', method: RequestMethod.ALL }],
       renameContext: 'apiContext',
     };
   }

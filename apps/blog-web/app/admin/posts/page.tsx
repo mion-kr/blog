@@ -2,28 +2,12 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { FileText, PenSquare } from "lucide-react"
 
-import type { PostsQuery } from "@repo/shared"
-import { apiClient, isSuccessResponse } from "@/lib/api-client"
-import { getAuthorizationToken } from "@/lib/auth"
 import { AdminStatusBanner } from "@/components/admin"
-
-type PostsSearchParams = {
-  page?: string
-  search?: string
-  published?: string
-  status?: string
-  message?: string
-}
+import { getAdminPosts } from "@/features/posts/server/get-admin-posts"
+import { getAuthorizationToken } from "@/lib/auth"
 
 interface PostsPageProps {
-  searchParams?: Promise<PostsSearchParams>
-}
-
-function parseBoolean(value: string | undefined): boolean | undefined {
-  if (value === undefined) return undefined
-  if (['true', '1', 'yes'].includes(value.toLowerCase())) return true
-  if (['false', '0', 'no'].includes(value.toLowerCase())) return false
-  return undefined
+  searchParams?: Promise<Record<string, string | undefined>>
 }
 
 function formatDate(dateLike: string | Date, options?: Intl.DateTimeFormatOptions) {
@@ -36,52 +20,19 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
 
   const resolvedSearchParams = searchParams ? await searchParams : {}
 
-  const pageParam = resolvedSearchParams.page
-  const searchParam = resolvedSearchParams.search
-  const publishedParam = resolvedSearchParams.published
-  const statusParam = resolvedSearchParams.status
-  const messageParam = resolvedSearchParams.message
+  const result = await getAdminPosts({
+    searchParams: resolvedSearchParams,
+    token,
+  })
 
-  const page = Number(pageParam ?? '1') || 1
-  const search = searchParam?.trim() ?? ''
-  const published = parseBoolean(publishedParam)
-
-  let postsPerPage = 10
-
-  if (token) {
-    try {
-      const settingsRes = await apiClient.settings.getSettings({ token })
-      if (
-        settingsRes.success &&
-        settingsRes.data?.postsPerPage &&
-        settingsRes.data.postsPerPage > 0
-      ) {
-        postsPerPage = settingsRes.data.postsPerPage
-      }
-    } catch {
-      // ignore and keep default
-    }
-  }
-
-  const query: PostsQuery = {
-    page,
-    limit: postsPerPage,
-    order: 'desc',
-    sort: 'updatedAt',
-    search: search || undefined,
-    published,
-  }
-
-  const response = token
-    ? await apiClient.posts.getPosts(query, { token })
-    : await apiClient.posts.getPosts(query)
-
-  if (!response || !isSuccessResponse(response)) {
+  if (!result) {
     notFound()
   }
 
-  const posts = response.data ?? []
-  const total = response.meta?.total ?? posts.length
+  const { posts, total, statusParam, messageParam, query } = result
+  const search = query.search ?? ''
+  const published = query.published
+  const page = query.page ?? 1
 
   return (
     <div className="space-y-6">

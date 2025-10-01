@@ -104,9 +104,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // ValidationPipe 에러 처리
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const response = exceptionResponse as Record<string, unknown>;
-      const validationErrors = (response.validation ?? response.validationErrors) as
-        | ApiValidationError[]
-        | undefined;
+      const validationErrors = (response.validation ??
+        response.validationErrors) as ApiValidationError[] | undefined;
 
       if (Array.isArray(response.message)) {
         // class-validator 유효성 검사 에러
@@ -115,9 +114,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           validation: response.message,
         };
       } else if (Array.isArray(validationErrors)) {
-        userMessage = typeof response.message === 'string'
-          ? response.message
-          : '입력 데이터가 올바르지 않습니다.';
+        userMessage =
+          typeof response.message === 'string'
+            ? response.message
+            : '입력 데이터가 올바르지 않습니다.';
         details = {
           validation: validationErrors,
         };

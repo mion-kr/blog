@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PostsController } from './posts.controller';
-import { PostsService } from './posts.service';
+
 import { CategoriesModule } from '../categories/categories.module';
 import { TagsModule } from '../tags/tags.module';
+import { PostsController } from './posts.controller';
+import { PostsService } from './posts.service';
+import { DrizzlePostsRepository } from './repositories/drizzle-posts.repository';
+import { POSTS_REPOSITORY } from './repositories/posts.repository';
 
 /**
  * 포스트 모듈
@@ -16,7 +19,13 @@ import { TagsModule } from '../tags/tags.module';
 @Module({
   imports: [CategoriesModule, TagsModule],
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [
+    PostsService,
+    {
+      provide: POSTS_REPOSITORY,
+      useClass: DrizzlePostsRepository,
+    },
+  ],
   exports: [PostsService],
 })
 export class PostsModule {}
