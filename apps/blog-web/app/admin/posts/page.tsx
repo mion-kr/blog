@@ -46,9 +46,26 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
   const search = searchParam?.trim() ?? ''
   const published = parseBoolean(publishedParam)
 
+  let postsPerPage = 10
+
+  if (token) {
+    try {
+      const settingsRes = await apiClient.settings.getSettings({ token })
+      if (
+        settingsRes.success &&
+        settingsRes.data?.postsPerPage &&
+        settingsRes.data.postsPerPage > 0
+      ) {
+        postsPerPage = settingsRes.data.postsPerPage
+      }
+    } catch {
+      // ignore and keep default
+    }
+  }
+
   const query: PostsQuery = {
     page,
-    limit: 20,
+    limit: postsPerPage,
     order: 'desc',
     sort: 'updatedAt',
     search: search || undefined,

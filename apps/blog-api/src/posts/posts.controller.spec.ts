@@ -217,7 +217,10 @@ describe('PostsController', () => {
 
       // Assert
       expect(result).toEqual(createdPost);
-      expect(postsService.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
+      expect(postsService.create).toHaveBeenCalledWith(
+        createPostDto,
+        mockUser.id,
+      );
       expect(postsService.create).toHaveBeenCalledTimes(1);
     });
 
@@ -237,7 +240,10 @@ describe('PostsController', () => {
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
+      expect(postsService.create).toHaveBeenCalledWith(
+        createPostDto,
+        mockUser.id,
+      );
     });
 
     it('MDX 콘텐츠를 포함한 포스트를 생성해야 함', async () => {
@@ -267,7 +273,10 @@ console.log(hello);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
+      expect(postsService.create).toHaveBeenCalledWith(
+        createPostDto,
+        mockUser.id,
+      );
     });
 
     it('서비스에서 에러가 발생하면 전파해야 함', async () => {
@@ -286,7 +295,10 @@ console.log(hello);
       await expect(controller.create(mockUser, createPostDto)).rejects.toThrow(
         error,
       );
-      expect(postsService.create).toHaveBeenCalledWith(createPostDto, mockUser.id);
+      expect(postsService.create).toHaveBeenCalledWith(
+        createPostDto,
+        mockUser.id,
+      );
     });
   });
 

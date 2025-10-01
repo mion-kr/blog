@@ -12,7 +12,8 @@ describe('CategoriesController', () => {
   let categoriesService: Mocked<CategoriesService>;
 
   beforeAll(async () => {
-    const { unit, unitRef } = await TestBed.solitary(CategoriesController).compile();
+    const { unit, unitRef } =
+      await TestBed.solitary(CategoriesController).compile();
     controller = unit;
     categoriesService = unitRef.get(CategoriesService);
   });

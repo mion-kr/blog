@@ -93,7 +93,7 @@ export class PostsController {
 
   /**
    * 포스트 생성 (ADMIN 권한 + CSRF 보호)
-  */
+   */
   @Post()
   @UseGuards(AdminGuard)
   @ApiAdminCreate(PostResponseDto, '포스트 생성')

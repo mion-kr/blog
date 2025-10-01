@@ -10,8 +10,12 @@ import * as database from '@repo/database';
 
 // Suites auto-mocking: leverage Jest's automatic module mock to turn all exports into jest.fn
 jest.mock('@repo/database', () => {
-  const actual = jest.requireActual<typeof import('@repo/database')>('@repo/database');
-  const mocked = jest.createMockFromModule<typeof import('@repo/database')>('@repo/database');
+  const actual =
+    jest.requireActual<typeof import('@repo/database')>('@repo/database');
+  const mocked =
+    jest.createMockFromModule<typeof import('@repo/database')>(
+      '@repo/database',
+    );
 
   return {
     __esModule: true,
@@ -807,9 +811,7 @@ describe('PostsService', () => {
       });
 
       // Act & Assert
-      await expect(
-        service.create(createPostDto, mockAuthorId),
-      ).rejects.toThrow(
+      await expect(service.create(createPostDto, mockAuthorId)).rejects.toThrow(
         new BadRequestException(
           `카테고리 ID 'non-existent-cat'를 찾을 수 없습니다.`,
         ),
@@ -854,9 +856,7 @@ describe('PostsService', () => {
       });
 
       // Act & Assert
-      await expect(
-        service.create(createPostDto, mockAuthorId),
-      ).rejects.toThrow(
+      await expect(service.create(createPostDto, mockAuthorId)).rejects.toThrow(
         new BadRequestException(
           `다음 태그 ID를 찾을 수 없습니다: non-existent-tag`,
         ),
@@ -1005,19 +1005,22 @@ describe('PostsService', () => {
         {
           from: jest.fn().mockReturnThis(),
           leftJoin: jest.fn().mockReturnThis(),
-          where: jest.fn().mockResolvedValue([
-            { tagId: 'tag-1', tagName: 'Tag 1', tagSlug: 'tag-1' },
-          ]),
+          where: jest
+            .fn()
+            .mockResolvedValue([
+              { tagId: 'tag-1', tagName: 'Tag 1', tagSlug: 'tag-1' },
+            ]),
         }, // findOneBySlug - tags
       ];
 
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       let capturedValues: any;
@@ -1140,13 +1143,14 @@ describe('PostsService', () => {
         afterUpdatePostBuilder,
         afterUpdateTagsBuilder,
       ];
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       // Mock transaction
@@ -1273,13 +1277,14 @@ describe('PostsService', () => {
         afterUpdatePostBuilder,
         afterUpdateTagsBuilder,
       ];
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       let capturedUpdateData: any;
@@ -1390,13 +1395,14 @@ describe('PostsService', () => {
         updatedPostBuilder,
         updatedTagsBuilder,
       ];
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       mockDb.update.mockReturnValue({
@@ -1462,13 +1468,14 @@ describe('PostsService', () => {
         }, // findOneBySlug - tags
       ];
 
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       mockDb.transaction.mockImplementation(async (callback) => {
@@ -1525,7 +1532,9 @@ describe('PostsService', () => {
 
       const mockExistingTagIdsBuilder = {
         from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([{ tagId: 'tag-1' }, { tagId: 'tag-2' }]),
+          where: jest
+            .fn()
+            .mockResolvedValue([{ tagId: 'tag-1' }, { tagId: 'tag-2' }]),
         }),
       };
 
@@ -1568,13 +1577,14 @@ describe('PostsService', () => {
         remAfterPostBuilder,
         remAfterTagsBuilder,
       ];
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-          leftJoin: jest.fn().mockReturnThis(),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+            leftJoin: jest.fn().mockReturnThis(),
+          },
       );
 
       mockDb.update.mockReturnValue({
@@ -1616,12 +1626,13 @@ describe('PostsService', () => {
       };
 
       const selectQueue = [mockFindPostBuilder, mockExistingTagsBuilder];
-      mockDb.select.mockImplementation(() =>
-        selectQueue.shift() || {
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([]),
-        },
+      mockDb.select.mockImplementation(
+        () =>
+          selectQueue.shift() || {
+            from: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockResolvedValue([]),
+          },
       );
 
       // Mock transaction

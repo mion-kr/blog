@@ -70,7 +70,7 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
       secret, // 입력 키 자료 (IKM)
       '', // Salt (빈 문자열)
       'NextAuth.js Generated Encryption Key', // Info (NextAuth.js 표준)
-      32 // 키 길이 (256비트)
+      32, // 키 길이 (256비트)
     );
   }
 
@@ -84,14 +84,17 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
    * @throws UnauthorizedException - 헤더가 없거나 형식이 잘못된 경우
    */
   private ensureBearerToken(request: Request): string {
-    const header = request.headers['authorization'] ?? request.headers['Authorization'];
+    const header =
+      request.headers['authorization'] ?? request.headers['Authorization'];
     if (!header || Array.isArray(header)) {
       throw new UnauthorizedException('Authorization header is missing');
     }
 
     const [scheme, token] = header.split(' ');
     if (!token || scheme?.toLowerCase() !== 'bearer') {
-      throw new UnauthorizedException('Authorization header must be a Bearer token');
+      throw new UnauthorizedException(
+        'Authorization header must be a Bearer token',
+      );
     }
 
     return token.trim();
@@ -150,20 +153,25 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
     this.assertNotExpired(payload);
 
     // 4. 필수 필드 확인
-    const subject = payload.sub as string | undefined;
+    const subject = payload.sub;
     const email = (payload.email as string | undefined) ?? undefined;
     if (!subject || !email) {
-      throw new UnauthorizedException('Token payload is missing subject or email');
+      throw new UnauthorizedException(
+        'Token payload is missing subject or email',
+      );
     }
 
     const googleId = (payload.googleId as string | undefined) ?? subject;
     if (!googleId) {
-      throw new UnauthorizedException('Token payload is missing Google account identifier');
+      throw new UnauthorizedException(
+        'Token payload is missing Google account identifier',
+      );
     }
 
     const nameFromToken = (payload.name as string | undefined) ?? email;
     const imageFromToken = payload.picture as string | undefined;
-    const roleFromToken = (payload.role as 'ADMIN' | 'USER' | undefined) ?? 'USER';
+    const roleFromToken =
+      (payload.role as 'ADMIN' | 'USER' | undefined) ?? 'USER';
 
     const userRecord = await this.ensureUserExists({
       googleId,
@@ -241,7 +249,7 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
         })
         .returning();
 
-      return created as UserRecord;
+      return created;
     } catch (error) {
       const fallback = await db
         .select()

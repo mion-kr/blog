@@ -7,6 +7,8 @@ import {
   Tag,
   CategoriesQuery,
   TagsQuery,
+  BlogSettings,
+  UpdateBlogSettingsDto,
 } from '@repo/shared';
 import {
   ApiError,
@@ -364,6 +366,23 @@ export const apiClient = {
   posts: postsApi,
   categories: categoriesApi,
   tags: tagsApi,
+  settings: {
+    async getSettings(options: ApiRequestOptions): Promise<ApiResponse<BlogSettings>> {
+      ensureAuthToken(options.token, 'GET /api/admin/settings');
+      return request<BlogSettings>('/api/admin/settings', options);
+    },
+    async updateSettings(
+      payload: UpdateBlogSettingsDto,
+      options: ApiRequestOptions
+    ): Promise<ApiResponse<BlogSettings>> {
+      ensureAuthToken(options.token, 'PATCH /api/admin/settings');
+      return request<BlogSettings>('/api/admin/settings', {
+        ...options,
+        method: 'PATCH',
+        body: payload,
+      });
+    },
+  },
 };
 
 /**
