@@ -1,26 +1,26 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  ValidationPipe,
-  UnauthorizedException,
   CanActivate,
   ExecutionContext,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
 } from '@nestjs/common';
-import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 
-import { AppModule } from '../app.module';
-import { AdminGuard } from '../auth/guards/admin.guard';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
+  categories as categoriesTable,
   db,
-  users,
   eq,
   posts as postsTable,
   postTags as postTagsTable,
-  categories as categoriesTable,
   tags as tagsTable,
+  users,
 } from '@repo/database';
+import { AppModule } from '../app.module';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const TEST_ADMIN_TOKEN = 'test-admin-token';
 const TEST_ADMIN_USER_ID = 'test-admin-user';
@@ -57,7 +57,7 @@ const createMockAdminGuard = (): CanActivate => ({
  * - 복잡한 필터링 및 검색 기능 테스트
  * - 에러 상황 및 예외 처리 테스트
  */
-// TODO: Re-enable when full-stack integration test harness (DB + auth tokens) is ready.
+// TestContainer 적용하여 테스트 예정
 describe.skip('PostsController (Integration)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;

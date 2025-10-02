@@ -1,24 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  ValidationPipe,
-  UnauthorizedException,
   CanActivate,
   ExecutionContext,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
 } from '@nestjs/common';
-import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 
-import { AppModule } from '../app.module';
-import { AdminGuard } from '../auth/guards/admin.guard';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
+  categories as categoriesTable,
   db,
   postTags as postTagsTable,
   posts as postsTable,
   tags as tagsTable,
-  categories as categoriesTable,
 } from '@repo/database';
+import { AppModule } from '../app.module';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const TEST_ADMIN_TOKEN = 'test-admin-token';
 const TEST_ADMIN_USER_ID = 'test-admin-user';
@@ -54,7 +54,7 @@ const createMockAdminGuard = (): CanActivate => ({
  * - 다대다 관계 (Post-Tag) 테스트
  * - 에러 상황 및 예외 처리 테스트
  */
-// TODO: Re-enable when integration fixtures and auth-compatible environment are prepared.
+// TestContainer 적용하여 테스트 예정
 describe.skip('TagsController (Integration)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
