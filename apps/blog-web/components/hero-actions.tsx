@@ -36,20 +36,23 @@ export function HeroActions() {
 
       {isAdmin ? (
         <Link
-          href="/admin/write"
-          className={cn(secondaryButtonStyles, "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80")}
+          href="/admin/posts/new"
+          className={cn(
+            secondaryButtonStyles,
+            "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
+          )}
         >
           <PenSquare className="h-4 w-4" aria-hidden />
           새 글 작성하기
         </Link>
       ) : isAuthenticated ? (
-        <Link
-          href="/categories"
-          className={secondaryButtonStyles}
+        <span
+          className={cn(secondaryButtonStyles, "pointer-events-none select-none")}
+          aria-disabled
         >
           <Sparkles className="h-4 w-4" aria-hidden />
-          관심 주제 찾기
-        </Link>
+          관심 주제 찾기 준비 중이에요
+        </span>
       ) : (
         <button
           type="button"

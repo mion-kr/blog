@@ -473,30 +473,28 @@ function DiscoverySection({
 
 function CategoryLink({ category }: { category: Category }) {
   return (
-    <Link
-      href={`/category/${category.slug}`}
+    <span
       className={cn(
         "blog-tag",
-        "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
+        "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]"
       )}
     >
       <FolderOpen className="h-3 w-3" aria-hidden />
       {category.name}
-    </Link>
+    </span>
   );
 }
 
 function TagLink({ tag, emphasis }: { tag: Tag; emphasis?: boolean }) {
   return (
-    <Link
-      href={`/tag/${tag.slug}`}
+    <span
       className={cn(
         "blog-tag",
         emphasis ? "text-sm font-semibold" : "text-xs"
       )}
     >
       #{tag.name}
-    </Link>
+    </span>
   );
 }
 
