@@ -255,7 +255,8 @@ async function loadMermaid(): Promise<MermaidModule> {
 
   if (!mermaidModulePromise) {
     mermaidModulePromise = import('mermaid').then((mod) => {
-      const instance = (mod as { default?: MermaidModule }).default ?? (mod as MermaidModule);
+      const instance = (mod as Partial<{ default: MermaidModule }>).default ??
+        ((mod as unknown) as MermaidModule);
       mermaidModule = instance;
       return instance;
     });

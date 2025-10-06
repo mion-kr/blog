@@ -94,7 +94,8 @@ async function updateAdminSettings(
       }
     }
 
-    const validationErrors = extractValidationErrors(response?.error?.details)
+    const errorDetails = response && 'error' in response ? response.error.details : undefined
+    const validationErrors = extractValidationErrors(errorDetails)
 
     return {
       success: false,

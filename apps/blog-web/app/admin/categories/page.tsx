@@ -255,7 +255,7 @@ export default async function AdminCategoriesPage({ searchParams }: CategoriesPa
               cancelHref="/admin/categories"
             />
 
-            <form id="delete-category-form" action={deleteAdminCategoryAction} className="hidden">
+            <form id="delete-category-form" className="hidden">
               <input type="hidden" name="slug" value={editingCategory.slug} />
             </form>
             <div className="flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs text-red-200">
