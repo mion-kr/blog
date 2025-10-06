@@ -191,14 +191,14 @@ function FeaturedSection({
   highlightPosts: PostResponseDto[];
 }) {
   if (!featuredPost) {
-    return (
-      <EmptyState
-        icon={<PenSquare className="h-5 w-5" aria-hidden />}
-        title="첫 번째 포스트를 기다리고 있어요"
-        description="관리자 로그인을 통해 새로운 포스트를 작성해보세요."
-      />
-    );
-  }
+      return (
+        <EmptyState
+          icon={<PenSquare className="h-5 w-5" aria-hidden />}
+          title="첫 번째 포스트를 기다리고 있어요"
+          description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
+        />
+      );
+    }
 
   const displayDate = featuredPost.publishedAt ?? featuredPost.createdAt;
 

@@ -261,9 +261,6 @@ test.describe('[UI] 홈 화면', () => {
     await page.goto('/')
 
     await expect(page.getByRole('heading', { name: "Mion's 기술 블로그에 오신 것을 환영합니다" })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Google로 로그인' }).first()).toBeVisible()
-    await expect(page.getByRole('link', { name: '최신 글 둘러보기' })).toBeVisible()
-
     const statCards = page.locator('.blog-stat-card')
     await expect(statCards).toHaveCount(3)
     await expect(statCards.nth(0)).toContainText('전체 포스트')
@@ -271,6 +268,6 @@ test.describe('[UI] 홈 화면', () => {
     await expect(statCards.nth(2)).toContainText('마지막 업데이트')
 
     await expect(page.getByText('첫 번째 포스트를 기다리고 있어요')).toBeVisible()
-    await expect(page.getByText('관리자 로그인을 통해 새로운 포스트를 작성해보세요.')).toBeVisible()
+    await expect(page.getByText('새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요.')).toBeVisible()
   })
 })

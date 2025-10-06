@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { AdminSignInButton } from "@/components/auth/admin-signin-button";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 interface SignInSearchParams {
   callbackUrl?: string;
@@ -15,6 +17,11 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const callbackUrl = params?.callbackUrl ?? "/admin";
   const errorMessage = params?.error;
+
+  const session = await getSession();
+  if (session?.user) {
+    redirect(callbackUrl || "/admin");
+  }
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { Loader2, LogIn } from "lucide-react"
 
@@ -10,11 +11,20 @@ interface AdminSignInButtonProps {
 
 export function AdminSignInButton({ callbackUrl }: AdminSignInButtonProps) {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSignIn = async () => {
     try {
       setLoading(true)
-      await signIn("google", { callbackUrl })
+      const result = await signIn("google", {
+        callbackUrl,
+        redirect: false,
+      })
+
+      if (result?.ok) {
+        router.push(callbackUrl ?? "/admin")
+        router.refresh()
+      }
     } finally {
       setLoading(false)
     }
