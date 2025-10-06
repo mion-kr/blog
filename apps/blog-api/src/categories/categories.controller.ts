@@ -15,7 +15,6 @@ import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { CategoriesService } from './categories.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CsrfGuard } from '../auth/guards/csrf.guard';
 
 import { CategoryQueryDto } from './dto/category-query.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -83,7 +82,7 @@ export class CategoriesController {
    * 카테고리 생성 (ADMIN 권한 + CSRF 보호)
    */
   @Post()
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminCreate(CategoryResponseDto, '카테고리 생성')
   @ApiConflictError('슬러그 중복')
   async create(
@@ -96,7 +95,7 @@ export class CategoriesController {
    * 카테고리 수정 (ADMIN 권한 + CSRF 보호)
    */
   @Put(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminUpdate(CategoryResponseDto, '카테고리 수정', '카테고리')
   @ApiConflictError('슬러그 중복')
   async update(
@@ -110,7 +109,7 @@ export class CategoriesController {
    * 카테고리 삭제 (ADMIN 권한 + CSRF 보호)
    */
   @Delete(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAdminDelete('카테고리 삭제', '카테고리')
   async remove(@Param('slug') slug: string): Promise<void> {

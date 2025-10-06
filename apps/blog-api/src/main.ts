@@ -1,9 +1,14 @@
-import { ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  ValidationPipe,
+} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
+import { ValidationError } from 'class-validator';
 import { AppModule } from './app.module';
 import { CategoriesModule } from './categories/categories.module';
 import {
@@ -13,6 +18,7 @@ import {
 } from './common/dto';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
+import { formatValidationErrors } from './common/utils';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -61,6 +67,16 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        const formattedErrors = formatValidationErrors(validationErrors);
+
+        return new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: '입력 데이터가 올바르지 않습니다.',
+          error: 'Bad Request',
+          validation: formattedErrors,
+        });
+      },
     }),
   );
 

@@ -20,11 +20,12 @@
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "build:tsc": "tsc --project tsconfig.build.json",
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push",
-    "studio": "drizzle-kit studio",
-    "db:seed": "tsx src/seed.ts"
+    "generate": "doppler run -- drizzle-kit generate",
+    "migrate": "doppler run -- drizzle-kit migrate",
+    "push": "doppler run -- drizzle-kit push",
+    "studio": "doppler run -- drizzle-kit studio",
+    "db:seed": "doppler run -- tsx src/seed.ts",
+    "doppler-setup": "doppler setup --no-interactive"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.5",

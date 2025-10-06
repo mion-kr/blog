@@ -1,6 +1,9 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useCallback } from "react"
+import { signIn, useSession } from "next-auth/react"
+
+import { isReauthenticationError } from "../lib/api-errors"
 
 export function useAuth() {
   const { data: session, status } = useSession()
@@ -32,4 +35,26 @@ export function useRequireAdmin() {
   }
   
   return auth
+}
+
+// API 호출에서 인증 오류가 발생했을 때 재로그인으로 유도하는 헬퍼
+export function useAuthReauthentication(options: { callbackUrl?: string } = {}) {
+  return useCallback(
+    (error: unknown) => {
+      if (!isReauthenticationError(error)) {
+        return false
+      }
+
+      const callbackUrl = options.callbackUrl ??
+        (typeof window !== "undefined" ? window.location.href : "/admin")
+
+      // NextAuth signIn 호출로 재인증 유도
+      void signIn(undefined, {
+        callbackUrl,
+      })
+
+      return true
+    },
+    [options.callbackUrl]
+  )
 }

@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
+
 import { TagsController } from './tags.controller';
 import { TagsService } from './tags.service';
+import { DrizzleTagsRepository } from './repositories/drizzle-tags.repository';
+import { TAGS_REPOSITORY } from './repositories/tags.repository';
 
 /**
  * 태그 모듈
@@ -13,7 +16,13 @@ import { TagsService } from './tags.service';
  */
 @Module({
   controllers: [TagsController],
-  providers: [TagsService],
+  providers: [
+    TagsService,
+    {
+      provide: TAGS_REPOSITORY,
+      useClass: DrizzleTagsRepository,
+    },
+  ],
   exports: [TagsService],
 })
 export class TagsModule {}

@@ -13,7 +13,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { ErrorResponse } from '../interfaces/api-response.interface';
+import {
+  ErrorResponse,
+  ValidationError as ApiValidationError,
+} from '../interfaces/api-response.interface';
 import { ErrorCode } from '../enums/error-codes.enum';
 import {
   ErrorMessages,
@@ -101,12 +104,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // ValidationPipe 에러 처리
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const response = exceptionResponse as Record<string, unknown>;
+      const validationErrors = (response.validation ??
+        response.validationErrors) as ApiValidationError[] | undefined;
 
       if (Array.isArray(response.message)) {
         // class-validator 유효성 검사 에러
         userMessage = '입력 데이터가 올바르지 않습니다.';
         details = {
-          validationErrors: response.message,
+          validation: response.message,
+        };
+      } else if (Array.isArray(validationErrors)) {
+        userMessage =
+          typeof response.message === 'string'
+            ? response.message
+            : '입력 데이터가 올바르지 않습니다.';
+        details = {
+          validation: validationErrors,
         };
       } else if (typeof response.message === 'string') {
         userMessage = response.message;

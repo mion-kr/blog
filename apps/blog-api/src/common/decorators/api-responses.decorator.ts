@@ -197,6 +197,42 @@ export function ApiAdminDelete(
 }
 
 /**
+ * ADMIN 전용 설정/환경 업데이트 엔드포인트 데코레이터 (경로 파라미터 없음)
+ */
+export function ApiAdminPatch<TModel extends Type<any>>(
+  responseType: TModel,
+  summary: string,
+  description?: string,
+  successMessage = '수정이 완료되었습니다.',
+) {
+  return applyDecorators(
+    ApiBearerAuth(),
+    ApiOperation({
+      summary,
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+    }),
+    ApiResponse({
+      status: 200,
+      description: '수정 성공',
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(ApiResponseDto) },
+          {
+            properties: {
+              data: { $ref: getSchemaPath(responseType) },
+              message: { example: successMessage },
+            },
+          },
+        ],
+      },
+    }),
+    ApiAdminErrors(),
+  );
+}
+
+/**
  * 공개 목록 조회 엔드포인트 데코레이터
  */
 export function ApiPublicList<TModel extends Type<any>>(

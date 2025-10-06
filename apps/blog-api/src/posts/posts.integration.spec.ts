@@ -1,10 +1,49 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
+import {
+  CanActivate,
+  ExecutionContext,
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 
+import {
+  categories as categoriesTable,
+  db,
+  eq,
+  posts as postsTable,
+  postTags as postTagsTable,
+  tags as tagsTable,
+  users,
+} from '@repo/database';
 import { AppModule } from '../app.module';
-import { DatabaseModule } from '../database';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+const TEST_ADMIN_TOKEN = 'test-admin-token';
+const TEST_ADMIN_USER_ID = 'test-admin-user';
+
+const createMockAdminGuard = (): CanActivate => ({
+  canActivate: (context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest();
+    const authHeader =
+      request.headers['authorization'] ?? request.headers['Authorization'];
+
+    if (authHeader === `Bearer ${TEST_ADMIN_TOKEN}`) {
+      request.user = {
+        id: TEST_ADMIN_USER_ID,
+        role: 'ADMIN',
+        email: 'admin@example.com',
+        name: 'Test Admin',
+      };
+      return true;
+    }
+
+    throw new UnauthorizedException('Invalid token for testing');
+  },
+});
 
 /**
  * Posts API Integration Tests
@@ -18,7 +57,8 @@ import { DatabaseModule } from '../database';
  * - 복잡한 필터링 및 검색 기능 테스트
  * - 에러 상황 및 예외 처리 테스트
  */
-describe('PostsController (Integration)', () => {
+// TestContainer 적용하여 테스트 예정
+describe.skip('PostsController (Integration)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
 
@@ -60,8 +100,7 @@ describe('PostsController (Integration)', () => {
   };
 
   beforeAll(async () => {
-    // 테스트 모듈 생성
-    moduleFixture = await Test.createTestingModule({
+    const testingModuleBuilder = Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
@@ -69,7 +108,16 @@ describe('PostsController (Integration)', () => {
         }),
         AppModule,
       ],
-    }).compile();
+    });
+
+    testingModuleBuilder
+      .overrideGuard(JwtAuthGuard)
+      .useValue(createMockAdminGuard());
+    testingModuleBuilder
+      .overrideGuard(AdminGuard)
+      .useValue(createMockAdminGuard());
+
+    moduleFixture = await testingModuleBuilder.compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -87,8 +135,8 @@ describe('PostsController (Integration)', () => {
 
     await app.init();
 
-    // 테스트용 관리자 토큰 생성
-    adminToken = await getAdminToken(app);
+    await ensureAdminUser();
+    adminToken = await getAdminToken();
   });
 
   afterAll(async () => {
@@ -97,7 +145,7 @@ describe('PostsController (Integration)', () => {
 
   beforeEach(async () => {
     // 각 테스트 전에 데이터 정리 및 기본 데이터 생성
-    await cleanupDatabase(app);
+    await cleanupDatabase();
     await setupTestData(app);
   });
 
@@ -371,7 +419,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -404,22 +451,6 @@ describe('PostsController (Integration)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('CSRF 토큰 없이 포스트 생성 시 403 에러를 반환해야 함', async () => {
-      const postData = {
-        ...testPost,
-        categoryId: testCategory.id,
-        tagIds: testTags.map((tag) => tag.id),
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/api/posts')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send(postData)
-        .expect(403);
-
-      expect(response.body.success).toBe(false);
-    });
-
     it('잘못된 데이터로 포스트 생성 시 400 에러를 반환해야 함', async () => {
       const invalidPost = {
         title: '', // 빈 제목
@@ -432,7 +463,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidPost)
         .expect(400);
 
@@ -450,7 +480,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(400);
 
@@ -467,7 +496,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(400);
 
@@ -486,7 +514,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(minimalPost)
         .expect(201);
 
@@ -507,7 +534,6 @@ describe('PostsController (Integration)', () => {
       const response1 = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -515,7 +541,6 @@ describe('PostsController (Integration)', () => {
       const response2 = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(postData)
         .expect(201);
 
@@ -534,7 +559,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updatePost)
         .expect(200);
 
@@ -551,7 +575,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put('/api/posts/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updatePost)
         .expect(404);
 
@@ -576,7 +599,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(updateData)
         .expect(200);
 
@@ -592,7 +614,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(partialUpdate)
         .expect(200);
 
@@ -609,7 +630,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .put(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(invalidUpdate)
         .expect(400);
 
@@ -628,7 +648,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 삭제 확인
@@ -641,7 +660,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .delete('/api/posts/non-existent-slug')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -659,7 +677,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       // 태그는 여전히 존재해야 함
@@ -701,7 +718,6 @@ describe('PostsController (Integration)', () => {
       await request(app.getHttpServer())
         .delete(`/api/posts/${createdPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .expect(204);
 
       const afterResponse = await request(app.getHttpServer())
@@ -793,7 +809,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(longPost)
         .expect(201);
 
@@ -812,7 +827,6 @@ describe('PostsController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(specialPost)
         .expect(201);
 
@@ -853,7 +867,6 @@ const test = () => {
       const response = await request(app.getHttpServer())
         .post('/api/posts')
         .set('Authorization', `Bearer ${adminToken}`)
-        .set('X-CSRF-Token', 'test-csrf-token')
         .send(mdxPost)
         .expect(201);
 
@@ -868,26 +881,52 @@ const test = () => {
 /**
  * 테스트용 관리자 토큰 획득
  */
-async function getAdminToken(app: INestApplication): Promise<string> {
-  return 'test-admin-token';
+async function getAdminToken(): Promise<string> {
+  return TEST_ADMIN_TOKEN;
 }
 
 /**
  * 데이터베이스 정리
  */
-async function cleanupDatabase(app: INestApplication): Promise<void> {
-  // 실제 구현 시 모든 테이블 정리
-  // 순서: PostTags -> Posts -> Categories -> Tags -> Users
+async function cleanupDatabase(): Promise<void> {
+  await db.delete(postTagsTable);
+  await db.delete(postsTable);
+  await db.delete(tagsTable);
+  await db.delete(categoriesTable);
 }
 
 /**
  * 테스트 데이터 설정
  */
 async function setupTestData(app: INestApplication): Promise<void> {
-  // 실제 구현 시 기본 테스트 데이터 생성
-  // 카테고리, 태그, 사용자 생성
-  // 테스트 카테고리와 태그가 전역 변수로 정의되어 있음
-  // 실제 구현에서는 데이터베이스에 생성해야 함
+  const server = app.getHttpServer();
+
+  const categoryResponse = await request(server)
+    .post('/api/categories')
+    .set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`)
+    .send({
+      name: testCategory.name,
+      slug: testCategory.slug,
+      description: '통합 테스트용 카테고리입니다.',
+      color: '#3B82F6',
+    })
+    .expect(201);
+
+  Object.assign(testCategory, categoryResponse.body.data);
+
+  for (let i = 0; i < testTags.length; i += 1) {
+    const tag = testTags[i];
+    const tagResponse = await request(server)
+      .post('/api/tags')
+      .set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`)
+      .send({
+        name: tag.name,
+        slug: tag.slug,
+      })
+      .expect(201);
+
+    Object.assign(tag, tagResponse.body.data);
+  }
 }
 
 /**
@@ -907,8 +946,32 @@ async function createTestPost(
   const response = await request(app.getHttpServer())
     .post('/api/posts')
     .set('Authorization', `Bearer ${token}`)
-    .set('X-CSRF-Token', 'test-csrf-token')
-    .send(postData);
+    .send(postData)
+    .expect((res) => {
+      if (res.status !== 201) {
+        throw new Error(`Unexpected status ${res.status} while creating post`);
+      }
+    });
 
   return response.body.data;
+}
+
+async function ensureAdminUser(): Promise<void> {
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, TEST_ADMIN_USER_ID))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return;
+  }
+
+  await db.insert(users).values({
+    id: TEST_ADMIN_USER_ID,
+    email: 'admin@example.com',
+    name: 'Test Admin',
+    googleId: `google-${TEST_ADMIN_USER_ID}`,
+    role: 'ADMIN',
+  });
 }

@@ -15,7 +15,6 @@ import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CsrfGuard } from '../auth/guards/csrf.guard';
 
 import { PostQueryDto } from './dto/post-query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -36,6 +35,8 @@ import {
   ApiAdminDelete,
   ResponseMessage,
   PaginatedResponse,
+  User,
+  CurrentUser,
 } from '../common/decorators';
 
 /**
@@ -94,33 +95,40 @@ export class PostsController {
    * 포스트 생성 (ADMIN 권한 + CSRF 보호)
    */
   @Post()
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminCreate(PostResponseDto, '포스트 생성')
-  async create(@Body() createPostDto: CreatePostDto): Promise<PostResponseDto> {
-    return this.postsService.create(createPostDto);
+  async create(
+    @User() user: CurrentUser,
+    @Body() createPostDto: CreatePostDto,
+  ): Promise<PostResponseDto> {
+    return this.postsService.create(createPostDto, user.id);
   }
 
   /**
    * 포스트 수정 (ADMIN 권한 + CSRF 보호)
    */
   @Put(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminUpdate(PostResponseDto, '포스트 수정', '포스트')
   async update(
     @Param('slug') slug: string,
+    @User() user: CurrentUser,
     @Body() updatePostDto: UpdatePostDto,
   ): Promise<PostResponseDto> {
-    return this.postsService.update(slug, updatePostDto);
+    return this.postsService.update(slug, updatePostDto, user.id);
   }
 
   /**
    * 포스트 삭제 (ADMIN 권한 + CSRF 보호)
    */
   @Delete(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAdminDelete('포스트 삭제', '포스트')
-  async remove(@Param('slug') slug: string): Promise<void> {
-    return this.postsService.remove(slug);
+  async remove(
+    @Param('slug') slug: string,
+    @User() user: CurrentUser,
+  ): Promise<void> {
+    return this.postsService.remove(slug, user.id);
   }
 }

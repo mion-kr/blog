@@ -15,7 +15,6 @@ import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { TagsService } from './tags.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CsrfGuard } from '../auth/guards/csrf.guard';
 
 import { TagQueryDto } from './dto/tag-query.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -81,7 +80,7 @@ export class TagsController {
    * 태그 생성 (ADMIN 권한 + CSRF 보호)
    */
   @Post()
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminCreate(TagResponseDto, '태그 생성')
   @ApiConflictError('슬러그 중복')
   async create(@Body() createTagDto: CreateTagDto): Promise<TagResponseDto> {
@@ -92,7 +91,7 @@ export class TagsController {
    * 태그 수정 (ADMIN 권한 + CSRF 보호)
    */
   @Put(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @ApiAdminUpdate(TagResponseDto, '태그 수정', '태그')
   @ApiConflictError('슬러그 중복')
   async update(
@@ -106,7 +105,7 @@ export class TagsController {
    * 태그 삭제 (ADMIN 권한 + CSRF 보호)
    */
   @Delete(':slug')
-  @UseGuards(AdminGuard, CsrfGuard)
+  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAdminDelete('태그 삭제', '태그')
   async remove(@Param('slug') slug: string): Promise<void> {

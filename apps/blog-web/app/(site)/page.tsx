@@ -5,15 +5,13 @@ import { ReactNode } from "react";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { HeroActions } from "@/components/hero-actions";
 import { PostCard } from "@/components/post-card";
-import { cn } from "@/lib/utils";
 
-import type { Category, PostResponseDto, Tag } from "@repo/shared";
+import type { PostResponseDto } from "@repo/shared";
 import {
   ArrowRight,
   CalendarDays,
   Eye,
   Flame,
-  FolderOpen,
   PenSquare,
   Tag as TagIcon,
 } from "lucide-react";
@@ -114,11 +112,7 @@ export default async function HomePage() {
             <LatestPostsSection posts={latestGridPosts} total={stats.posts} />
           )}
 
-          <DiscoverySection
-            trendingPosts={trendingPosts}
-            categories={categories}
-            tags={tags}
-          />
+          <DiscoverySection trendingPosts={trendingPosts} />
         </div>
       </section>
     </div>
@@ -197,14 +191,14 @@ function FeaturedSection({
   highlightPosts: PostResponseDto[];
 }) {
   if (!featuredPost) {
-    return (
-      <EmptyState
-        icon={<PenSquare className="h-5 w-5" aria-hidden />}
-        title="첫 번째 포스트를 기다리고 있어요"
-        description="관리자 로그인을 통해 새로운 포스트를 작성해보세요."
-      />
-    );
-  }
+      return (
+        <EmptyState
+          icon={<PenSquare className="h-5 w-5" aria-hidden />}
+          title="첫 번째 포스트를 기다리고 있어요"
+          description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
+        />
+      );
+    }
 
   const displayDate = featuredPost.publishedAt ?? featuredPost.createdAt;
 
@@ -346,18 +340,12 @@ function LatestPostsSection({
 
 function DiscoverySection({
   trendingPosts,
-  categories,
-  tags,
 }: {
   trendingPosts: PostResponseDto[];
-  categories: Category[];
-  tags: Tag[];
 }) {
   const hasTrending = trendingPosts.length > 0;
-  const hasCategories = categories.length > 0;
-  const hasTags = tags.length > 0;
 
-  if (!hasTrending && !hasCategories && !hasTags) {
+  if (!hasTrending) {
     return null;
   }
 
@@ -379,8 +367,7 @@ function DiscoverySection({
         </Link>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
-        <div className="space-y-4">
+      <div className="space-y-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
             <Flame className="h-5 w-5 text-[var(--color-accent-warning)]" aria-hidden />
             인기 포스트 Top {trendingPosts.length}
@@ -421,82 +408,8 @@ function DiscoverySection({
               description="새로운 포스트가 발행되면 조회수 기준으로 자동 집계됩니다."
             />
           )}
-        </div>
-
-        <aside className="space-y-8">
-          <div className="space-y-3">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
-              <FolderOpen className="h-5 w-5 text-[var(--color-accent-success)]" aria-hidden />
-              카테고리
-            </h3>
-
-            {hasCategories ? (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <CategoryLink key={category.id} category={category} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<FolderOpen className="h-5 w-5" aria-hidden />}
-                title="카테고리가 아직 없어요"
-                description="관리자 페이지에서 카테고리를 생성하면 이곳에 표시됩니다."
-              />
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
-              <TagIcon className="h-5 w-5 text-[var(--color-accent-secondary)]" aria-hidden />
-              인기 태그
-            </h3>
-
-            {hasTags ? (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <TagLink key={tag.id} tag={tag} emphasis={index % 5 === 0} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<TagIcon className="h-5 w-5" aria-hidden />}
-                title="등록된 태그가 없습니다"
-                description="포스트에 태그를 추가하면 독자가 더 쉽게 찾을 수 있어요."
-              />
-            )}
-          </div>
-        </aside>
       </div>
     </div>
-  );
-}
-
-function CategoryLink({ category }: { category: Category }) {
-  return (
-    <Link
-      href={`/category/${category.slug}`}
-      className={cn(
-        "blog-tag",
-        "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
-      )}
-    >
-      <FolderOpen className="h-3 w-3" aria-hidden />
-      {category.name}
-    </Link>
-  );
-}
-
-function TagLink({ tag, emphasis }: { tag: Tag; emphasis?: boolean }) {
-  return (
-    <Link
-      href={`/tag/${tag.slug}`}
-      className={cn(
-        "blog-tag",
-        emphasis ? "text-sm font-semibold" : "text-xs"
-      )}
-    >
-      #{tag.name}
-    </Link>
   );
 }
 

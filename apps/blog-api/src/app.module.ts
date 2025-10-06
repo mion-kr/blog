@@ -7,6 +7,7 @@ import { DatabaseModule } from './database';
 import { PostsModule } from './posts/posts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TagsModule } from './tags/tags.module';
+import { SettingsModule } from './settings/settings.module';
 import { CommonModule } from './common/common.module';
 import { LoggerModule } from './logger/logger.module';
 
@@ -23,6 +24,7 @@ import { LoggerModule } from './logger/logger.module';
     PostsModule,
     CategoriesModule,
     TagsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

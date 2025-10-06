@@ -33,5 +33,8 @@
     "@repo/typescript-config": "workspace:*",
     "tsup": "^8.5.0",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "hangul-romanize": "^0.3.2"
   }
 }
