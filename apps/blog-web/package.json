@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "doppler run -- next dev --turbopack --port 3000",
     "build": "next build",
-    "start": "doppler -- next start",
+    "start": "next start",
     "lint": "next lint --max-warnings 0",
     "check-types": "tsc --noEmit",
     "test:e2e": "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3100} NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://127.0.0.1:3001} pnpm exec playwright test --workers=1",
