@@ -4,13 +4,13 @@
 
 ### 목적
 
-- 토큰이 변조되지 않았음을 증명
-- 무결성(Integrity) 보장
+- 토큰이 변조되지 않았음을 증명합니다.
+- 무결성(Integrity)을 보장합니다.
 
 ### 방식
 
-- 시크릿 키로 서명만 추가
-- 내용은 Base64로 인코딩되어 **누구나 디코딩해서 볼 수 있음**
+- 시크릿 키로 서명만 추가합니다.
+- 내용은 Base64로 인코딩되어 **누구나 디코딩해서 볼 수 있습니다.**
 
 ### 형식
 
@@ -24,11 +24,11 @@ header.payload.signature
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 ```
 
-3개 파트로 구성:
+3개 파트로 구성됩니다.
 
-1. **Header**: 알고리즘 정보 (예: HS256)
-2. **Payload**: 실제 데이터 (JSON)
-3. **Signature**: 서명
+1. **Header**: 알고리즘 정보를 담습니다.(예: HS256)
+2. **Payload**: 실제 데이터를 담습니다.(JSON)
+3. **Signature**: 서명 값을 담습니다.
 
 ### 검증 과정
 
@@ -49,14 +49,14 @@ sequenceDiagram
 
 ### 보안 특성
 
-- ✅ 변조 불가능 (서명 검증)
-- ❌ 내용 노출됨 (Base64는 암호화가 아님)
-- 민감한 정보를 넣으면 안 됨
+- ✅ 변조가 불가능합니다.(서명 검증)
+- ❌ 내용이 노출됩니다.(Base64는 암호화가 아닙니다.)
+- 민감한 정보를 넣지 않아야 합니다.
 
 ### 사용 라이브러리
 
-- `jsonwebtoken` (Node.js)
-- `passport-jwt` (Passport 전략)
+- `jsonwebtoken`(Node.js)
+- `passport-jwt`(Passport 전략)
 
 ---
 
@@ -64,13 +64,13 @@ sequenceDiagram
 
 ### 목적
 
-- 토큰 내용 자체를 암호화해서 **아무도 볼 수 없게** 함
-- 기밀성(Confidentiality) 보장
+- 토큰 내용 자체를 암호화해 **아무도 볼 수 없도록** 합니다.
+- 기밀성(Confidentiality)을 보장합니다.
 
 ### 방식
 
-- 시크릿 키로 전체 내용을 암호화
-- 복호화 키가 없으면 내용을 볼 수 없음
+- 시크릿 키로 전체 내용을 암호화합니다.
+- 복호화 키가 없으면 내용을 볼 수 없습니다.
 
 ### 형식
 
@@ -84,13 +84,13 @@ header.encrypted_key.iv.ciphertext.tag
 eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..x2I7kZ2nsTfxVn5K.Y8F9bvLqP3KJ8nR2mZ...
 ```
 
-5개 파트로 구성:
+5개 파트로 구성됩니다.
 
-1. **Header**: 암호화 알고리즘 정보 (예: dir, A256GCM)
-2. **Encrypted Key**: 암호화된 키 (direct encryption이면 비어있음)
-3. **IV (Initialization Vector)**: 초기화 벡터
-4. **Ciphertext**: 암호화된 실제 데이터
-5. **Tag**: 인증 태그
+1. **Header**: 암호화 알고리즘 정보를 담습니다.(예: dir, A256GCM)
+2. **Encrypted Key**: 암호화된 키를 담습니다.(direct encryption이면 비어 있습니다.)
+3. **IV (Initialization Vector)**: 초기화 벡터를 담습니다.
+4. **Ciphertext**: 암호화된 실제 데이터를 담습니다.
+5. **Tag**: 인증 태그를 담습니다.
 
 ### 복호화 과정
 
@@ -111,14 +111,14 @@ sequenceDiagram
 
 ### 보안 특성
 
-- ✅ 변조 불가능
-- ✅ 내용 숨김 (암호화)
-- 민감한 정보도 안전
+- ✅ 변조가 불가능합니다.
+- ✅ 내용을 숨깁니다.(암호화)
+- 민감한 정보도 안전하게 보호합니다.
 
 ### 사용 라이브러리
 
-- `jose` (Node.js)
-- NextAuth.js (기본적으로 JWE 사용)
+- `jose`(Node.js)
+- NextAuth.js(기본적으로 JWE 사용)
 
 ---
 
@@ -154,10 +154,9 @@ graph TB
 
 | 항목 | JWT (서명) | JWE (암호화) |
 |------|-----------|-------------|
-| **목적** | 무결성 검증 | 기밀성 보장 |
-| **내용 노출** | 누구나 볼 수 있음 | 키가 있어야 볼 수 있음 |
-| **파트 개수** | 3개 | 5개 |
-| **토큰 길이** | 짧음 | 김 |
+| **목적** | 무결성을 검증합니다. | 기밀성을 보장합니다. |
+| **내용 노출** | 누구나 볼 수 있습니다. | 키가 있어야 볼 수 있습니다. |
+| **파트 개수** | 3개입니다. | 5개입니다. |
+| **토큰 길이** | 짧습니다. | 깁니다. |
 | **성능** | 빠름 | 느림 (암호화/복호화) |
 | **사용 케이스** | 일반 인증 토큰 | 민감 정보 포함 토큰 |
-
