@@ -26,6 +26,8 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
+    "@aws-sdk/client-s3": "^3.744.0",
+    "@aws-sdk/s3-request-presigner": "^3.744.0",
     "@panva/hkdf": "^1.1.1",
     "@repo/database": "workspace:*",
     "@repo/shared": "workspace:*",

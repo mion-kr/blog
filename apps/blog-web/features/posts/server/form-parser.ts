@@ -33,12 +33,14 @@ export function parseCreatePostForm(formData: FormData): CreatePostDto {
     content: String(formData.get('content') ?? ''),
     excerpt: parseString(formData.get('excerpt')),
     coverImage: parseString(formData.get('coverImage')),
+    coverImageKey: parseString(formData.get('coverImageKey')),
     published: parseBoolean(formData.get('published')),
     categoryId: parseStringRequired(formData.get('categoryId'), 'categoryId'),
     tagIds: formData
       .getAll('tagIds')
       .map((value) => String(value))
       .filter((value) => value.length > 0),
+    draftUuid: parseString(formData.get('draftUuid')),
   };
 }
 
@@ -53,12 +55,14 @@ export function parseUpdatePostForm(formData: FormData): {
     content: parseString(formData.get('content')),
     excerpt: parseString(formData.get('excerpt')),
     coverImage: parseString(formData.get('coverImage')),
+    coverImageKey: parseString(formData.get('coverImageKey')),
     published: parseBoolean(formData.get('published')),
     categoryId: parseString(formData.get('categoryId')),
     tagIds: formData
       .getAll('tagIds')
       .map((value) => String(value))
       .filter((value) => value.length > 0),
+    draftUuid: parseString(formData.get('draftUuid')),
   };
 
   return { slug, payload };

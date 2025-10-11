@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { uuidv7 } from "uuidv7"
 
 import { apiClient } from "@/lib/api-client"
 import { getAuthorizationToken } from "@/lib/auth"
@@ -30,6 +31,7 @@ export default async function AdminNewPostPage({
   const params = searchParams ? await searchParams : undefined
   const statusParam = params?.status
   const messageParam = params?.message
+  const draftUuid = uuidv7()
 
   return (
     <div className="space-y-6">
@@ -56,6 +58,7 @@ export default async function AdminNewPostPage({
         action={createAdminPostAction}
         categories={categories}
         tags={tags}
+        defaultDraftUuid={draftUuid}
         submitLabel="포스트 저장"
         cancelHref="/admin/posts"
       />

@@ -34,6 +34,12 @@ export class UpdatePostDto
   coverImage?: string;
 
   @ApiPropertyOptional({
+    description: '새롭게 업로드된 커버 이미지 객체 키',
+    example: 'development/draft/123e4567/thumbnail/1728361923-cover.png',
+  })
+  coverImageKey?: string;
+
+  @ApiPropertyOptional({
     description: '발행 상태',
     example: false,
   })
@@ -56,4 +62,11 @@ export class UpdatePostDto
     isArray: true,
   })
   tagIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '업로드된 파일 세션을 구분하는 Draft UUID (UUIDv7)',
+    example: '018f1aeb-4b58-79f7-b555-725f0c602114',
+    format: 'uuidv7',
+  })
+  draftUuid?: string;
 }
