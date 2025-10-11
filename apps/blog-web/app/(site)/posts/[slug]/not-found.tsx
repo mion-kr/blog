@@ -68,13 +68,13 @@ export default function PostNotFound() {
 
           {/* 뒤로 가기 링크 */}
           <div className="mt-8">
-            <button
-              onClick={() => window.history.back()}
+            <Link
+              href="/"
               className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              이전 페이지로 돌아가기
-            </button>
+              메인 페이지로 돌아가기
+            </Link>
           </div>
         </div>
       </div>
