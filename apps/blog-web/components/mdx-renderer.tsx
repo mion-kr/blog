@@ -5,6 +5,7 @@ import { serialize } from 'next-mdx-remote/serialize';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import remarkGfm from 'remark-gfm';
 import remarkMermaid from '@/lib/mdx/remark-mermaid';
 import { cn } from '@/lib/utils';
 import {
@@ -42,7 +43,7 @@ export function MDXRenderer({ content, className }: MDXRendererProps) {
 
         const mdxSource = await serialize(content, {
           mdxOptions: {
-            remarkPlugins: [remarkMermaid],
+            remarkPlugins: [remarkGfm, remarkMermaid],
             rehypePlugins: [],
             development: process.env.NODE_ENV === 'development',
           },
@@ -504,6 +505,47 @@ const mdxComponents = {
   code: CodeBlock,
   pre: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   blockquote: Blockquote,
+  table: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <div className="my-6 overflow-x-auto">
+      <table
+        className="w-full border-collapse text-sm md:text-base"
+        {...props}
+      >
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <th
+      className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold"
+      {...props}
+    >
+      {children}
+    </th>
+  ),
+  td: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <td className="border border-gray-200 px-3 py-2 align-top" {...props}>
+      {children}
+    </td>
+  ),
 
   // 커스텀 컴포넌트
   Image: CustomImage,
