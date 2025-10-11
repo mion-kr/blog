@@ -3,6 +3,7 @@ import { PostsService } from './posts.service'
 import type { PostsRepository, PostSortField, SortDirection } from './repositories/posts.repository'
 import type { CategoriesService } from '../categories/categories.service'
 import type { TagsService } from '../tags/tags.service'
+import type { UploadsService } from '../uploads/uploads.service'
 import type { PostAggregate, PaginatedPostResult, PostEntity } from './domain/post.model'
 import { CreatePostDto } from './dto/create-post.dto'
 import { UpdatePostDto } from './dto/update-post.dto'
@@ -13,6 +14,7 @@ describe('PostsService', () => {
   let postsRepository: jest.Mocked<PostsRepository>
   let categoriesService: jest.Mocked<CategoriesService>
   let tagsService: jest.Mocked<TagsService>
+  let uploadsService: jest.Mocked<UploadsService>
 
   const createPostAggregate = (overrides: Partial<PostAggregate> = {}): PostAggregate => ({
     id: overrides.id ?? 'post-1',
@@ -79,7 +81,21 @@ describe('PostsService', () => {
       updateMultiplePostCounts: jest.fn(),
     } as unknown as jest.Mocked<TagsService>
 
-    service = new PostsService(categoriesService, tagsService, postsRepository)
+    uploadsService = {
+      finalizeCoverImage: jest.fn(),
+      createPreSignedUrl: jest.fn(),
+    } as unknown as jest.Mocked<UploadsService>
+
+    uploadsService.finalizeCoverImage.mockResolvedValue(null)
+    postsRepository.update.mockResolvedValue(undefined)
+    postsRepository.delete.mockResolvedValue(undefined)
+
+    service = new PostsService(
+      categoriesService,
+      tagsService,
+      uploadsService,
+      postsRepository,
+    )
   })
 
   describe('findAll', () => {
@@ -158,16 +174,25 @@ describe('PostsService', () => {
         content: '# Hello',
         excerpt: 'Hello world',
         coverImage: null,
+        coverImageKey: 'development/draft/test-draft/thumbnail/file.png',
+        draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
         published: true,
         categoryId: 'cat-1',
         tagIds: ['tag-1', 'tag-2'],
       }
-      const aggregate = createPostAggregate({ id: 'post-new', slug: 'new-post', tagIds: undefined })
+      const aggregate = createPostAggregate({
+        id: 'post-new',
+        slug: 'new-post',
+        coverImage: null,
+      })
 
       postsRepository.categoryExists.mockResolvedValue(true)
       postsRepository.findExistingTagIds.mockResolvedValue(['tag-1', 'tag-2'])
       postsRepository.fetchSlugsByPrefix.mockResolvedValue([])
       postsRepository.create.mockResolvedValue(aggregate)
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-new/thumbnail/file.png',
+      )
 
       const result = await service.create(dto, 'user-1')
 
@@ -182,9 +207,25 @@ describe('PostsService', () => {
         authorId: 'user-1',
         tagIds: ['tag-1', 'tag-2'],
       })
+      expect(uploadsService.finalizeCoverImage).toHaveBeenCalledWith({
+        postId: 'post-new',
+        draftUuid: dto.draftUuid,
+        objectKey: dto.coverImageKey,
+        type: 'thumbnail',
+        currentCoverImage: null,
+      })
+      expect(postsRepository.update).toHaveBeenCalledWith(
+        'post-new',
+        expect.objectContaining({
+          coverImage: 'https://cdn.example.com/development/posts/post-new/thumbnail/file.png',
+        }),
+      )
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(['tag-1', 'tag-2'])
       expect(result.slug).toBe('new-post')
+      expect(result.coverImage).toBe(
+        'https://cdn.example.com/development/posts/post-new/thumbnail/file.png',
+      )
     })
 
     it('카테고리가 존재하지 않으면 BadRequestException', async () => {
@@ -244,7 +285,13 @@ describe('PostsService', () => {
         updatedAt: new Date('2024-01-01'),
         publishedAt: null,
       }
-      const updatedAggregate = createPostAggregate({ id: 'post-1', slug: 'new-title', title: 'New title', categoryId: 'cat-new' })
+      const updatedAggregate = createPostAggregate({
+        id: 'post-1',
+        slug: 'new-title',
+        title: 'New title',
+        categoryId: 'cat-new',
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      })
 
       postsRepository.findBasicBySlug.mockResolvedValue(existing)
       postsRepository.findTagIdsByPostId.mockResolvedValue(['tag-1'])
@@ -254,22 +301,53 @@ describe('PostsService', () => {
       postsRepository.update.mockResolvedValue(undefined)
       postsRepository.findBySlug.mockResolvedValue(updatedAggregate)
 
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
+
       const dto: UpdatePostDto = {
         title: 'New title',
         published: true,
         categoryId: 'cat-new',
         tagIds: ['tag-1', 'tag-2'],
+        coverImageKey: 'development/draft/test/thumbnail/new.png',
+        draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
       }
 
       const result = await service.update('old-title', dto, 'user-1')
 
-      expect(postsRepository.update).toHaveBeenCalled()
+      expect(postsRepository.update).toHaveBeenCalledTimes(2)
+      expect(postsRepository.update).toHaveBeenNthCalledWith(
+        1,
+        'post-1',
+        expect.objectContaining({
+          title: 'New title',
+          categoryId: 'cat-new',
+        }),
+      )
+      expect(postsRepository.update).toHaveBeenNthCalledWith(
+        2,
+        'post-1',
+        expect.objectContaining({
+          coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+        }),
+      )
+      expect(uploadsService.finalizeCoverImage).toHaveBeenCalledWith({
+        postId: 'post-1',
+        draftUuid: dto.draftUuid,
+        objectKey: dto.coverImageKey,
+        type: 'thumbnail',
+        currentCoverImage: null,
+      })
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-old')
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-new')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(
         expect.arrayContaining(['tag-1', 'tag-2']),
       )
       expect(result.title).toBe('New title')
+      expect(result.coverImage).toBe(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
     })
 
     it('존재하지 않는 포스트는 NotFoundException', async () => {

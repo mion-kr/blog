@@ -59,9 +59,11 @@ export interface CreatePostDto {
   content: string;
   excerpt?: string;
   coverImage?: string;
+  coverImageKey?: string;
   published: boolean;
   categoryId: string;
   tagIds: string[];
+  draftUuid?: string;
 }
 
 export interface UpdatePostDto extends Partial<CreatePostDto> {}

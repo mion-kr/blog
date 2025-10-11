@@ -16,7 +16,8 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'example.com',
+        hostname: 'bucket-production-d421.up.railway.app',
+        pathname: '/**',
       },
     ],
   },

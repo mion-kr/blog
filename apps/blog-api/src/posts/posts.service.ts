@@ -14,6 +14,7 @@ import {
 } from '@repo/shared';
 
 import { CategoriesService } from '../categories/categories.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { TagsService } from '../tags/tags.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostQueryDto } from './dto/post-query.dto';
@@ -37,6 +38,7 @@ export class PostsService {
   constructor(
     private readonly categoriesService: CategoriesService,
     private readonly tagsService: TagsService,
+    private readonly uploadsService: UploadsService,
     @Inject(POSTS_REPOSITORY)
     private readonly postsRepository: PostsRepository,
   ) {}
@@ -126,9 +128,11 @@ export class PostsService {
       content,
       excerpt,
       coverImage,
+      coverImageKey,
       published,
       categoryId,
       tagIds,
+      draftUuid,
     } = createPostDto;
 
     const slug = await this.createSlugFromTitle(title);
@@ -147,6 +151,21 @@ export class PostsService {
       authorId,
       tagIds,
     });
+
+    const finalizedCoverImage = await this.uploadsService.finalizeCoverImage({
+      postId: createdPost.id,
+      draftUuid,
+      objectKey: coverImageKey,
+      type: 'thumbnail',
+      currentCoverImage: coverImage ?? createdPost.coverImage ?? null,
+    });
+
+    if (finalizedCoverImage !== createdPost.coverImage) {
+      await this.postsRepository.update(createdPost.id, {
+        coverImage: finalizedCoverImage ?? null,
+      });
+      createdPost.coverImage = finalizedCoverImage ?? null;
+    }
 
     await this.categoriesService.updatePostCount(categoryId);
     await this.tagsService.updateMultiplePostCounts(tagIds);
@@ -176,9 +195,11 @@ export class PostsService {
       content,
       excerpt,
       coverImage,
+      coverImageKey,
       published,
       categoryId,
       tagIds,
+      draftUuid,
     } = updatePostDto;
 
     let newSlug = slug;
@@ -229,6 +250,25 @@ export class PostsService {
       const tagsToUpdate = new Set<string>(existingTagIds);
       tagIds.forEach((tagId) => tagsToUpdate.add(tagId));
       await this.tagsService.updateMultiplePostCounts(Array.from(tagsToUpdate));
+    }
+
+    const nextCoverImage =
+      updatePayload.coverImage !== undefined
+        ? updatePayload.coverImage
+        : existingPost.coverImage;
+
+    const finalizedCoverImage = await this.uploadsService.finalizeCoverImage({
+      postId: existingPost.id,
+      draftUuid,
+      objectKey: coverImageKey,
+      type: 'thumbnail',
+      currentCoverImage: nextCoverImage ?? null,
+    });
+
+    if (finalizedCoverImage !== nextCoverImage) {
+      await this.postsRepository.update(existingPost.id, {
+        coverImage: finalizedCoverImage ?? null,
+      });
     }
 
     const updatedPost = await this.postsRepository.findBySlug(newSlug);

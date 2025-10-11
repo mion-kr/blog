@@ -12,6 +12,7 @@ import { categoriesApi } from './categories';
 import { postsApi } from './posts';
 import { settingsApi } from './settings';
 import { tagsApi } from './tags';
+import { uploadsApi } from './uploads';
 
 function get<T>(endpoint: string, options: ApiRequestOptions = {}) {
   return request<T>(endpoint, { ...options, method: 'GET' });
@@ -60,6 +61,7 @@ export const apiClient = {
   categories: categoriesApi,
   tags: tagsApi,
   settings: settingsApi,
+  uploads: uploadsApi,
 };
 
 export type { ApiRequestOptions };
@@ -70,5 +72,5 @@ export {
   isSuccessResponse,
   request,
 };
-export { categoriesApi, postsApi, tagsApi, settingsApi };
+export { categoriesApi, postsApi, tagsApi, settingsApi, uploadsApi };
 export type { ApiResponse };

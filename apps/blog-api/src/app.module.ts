@@ -10,6 +10,7 @@ import { TagsModule } from './tags/tags.module';
 import { SettingsModule } from './settings/settings.module';
 import { CommonModule } from './common/common.module';
 import { LoggerModule } from './logger/logger.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { LoggerModule } from './logger/logger.module';
     CategoriesModule,
     TagsModule,
     SettingsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsBoolean,
@@ -53,6 +53,15 @@ export class CreatePostDto implements ICreatePostDto {
   @IsUrl({}, { message: '올바른 URL 형식이어야 합니다.' })
   coverImage?: string;
 
+  @ApiPropertyOptional({
+    description: 'pre-signed 업로드 응답에서 전달된 커버 이미지 객체 키',
+    example: 'development/draft/123e4567/thumbnail/1728361923-cover.png',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  coverImageKey?: string;
+
   @ApiProperty({
     description: '발행 상태',
     example: true,
@@ -87,4 +96,16 @@ export class CreatePostDto implements ICreatePostDto {
     message: '모든 태그 ID는 올바른 UUIDv7 형식이어야 합니다.',
   })
   tagIds: string[];
+
+  @ApiPropertyOptional({
+    description:
+      '파일 업로드 세션을 구분하는 Draft UUID (pre-signed 요청과 동일한 UUIDv7)',
+    example: '018f1aeb-4b58-79f7-b555-725f0c602114',
+    format: 'uuidv7',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsUUID('7', { message: 'Draft UUID는 UUIDv7 형식이어야 합니다.' })
+  draftUuid?: string;
 }

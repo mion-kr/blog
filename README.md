@@ -45,6 +45,7 @@
 - 인증: `NextAuth`(소셜 로그인 실험)
 - 환경/시크릿: `Doppler`
 - 인프라: `Railway`
+- 오브젝트 스토리지: `MinIO`
 - 패키징/워크스페이스: `pnpm`, `Turborepo`
 - 테스트: `Playwright`(웹), `Jest`(API)
 - UI: `@repo/ui`(shadcn 기반 구성)
