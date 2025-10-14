@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { CategoryList } from "./category-list";
 import { TagCloud } from "./tag-cloud";
 
-import type { Category, Tag } from "@repo/shared";
+import type { Category, PaginatedResponse, Tag } from "@repo/shared";
 
 interface BlogSidebarProps {
   className?: string;
@@ -22,21 +22,29 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
         setIsLoading(true);
 
         const [categoriesResponse, tagsResponse] = await Promise.all([
-          fetch('/api/categories?limit=50&sort=postCount&order=desc'),
-          fetch('/api/tags?limit=30&sort=postCount&order=desc')
+          fetch("/api/categories?limit=50&sort=postCount&order=desc"),
+          fetch("/api/tags?limit=30&sort=postCount&order=desc"),
         ]);
 
         if (categoriesResponse.ok && tagsResponse.ok) {
-          const [categoriesData, tagsData] = await Promise.all([
+          const [categoriesPayload, tagsPayload] = (await Promise.all([
             categoriesResponse.json(),
-            tagsResponse.json()
-          ]);
+            tagsResponse.json(),
+          ])) as [PaginatedResponse<Category>, PaginatedResponse<Tag>];
 
-          setCategories(categoriesData);
-          setTags(tagsData);
+          if (
+            categoriesPayload?.success &&
+            Array.isArray(categoriesPayload.data)
+          ) {
+            setCategories(categoriesPayload.data);
+          }
+
+          if (tagsPayload?.success && Array.isArray(tagsPayload.data)) {
+            setTags(tagsPayload.data);
+          }
         }
       } catch (error) {
-        console.error('Failed to load sidebar data:', error);
+        console.error("Failed to load sidebar data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -47,7 +55,7 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
 
   if (isLoading) {
     return (
-      <aside className={`blog-sidebar ${className || ''}`}>
+      <aside className={`blog-sidebar ${className || ""}`}>
         <div className="space-y-8">
           <div className="blog-sidebar-section">
             <h2 className="blog-sidebar-title">카테고리</h2>
@@ -76,7 +84,7 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
   }
 
   return (
-    <aside className={`blog-sidebar ${className || ''}`}>
+    <aside className={`blog-sidebar ${className || ""}`}>
       <div className="space-y-8">
         {/* 카테고리 섹션 */}
         <div className="blog-sidebar-section">
