@@ -1,38 +1,19 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
-import { FileText, PenSquare } from "lucide-react"
+import { PenSquare } from "lucide-react"
 
-import { AdminStatusBanner } from "@/components/admin"
-import { getAdminPosts } from "@/features/posts/server/get-admin-posts"
-import { getAuthorizationToken } from "@/lib/auth"
+import { AdminPostsContent, AdminStatusBanner } from "@/components/admin"
 
 interface PostsPageProps {
   searchParams?: Promise<Record<string, string | undefined>>
 }
 
-function formatDate(dateLike: string | Date, options?: Intl.DateTimeFormatOptions) {
-  const date = typeof dateLike === 'string' ? new Date(dateLike) : dateLike
-  return new Intl.DateTimeFormat('ko-KR', options).format(date)
-}
-
 export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
-  const token = await getAuthorizationToken()
-
   const resolvedSearchParams = searchParams ? await searchParams : {}
 
-  const result = await getAdminPosts({
-    searchParams: resolvedSearchParams,
-    token,
-  })
-
-  if (!result) {
-    notFound()
-  }
-
-  const { posts, total, statusParam, messageParam, query } = result
-  const search = query.search ?? ''
-  const published = query.published
-  const page = query.page ?? 1
+  const search = resolvedSearchParams.search?.trim() ?? ""
+  const published = resolvedSearchParams.published
+  const statusParam = resolvedSearchParams.status
+  const messageParam = resolvedSearchParams.message
 
   return (
     <div className="space-y-6">
@@ -52,7 +33,7 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
       </div>
 
       <AdminStatusBanner
-        status={statusParam as 'created' | 'updated' | 'deleted' | 'error' | undefined}
+        status={statusParam as "created" | "updated" | "deleted" | "error" | undefined}
         message={messageParam}
       />
 
@@ -76,9 +57,7 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
           <select
             id="published"
             name="published"
-            defaultValue={
-              published === undefined ? '' : published ? 'true' : 'false'
-            }
+            defaultValue={published ?? ""}
             className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
           >
             <option value="">전체</option>
@@ -102,131 +81,7 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-xl border border-slate-800">
-        <table className="min-w-full divide-y divide-slate-800">
-          <thead className="bg-slate-950/70">
-            <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                제목
-              </th>
-              <th scope="col" className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
-                카테고리
-              </th>
-              <th scope="col" className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
-                태그
-              </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                상태
-              </th>
-              <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
-                수정
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800 bg-slate-950/30">
-            {posts.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-500">
-                  <div className="flex flex-col items-center gap-3">
-                    <FileText className="h-10 w-10 text-slate-700" aria-hidden />
-                    아직 등록된 포스트가 없거나 검색 조건에 맞는 결과가 없어요.
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              posts.map((post) => (
-                <tr key={post.id} className="hover:bg-slate-900/50">
-                  <td className="px-4 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-slate-100 line-clamp-1">
-                        {post.title}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {post.published
-                          ? `발행일 ${formatDate(post.publishedAt ?? post.createdAt, { dateStyle: 'medium' })}`
-                          : `마지막 수정 ${formatDate(post.updatedAt, { dateStyle: 'medium', timeStyle: 'short' })}`}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="hidden px-4 py-4 text-sm text-slate-300 md:table-cell">
-                    {post.category?.name ?? '-'}
-                  </td>
-                  <td className="hidden px-4 py-4 text-sm text-slate-300 lg:table-cell">
-                    <div className="flex flex-wrap gap-1">
-                      {post.tags?.length
-                        ? post.tags.map((tag) => (
-                            <span
-                              key={tag.id}
-                              className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs text-slate-200"
-                            >
-                              {tag.name}
-                            </span>
-                          ))
-                        : '-'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-sm">
-                    <span
-                      className={
-                        post.published
-                          ? 'rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-300'
-                          : 'rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-300'
-                      }
-                    >
-                      {post.published ? '발행됨' : '초안'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-right text-sm">
-                    <Link
-                      href={`/admin/posts/${post.slug}/edit`}
-                      className="text-emerald-300 transition hover:text-emerald-200"
-                    >
-                      편집
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <span>
-          총 <strong className="text-slate-300">{total}</strong>건의 포스트가 있습니다.
-        </span>
-        <div className="flex items-center gap-2">
-          <Link
-            href={{
-              pathname: '/admin/posts',
-              query: {
-                ...(search ? { search } : {}),
-                ...(published !== undefined ? { published: String(published) } : {}),
-                page: Math.max(1, page - 1),
-              },
-            }}
-            className="rounded-lg border border-slate-800 px-3 py-1 text-xs text-slate-300 transition hover:border-slate-700 hover:text-slate-100"
-            aria-disabled={page <= 1}
-            tabIndex={page <= 1 ? -1 : undefined}
-          >
-            이전
-          </Link>
-          <span className="text-xs">{page} 페이지</span>
-          <Link
-            href={{
-              pathname: '/admin/posts',
-              query: {
-                ...(search ? { search } : {}),
-                ...(published !== undefined ? { published: String(published) } : {}),
-                page: page + 1,
-              },
-            }}
-            className="rounded-lg border border-slate-800 px-3 py-1 text-xs text-slate-300 transition hover:border-slate-700 hover:text-slate-100"
-          >
-            다음
-          </Link>
-        </div>
-      </div>
+      <AdminPostsContent searchParams={resolvedSearchParams} />
     </div>
   )
 }
