@@ -16,6 +16,7 @@ interface AdminPostsContentProps {
     published?: string
     sort?: string
     order?: string
+    limit?: string
   }
 }
 
@@ -96,8 +97,8 @@ export function AdminPostsContent({ searchParams }: AdminPostsContentProps) {
     }
   }, [queryString, reloadFlag])
 
-  const page = data?.query.page ?? Number(searchParams.page ?? "1") || 1
-  const limit = data?.query.limit ?? Number(searchParams.limit ?? "10") || 10
+  const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
+  const limit = (data?.query.limit ?? Number(searchParams.limit ?? "10")) || 10
   const total = data?.total ?? 0
   const hasPrev = page > 1
   const hasNext = page * limit < total
