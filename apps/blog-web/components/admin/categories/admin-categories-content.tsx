@@ -98,7 +98,7 @@ export function AdminCategoriesContent({ searchParams }: AdminCategoriesContentP
     }
   }, [queryString, reloadFlag])
 
-  const page = data?.query.page ?? Number(searchParams.page ?? "1") || 1
+  const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
   const limit = data?.query.limit ?? 20
   const total = data?.total ?? 0
   const hasPrev = page > 1
