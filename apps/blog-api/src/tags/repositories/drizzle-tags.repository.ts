@@ -23,7 +23,9 @@ import {
 
 @Injectable()
 export class DrizzleTagsRepository implements TagsRepository {
-  async findMany(options: FindTagsOptions): Promise<TagEntity[]> {
+  async findMany(
+    options: FindTagsOptions,
+  ): Promise<{ items: TagEntity[]; total: number }> {
     const { page, limit, sort, order, search } = options;
     const offset = (page - 1) * limit;
 
@@ -53,6 +55,11 @@ export class DrizzleTagsRepository implements TagsRepository {
       updatedAt: tags.updatedAt,
     } satisfies Record<string, unknown>;
 
+    const searchValue = search?.trim();
+    const whereCondition = searchValue
+      ? ilike(tags.name, `%${searchValue}%`)
+      : undefined;
+
     const baseQuery = db
       .select(selection)
       .from(tags)
@@ -61,20 +68,30 @@ export class DrizzleTagsRepository implements TagsRepository {
         posts,
         and(eq(postTags.postId, posts.id), eq(posts.published, true)),
       )
-      .groupBy(tags.id, tags.name, tags.slug, tags.createdAt, tags.updatedAt)
+      .groupBy(tags.id, tags.name, tags.slug, tags.createdAt, tags.updatedAt);
+
+    const filteredQuery = whereCondition
+      ? baseQuery.where(whereCondition)
+      : baseQuery;
+
+    const rows = await filteredQuery
       .orderBy(orderByExpression)
       .limit(limit)
       .offset(offset);
+    const items = rows.map((row) => this.mapRow(row));
 
-    let rows;
+    const totalQuery = db.select({ count: count(tags.id) }).from(tags);
 
-    if (search?.trim()) {
-      rows = await baseQuery.having(ilike(tags.name, `%${search.trim()}%`));
-    } else {
-      rows = await baseQuery;
-    }
+    const totalRows = whereCondition
+      ? await totalQuery.where(whereCondition)
+      : await totalQuery;
 
-    return rows.map((row) => this.mapRow(row));
+    const [{ count: total } = { count: 0 }] = totalRows;
+
+    return {
+      items,
+      total: Number(total ?? 0),
+    };
   }
 
   async findBySlug(slugValue: string): Promise<TagEntity | null> {

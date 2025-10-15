@@ -1,5 +1,6 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { TestBed, Mocked } from '@suites/unit';
+import { PaginationMeta } from '@repo/shared';
 import { TagsController } from './tags.controller';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -43,13 +44,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-04'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, 1, 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, 1, 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
       expect(tagsService.findAll).toHaveBeenCalledTimes(1);
     });
@@ -71,13 +78,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-02'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
 
@@ -88,13 +101,19 @@ describe('TagsController', () => {
         order: 'asc',
       };
       const mockTags: TagResponseDto[] = [];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith({
         sort: 'name',
         order: 'asc',
@@ -108,13 +127,19 @@ describe('TagsController', () => {
         limit: 50,
       };
       const mockTags: TagResponseDto[] = [];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith({
         page: 3,
         limit: 50,
@@ -126,13 +151,19 @@ describe('TagsController', () => {
       const query: TagQueryDto = {
         search: 'nonexistent',
       };
-      tagsService.findAll.mockResolvedValue([]);
+      tagsService.findAll.mockResolvedValue({
+        items: [],
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result).toEqual({
+        items: [],
+        meta: PaginationMeta.create(0, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
   });
@@ -539,7 +570,11 @@ describe('TagsController', () => {
       // Arrange
       const query: TagQueryDto = {};
       const mockTags: TagResponseDto[] = [];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      const mockResponse = {
+        items: mockTags,
+        meta: PaginationMeta.create(0, 1, 10),
+      };
+      tagsService.findAll.mockResolvedValue(mockResponse);
 
       // Act
       const results = await Promise.all([
@@ -550,7 +585,7 @@ describe('TagsController', () => {
 
       // Assert
       results.forEach((result) => {
-        expect(result).toEqual(mockTags);
+        expect(result).toEqual(mockResponse);
       });
       expect(tagsService.findAll).toHaveBeenCalledTimes(3);
     });
@@ -580,13 +615,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-04'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
 
@@ -605,13 +646,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-02'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
 
@@ -630,13 +677,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-02'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
 
@@ -663,13 +716,19 @@ describe('TagsController', () => {
           updatedAt: new Date('2024-01-04'),
         },
       ];
-      tagsService.findAll.mockResolvedValue(mockTags);
+      tagsService.findAll.mockResolvedValue({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockTags);
+      expect(result).toEqual({
+        items: mockTags,
+        meta: PaginationMeta.create(mockTags.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(tagsService.findAll).toHaveBeenCalledWith(query);
     });
   });

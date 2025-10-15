@@ -21,7 +21,9 @@ import {
 
 @Injectable()
 export class DrizzleCategoriesRepository implements CategoriesRepository {
-  async findMany(options: FindCategoriesOptions): Promise<CategoryEntity[]> {
+  async findMany(
+    options: FindCategoriesOptions,
+  ): Promise<{ items: CategoryEntity[]; total: number }> {
     const { page, limit, sort, order, search } = options;
     const offset = (page - 1) * limit;
 
@@ -52,6 +54,11 @@ export class DrizzleCategoriesRepository implements CategoriesRepository {
       updatedAt: categories.updatedAt,
     } satisfies Record<string, unknown>;
 
+    const searchValue = search?.trim();
+    const whereCondition = searchValue
+      ? ilike(categories.name, `%${searchValue}%`)
+      : undefined;
+
     const baseQuery = db
       .select(selection)
       .from(categories)
@@ -66,21 +73,32 @@ export class DrizzleCategoriesRepository implements CategoriesRepository {
         categories.description,
         categories.createdAt,
         categories.updatedAt,
-      )
+      );
+
+    const filteredQuery = whereCondition
+      ? baseQuery.where(whereCondition)
+      : baseQuery;
+
+    const rows = await filteredQuery
       .orderBy(orderByExpression)
       .limit(limit)
       .offset(offset);
+    const items = rows.map((row) => this.mapRow(row));
 
-    if (search?.trim()) {
-      const trimmed = search.trim();
-      const result = await baseQuery.having(
-        ilike(categories.name, `%${trimmed}%`),
-      );
-      return result.map((row) => this.mapRow(row));
-    }
+    const totalQuery = db
+      .select({ count: count(categories.id) })
+      .from(categories);
 
-    const rows = await baseQuery;
-    return rows.map((row) => this.mapRow(row));
+    const totalRows = whereCondition
+      ? await totalQuery.where(whereCondition)
+      : await totalQuery;
+
+    const [{ count: total } = { count: 0 }] = totalRows;
+
+    return {
+      items,
+      total: Number(total ?? 0),
+    };
   }
 
   async findBySlug(slugValue: string): Promise<CategoryEntity | null> {
@@ -218,6 +236,17 @@ export class DrizzleCategoriesRepository implements CategoriesRepository {
       .update(categories)
       .set({ postCount: total, updatedAt: new Date() })
       .where(eq(categories.id, categoryId));
+  }
+
+  async countAll(search?: string): Promise<number> {
+    const query = db.select({ count: count(categories.id) }).from(categories);
+
+    if (search?.trim()) {
+      query.where(ilike(categories.name, `%${search.trim()}%`));
+    }
+
+    const [{ count: total } = { count: 0 }] = await query;
+    return Number(total ?? 0);
   }
 
   async countPosts(categoryId: string): Promise<number> {

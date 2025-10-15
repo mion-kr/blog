@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { PaginatedData, PaginationMeta } from '@repo/shared';
+
 import { CreateTagDto } from './dto/create-tag.dto';
 import { TagQueryDto } from './dto/tag-query.dto';
 import { TagResponseDto } from './dto/tag-response.dto';
@@ -32,7 +34,7 @@ export class TagsService {
     private readonly tagsRepository: TagsRepository,
   ) {}
 
-  async findAll(query: TagQueryDto): Promise<TagResponseDto[]> {
+  async findAll(query: TagQueryDto): Promise<PaginatedData<TagResponseDto>> {
     const {
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
@@ -45,7 +47,7 @@ export class TagsService {
     const orderDirection: TagSortDirection = (order ??
       DEFAULT_ORDER) as TagSortDirection;
 
-    const tags = await this.tagsRepository.findMany({
+    const { items, total } = await this.tagsRepository.findMany({
       page,
       limit,
       sort: sortField,
@@ -53,11 +55,15 @@ export class TagsService {
       search,
     });
 
-    return tags.map(mapToTagResponse);
+    return {
+      items: items.map(mapToTagResponse),
+      meta: PaginationMeta.create(total, page, limit),
+    };
   }
 
   async findAllOld(query: TagQueryDto): Promise<TagResponseDto[]> {
-    return this.findAll(query);
+    const result = await this.findAll(query);
+    return result.items;
   }
 
   async findOneBySlug(slug: string): Promise<TagResponseDto> {

@@ -44,7 +44,7 @@ describe('CategoriesService', () => {
   describe('findAll', () => {
     it('기본 옵션으로 카테고리를 반환해야 함', async () => {
       const categories = [createCategory(), createCategory({ id: 'cat-2', name: '회고', slug: 'retro' })]
-      repository.findMany.mockResolvedValue(categories)
+      repository.findMany.mockResolvedValue({ items: categories, total: 2 })
 
       const result = await service.findAll({})
 
@@ -55,12 +55,13 @@ describe('CategoriesService', () => {
         order: 'desc' satisfies SortDirection,
         search: undefined,
       })
-      expect(result).toHaveLength(2)
-      expect(result[0]).toMatchObject({ id: 'cat-1', name: '개발', slug: 'development' })
+      expect(result.items).toHaveLength(2)
+      expect(result.items[0]).toMatchObject({ id: 'cat-1', name: '개발', slug: 'development' })
+      expect(result.meta.total).toBe(2)
     })
 
     it('검색어와 정렬을 전달해야 함', async () => {
-      repository.findMany.mockResolvedValue([])
+      repository.findMany.mockResolvedValue({ items: [], total: 0 })
 
       const query: CategoryQueryDto = {
         page: 2,

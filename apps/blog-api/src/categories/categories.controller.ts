@@ -13,6 +13,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
+import { PaginatedData } from '@repo/shared';
+
 import { CategoriesService } from './categories.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 
@@ -60,7 +62,7 @@ export class CategoriesController {
   )
   async findAll(
     @Query() query: CategoryQueryDto,
-  ): Promise<CategoryResponseDto[]> {
+  ): Promise<PaginatedData<CategoryResponseDto>> {
     return this.categoriesService.findAll(query);
   }
 

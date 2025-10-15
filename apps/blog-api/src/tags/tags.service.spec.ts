@@ -44,7 +44,7 @@ describe('TagsService', () => {
   describe('findAll', () => {
     it('기본 옵션으로 태그 목록을 반환해야 함', async () => {
       const tags = [createTagEntity(), createTagEntity({ id: 'tag-2', name: 'React', slug: 'react' })]
-      repository.findMany.mockResolvedValue(tags)
+      repository.findMany.mockResolvedValue({ items: tags, total: 2 })
 
       const result = await service.findAll({})
 
@@ -55,12 +55,13 @@ describe('TagsService', () => {
         order: 'desc' satisfies TagSortDirection,
         search: undefined,
       })
-      expect(result).toHaveLength(2)
-      expect(result[0]).toMatchObject({ id: 'tag-1', name: 'Next.js', slug: 'nextjs' })
+      expect(result.items).toHaveLength(2)
+      expect(result.items[0]).toMatchObject({ id: 'tag-1', name: 'Next.js', slug: 'nextjs' })
+      expect(result.meta.total).toBe(2)
     })
 
     it('검색 및 정렬 옵션을 전달해야 함', async () => {
-      repository.findMany.mockResolvedValue([])
+      repository.findMany.mockResolvedValue({ items: [], total: 0 })
       const query: TagQueryDto = {
         page: 3,
         limit: 5,

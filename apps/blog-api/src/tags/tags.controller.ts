@@ -13,6 +13,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
+import { PaginatedData } from '@repo/shared';
+
 import { TagsService } from './tags.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 
@@ -58,7 +60,9 @@ export class TagsController {
     '태그 목록 조회',
     '모든 태그를 페이징과 필터링을 통해 조회합니다. 공개 API이므로 인증이 필요하지 않습니다.',
   )
-  async findAll(@Query() query: TagQueryDto): Promise<TagResponseDto[]> {
+  async findAll(
+    @Query() query: TagQueryDto,
+  ): Promise<PaginatedData<TagResponseDto>> {
     return this.tagsService.findAll(query);
   }
 
