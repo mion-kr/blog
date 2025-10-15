@@ -28,7 +28,9 @@ export interface UpdateCategoryData {
 }
 
 export interface CategoriesRepository {
-  findMany(options: FindCategoriesOptions): Promise<CategoryEntity[]>;
+  findMany(
+    options: FindCategoriesOptions,
+  ): Promise<{ items: CategoryEntity[]; total: number }>;
   findBySlug(slug: string): Promise<CategoryEntity | null>;
   findById(id: string): Promise<CategoryEntity | null>;
   create(data: CreateCategoryData): Promise<CategoryEntity>;

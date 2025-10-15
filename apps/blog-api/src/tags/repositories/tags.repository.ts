@@ -22,7 +22,9 @@ export interface UpdateTagData {
 }
 
 export interface TagsRepository {
-  findMany(options: FindTagsOptions): Promise<TagEntity[]>;
+  findMany(
+    options: FindTagsOptions,
+  ): Promise<{ items: TagEntity[]; total: number }>;
   findBySlug(slug: string): Promise<TagEntity | null>;
   findById(id: string): Promise<TagEntity | null>;
   create(data: CreateTagData): Promise<TagEntity>;

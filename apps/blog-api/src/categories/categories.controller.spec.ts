@@ -1,5 +1,6 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { TestBed, Mocked } from '@suites/unit';
+import { PaginationMeta } from '@repo/shared';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { CategoryQueryDto } from './dto/category-query.dto';
@@ -52,13 +53,19 @@ describe('CategoriesController', () => {
         },
       ];
 
-      categoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue({
+        items: mockCategories,
+        meta: PaginationMeta.create(mockCategories.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockCategories);
+      expect(result).toEqual({
+        items: mockCategories,
+        meta: PaginationMeta.create(mockCategories.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(categoriesService.findAll).toHaveBeenCalledWith(query);
       expect(categoriesService.findAll).toHaveBeenCalledTimes(1);
     });
@@ -68,13 +75,19 @@ describe('CategoriesController', () => {
       const query: CategoryQueryDto = {};
       const mockCategories: CategoryResponseDto[] = [];
 
-      categoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue({
+        items: mockCategories,
+        meta: PaginationMeta.create(0, 1, 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockCategories);
+      expect(result).toEqual({
+        items: mockCategories,
+        meta: PaginationMeta.create(0, 1, 10),
+      });
       expect(categoriesService.findAll).toHaveBeenCalledWith(query);
     });
 
@@ -96,13 +109,19 @@ describe('CategoriesController', () => {
         },
       ];
 
-      categoriesService.findAll.mockResolvedValue(mockCategories);
+      categoriesService.findAll.mockResolvedValue({
+        items: mockCategories,
+        meta: PaginationMeta.create(mockCategories.length, query.page ?? 1, query.limit ?? 10),
+      });
 
       // Act
       const result = await controller.findAll(query);
 
       // Assert
-      expect(result).toEqual(mockCategories);
+      expect(result).toEqual({
+        items: mockCategories,
+        meta: PaginationMeta.create(mockCategories.length, query.page ?? 1, query.limit ?? 10),
+      });
       expect(categoriesService.findAll).toHaveBeenCalledWith(query);
     });
   });

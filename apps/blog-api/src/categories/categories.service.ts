@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { PaginatedData, PaginationMeta } from '@repo/shared';
+
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import { CategoryResponseDto } from './dto/category-response.dto';
@@ -32,7 +34,9 @@ export class CategoriesService {
     private readonly categoriesRepository: CategoriesRepository,
   ) {}
 
-  async findAll(query: CategoryQueryDto): Promise<CategoryResponseDto[]> {
+  async findAll(
+    query: CategoryQueryDto,
+  ): Promise<PaginatedData<CategoryResponseDto>> {
     const {
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
@@ -46,7 +50,7 @@ export class CategoriesService {
     const orderDirection: CategorySortDirection = (order ??
       DEFAULT_ORDER) as CategorySortDirection;
 
-    const categories = await this.categoriesRepository.findMany({
+    const { items, total } = await this.categoriesRepository.findMany({
       page,
       limit,
       sort: sortField,
@@ -54,11 +58,15 @@ export class CategoriesService {
       search,
     });
 
-    return categories.map(mapToCategoryResponse);
+    return {
+      items: items.map(mapToCategoryResponse),
+      meta: PaginationMeta.create(total, page, limit),
+    };
   }
 
   async findAllOld(query: CategoryQueryDto): Promise<CategoryResponseDto[]> {
-    return this.findAll(query);
+    const result = await this.findAll(query);
+    return result.items;
   }
 
   async findOneBySlug(slug: string): Promise<CategoryResponseDto> {
