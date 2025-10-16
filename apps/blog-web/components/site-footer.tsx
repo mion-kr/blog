@@ -16,7 +16,7 @@ export function SiteFooter() {
             RSS
           </Link>
           <a
-            href="https://github.com/mion-lab"
+            href="https://github.com/mion-kr"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[var(--color-primary)]"

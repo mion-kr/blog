@@ -1,17 +1,19 @@
-import Link from "next/link";
 import { Metadata } from "next";
+import Link from "next/link";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://mion.blog").replace(/\/$/, "");
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://mion.blog"
+).replace(/\/$/, "");
 const aboutOgImage = `${siteUrl}/og/about.png`;
 
 export const metadata: Metadata = {
   title: "About | Mion's Blog",
   description:
-    "Next.js와 NestJS를 넘나들며 제품 문제를 해결하는 백엔드 개발자 미온의 이야기와 기술 철학을 소개합니다.",
+    "Next.js와 NestJS를 기반으로 제품 문제를 해결하며 개발자 경험을 사랑하는 백엔드 개발자 미온을 소개합니다.",
   openGraph: {
     title: "About | Mion's Blog",
     description:
-      "Next.js·NestJS 기반으로 제품 문제를 해결하는 백엔드 개발자 미온의 가치관과 관심사를 만나보세요.",
+      "웹 성능, DX, 인프라 자동화에 집중하는 백엔드 개발자 미온의 관심사와 협업 방식을 소개합니다.",
     type: "website",
     url: `${siteUrl}/about`,
     images: [
@@ -19,64 +21,97 @@ export const metadata: Metadata = {
         url: aboutOgImage,
         width: 1200,
         height: 630,
-        alt: "Mion 소개 OG 이미지",
+        alt: "Mion About 페이지 OG 이미지",
       },
     ],
   },
 };
 
-const focusTopics = ["웹 성능", "DX(개발자 경험)", "인프라 자동화", "테스트 문화", "팀 생산성"];
+const focusTopics = [
+  "웹 성능",
+  "DX(개발자 경험)",
+  "인프라 자동화",
+  "테스트 문화",
+  "팀 생산성",
+];
 
-const currentGoals = [
-  "Next.js 15 App Router 기반 관리자 경험 개선",
-  "NestJS 11에서 MinIO 연동 최적화 및 업로드 파이프라인 확장",
-  "Playwright E2E 시나리오 고도화와 품질 지표 자동화",
+const currentFocus = [
+  {
+    title: "Next.js 15 · Turbopack 기반 관리자 UX 고도화",
+    description:
+      "초안·이미지 업로드 경험을 개선하고, 콘텐츠 편집 흐름을 더 빠르게 만들고 있어요.",
+  },
+  {
+    title: "NestJS 11 · Railway MinIO 연동 안정화",
+    description:
+      "pre-signed 업로드 파이프라인과 객체 이동 자동화를 구축해 운영 실수를 줄이고 있어요.",
+  },
+  {
+    title: "Playwright 테스트 지표 자동화",
+    description:
+      "핵심 시나리오에 대한 UI 테스트를 지표와 연결해 배포 전 품질을 확인하는 루프를 만들고 있어요.",
+  },
+];
+
+const techStacks = [
+  {
+    title: "Frontend",
+    items: [
+      "Next.js 15",
+      "React Server Components",
+      "Tailwind CSS",
+      "Playwright",
+    ],
+  },
+  {
+    title: "Backend",
+    items: ["NestJS 11", "Drizzle ORM", "PostgreSQL", "tRPC"],
+  },
+  {
+    title: "Infra & DX",
+    items: ["Railway", "MinIO", "Turborepo", "PNPM", "Doppler"],
+  },
+];
+
+const contactChannels = [
+  {
+    label: "Email",
+    value: "whddbs311@gmail.com",
+    href: "mailto:whddbs311@gmail.com",
+    helper: "평일 10:00–18:00 사이 2–3영업일 내 회신 드려요.",
+  },
+  {
+    label: "GitHub",
+    value: "github.com/mion-kr",
+    href: "https://github.com/mion-kr",
+    helper: "문서·샘플 코드는 저장소에서 확인할 수 있어요.",
+  },
 ];
 
 export default function AboutPage() {
+  const profileImageUrl = process.env.NEXT_PUBLIC_PROFILE_IMAGE_URL;
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
-      <section className="bg-gradient-to-b from-[var(--color-hero-gradient-from)] via-[var(--color-hero-gradient-via)] to-[var(--color-background)] py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-hero-chip)] px-4 py-1 text-sm font-medium text-[var(--color-primary)] shadow-sm backdrop-blur">
-            Mion · Backend Developer · DX Lover
-          </span>
-          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-            개발을 좋아하는 백엔드 개발자 미온입니다
-          </h1>
-          <p className="mx-auto max-w-3xl text-lg text-[var(--color-text-secondary)] md:text-xl">
-            Next.js와 NestJS를 중심으로 프론트와 백엔드를 넘나들며 제품의 문제를 기술로 풀어내는 것을 즐깁니다.
-            이 블로그는 실무와 사이드 프로젝트에서 얻은 인사이트를 빠르게 실험하고 공유하는 기록실이에요.
-          </p>
-        </div>
-      </section>
+    <main className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[var(--color-hero-gradient-from)] via-[var(--color-hero-gradient-via)] to-transparent py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.6fr,1fr] lg:items-center">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-hero-chip)] px-4 py-1 text-sm font-medium text-[var(--color-primary)] backdrop-blur">
+                About Mion
+              </div>
 
-      <section className="py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid gap-12 lg:grid-cols-[2fr,1fr]">
-          <article className="space-y-10">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">지금 집중하는 일</h2>
-              <p className="text-[var(--color-text-secondary)]">
-                SaaS 환경에서 반복되는 운영 이슈를 제거하고, 팀이 더 빠르게 실험할 수 있도록 개발자 경험을 다듬고 있어요.
-                코드 품질과 DX를 동시에 챙길 수 있는 자동화 흐름을 구축하는 것이 최근 가장 큰 관심사입니다.
-              </p>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {currentGoals.map((goal) => (
-                  <li
-                    key={goal}
-                    className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-text-secondary)]"
-                  >
-                    {goal}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+                  개발을 좋아하는 백엔드 개발자 미온입니다
+                </h1>
+                <p className="text-lg text-[var(--color-text-secondary)] md:text-xl">
+                  Next.js와 NestJS를 넘나들며 제품 문제를 기술로 해결하는 것을
+                  즐겨요. 빠르게 실험하고 기록하며, 팀이 더 좋은 경험을 만들 수
+                  있도록 개발자 경험(DX)을 다듬습니다.
+                </p>
+              </div>
 
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">다루는 주제</h2>
-              <p className="text-[var(--color-text-secondary)]">
-                아래 키워드를 중심으로 실험과 회고를 기록합니다. 때로는 사이드 프로젝트나 커뮤니티 활동에서 얻은 깨달음도 함께 나눠요.
-              </p>
               <div className="flex flex-wrap gap-3">
                 {focusTopics.map((topic) => (
                   <span
@@ -87,94 +122,163 @@ export default function AboutPage() {
                   </span>
                 ))}
               </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="mailto:whddbs311@gmail.com"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-[var(--color-hero-foreground)] transition hover:opacity-90"
+                >
+                  이메일로 연락하기
+                </Link>
+                <Link
+                  href="https://github.com/mion-kr"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                >
+                  GitHub 살펴보기
+                </Link>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">콜로폰</h2>
-              <p className="text-[var(--color-text-secondary)]">
-                블로그는 Next.js 15(App Router)와 NestJS 11 위에서 동작하며, 콘텐츠는 MDX로 작성합니다. 이미지는 Railway MinIO에 pre-signed URL 흐름으로 업로드되고,
-                Turborepo와 PNPM으로 모노레포를 관리해요. Playwright와 Jest로 주요 기능을 테스트하며, Doppler가 모든 환경 변수를 관리합니다.
+            <div className="mx-auto w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center shadow-sm shadow-[var(--color-shadow)]">
+              <div className="mx-auto h-36 w-36 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-muted)]">
+                {profileImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profileImageUrl}
+                    alt="미온 프로필"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-[var(--color-text-secondary)]">
+                    관리자 설정에서 프로필 이미지를 추가해 주세요
+                  </div>
+                )}
+              </div>
+              <div className="mt-6 space-y-1">
+                <p className="text-lg font-semibold">Mion</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Backend Developer · DX Enthusiast
+                </p>
+              </div>
+              <p className="mt-4 text-sm text-[var(--color-text-secondary)]">
+                사용자와 팀이 겪는 불편을 기술로 줄이는 일을 좋아해요. 실험과
+                기록을 통해 다음 도전을 준비합니다.
               </p>
             </div>
-          </article>
-
-          <aside className="space-y-6">
-            <ProfileCard />
-            <ContactCard />
-          </aside>
+          </div>
         </div>
       </section>
-    </div>
-  );
-}
 
-function ProfileCard() {
-  const profileImageUrl = process.env.NEXT_PUBLIC_PROFILE_IMAGE_URL;
-
-  return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)]">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="h-32 w-32 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-muted)]">
-          {profileImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profileImageUrl} alt="미온 프로필" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-[var(--color-text-secondary)]">
-              프로필 이미지를 설정해 주세요
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold">요즘 집중하는 일</h2>
+              <p className="text-[var(--color-text-secondary)]">
+                실무에서 얻은 과제를 토대로 빠르게 실험하고, 동료와 사용자
+                모두가 체감할 수 있는 개선을 만들고 있어요.
+              </p>
             </div>
-          )}
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {currentFocus.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)]"
+                >
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold">관심 있는 주제 & 스택</h2>
+              <p className="text-[var(--color-text-secondary)]">
+                제품 최적화와 팀 효율을 모두 잡기 위해 아래 기술 조합을 즐겨
+                사용합니다.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {techStacks.map((stack) => (
+                <div
+                  key={stack.title}
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)]"
+                >
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                    {stack.title}
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-sm text-[var(--color-text-secondary)]">
+                    {stack.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]"
+                          aria-hidden
+                        />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold">연락하기</h2>
+              <p className="text-[var(--color-text-secondary)]">
+                협업 제안, 기술 자문, 강연 요청 등은 아래 채널로 부탁드려요.
+                가급적 메일 제목에 [블로그문의]를 포함해 주시면 빠르게 확인할 수
+                있어요.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {contactChannels.map((channel) => (
+                <div
+                  key={channel.label}
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)]"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+                    {channel.label}
+                  </p>
+                  <Link
+                    href={channel.href}
+                    className="mt-2 block text-base font-medium text-[var(--color-text-primary)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
+                  >
+                    {channel.value}
+                  </Link>
+                  <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                    {channel.helper}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              모든 문의는 응대 목적 외에는 사용하지 않으며, 처리가 완료되면 30일
+              이내 안전하게 파기합니다.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold">이 블로그는</h2>
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)] text-sm text-[var(--color-text-secondary)]">
+              <p>
+                이 블로그는 Next.js 15(App Router)와 NestJS 11 위에서 동작하며,
+                Turborepo + PNPM 모노레포로 관리됩니다. 콘텐츠는 MDX로 작성하고,
+                이미지 업로드는 Railway의 MinIO에 pre-signed URL 흐름을
+                사용합니다. 테스트는 Playwright와 Jest가 담당하고, Doppler가
+                모든 환경 변수를 제공합니다.
+              </p>
+            </div>
+          </section>
         </div>
-
-        <div className="space-y-1">
-          <p className="text-lg font-semibold text-[var(--color-text-primary)]">Mion</p>
-          <p className="text-sm text-[var(--color-text-secondary)]">Backend Developer · Product Problem Solver</p>
-        </div>
-
-        <p className="text-sm text-[var(--color-text-secondary)]">
-          사용자의 문제를 정확히 파악하고, 실험을 통해 답을 찾아가는 것을 좋아합니다. 서비스 운영자가 겪는 불편을 줄이는 일이 곧 좋은 경험을 만든다고 믿어요.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ContactCard() {
-  return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-sm shadow-[var(--color-shadow)]">
-      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">연락하기</h2>
-      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-        협업 제안이나 기술 컨설팅, 강연 요청은 아래 채널로 연락해 주세요. 평일 10:00–18:00에 메일함을 확인하며 보통 2–3영업일 이내 답장을 드립니다.
-      </p>
-
-      <div className="mt-4 space-y-3 text-sm">
-        <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3">
-          <span className="mt-0.5 select-none text-xs font-semibold uppercase tracking-wide text-[var(--color-primary)]">
-            Email
-          </span>
-          <Link
-            href="mailto:whddbs311@gmail.com"
-            className="break-all text-[var(--color-text-primary)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
-          >
-            whddbs311@gmail.com
-          </Link>
-        </div>
-
-        <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3">
-          <span className="mt-0.5 select-none text-xs font-semibold uppercase tracking-wide text-[var(--color-primary)]">
-            GitHub
-          </span>
-          <Link
-            href="https://github.com/mion-lab"
-            className="break-all text-[var(--color-text-primary)] underline-offset-4 transition hover:text-[var(--color-primary)] hover:underline"
-          >
-            github.com/mion-lab
-          </Link>
-        </div>
-      </div>
-
-      <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-        모든 문의는 응대 목적 외로 사용하지 않으며 처리가 완료되면 30일 이내 안전하게 파기합니다.
-      </p>
-    </div>
+      </section>
+    </main>
   );
 }
