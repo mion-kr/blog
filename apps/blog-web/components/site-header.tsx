@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/", label: "홈" },
-  { href: "/posts", label: "포스트" },
-  { href: "/search", label: "검색" },
+  { href: "/", label: "Home" },
+  { href: "/posts", label: "Posts" },
+  { href: "/about", label: "About" },
 ];
 
 export function SiteHeader() {
@@ -37,9 +37,10 @@ export function SiteHeader() {
 
         <nav className="hidden md:flex md:items-center md:gap-6">
           {navigation.map((item) => {
-            const isActive = item.href === "/"
-              ? pathname === item.href
-              : pathname?.startsWith(item.href);
+            const isActive =
+              item.href === "/"
+                ? pathname === item.href
+                : pathname?.startsWith(item.href);
 
             return (
               <Link
@@ -47,7 +48,7 @@ export function SiteHeader() {
                 href={item.href}
                 className={cn(
                   "blog-nav-link",
-                  isActive && "blog-nav-link-active",
+                  isActive && "blog-nav-link-active"
                 )}
               >
                 {item.label}
@@ -67,19 +68,27 @@ export function SiteHeader() {
             aria-label="모바일 메뉴 토글"
             onClick={toggleMenu}
           >
-            {isMenuOpen ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+            {isMenuOpen ? (
+              <X className="h-5 w-5" aria-hidden />
+            ) : (
+              <Menu className="h-5 w-5" aria-hidden />
+            )}
           </button>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div id="mobile-nav" className="border-t border-[var(--color-border)] bg-[var(--color-card)] md:hidden">
+        <div
+          id="mobile-nav"
+          className="border-t border-[var(--color-border)] bg-[var(--color-card)] md:hidden"
+        >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-4 py-4">
             <nav className="flex flex-col gap-2">
               {navigation.map((item) => {
-                const isActive = item.href === "/"
-                  ? pathname === item.href
-                  : pathname?.startsWith(item.href);
+                const isActive =
+                  item.href === "/"
+                    ? pathname === item.href
+                    : pathname?.startsWith(item.href);
 
                 return (
                   <Link
@@ -88,7 +97,7 @@ export function SiteHeader() {
                     className={cn(
                       "blog-nav-link",
                       "py-2",
-                      isActive && "blog-nav-link-active",
+                      isActive && "blog-nav-link-active"
                     )}
                     onClick={closeMenu}
                   >

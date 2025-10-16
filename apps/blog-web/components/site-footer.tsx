@@ -15,14 +15,8 @@ export function SiteFooter() {
           <Link href="/rss.xml" className="transition-colors hover:text-[var(--color-primary)]">
             RSS
           </Link>
-          <Link href="/about" className="transition-colors hover:text-[var(--color-primary)]">
-            About
-          </Link>
-          <Link href="/contact" className="transition-colors hover:text-[var(--color-primary)]">
-            Contact
-          </Link>
           <a
-            href="https://github.com/mion-lab"
+            href="https://github.com/mion-kr"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[var(--color-primary)]"
