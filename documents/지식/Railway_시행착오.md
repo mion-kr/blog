@@ -39,7 +39,3 @@ Railway 내부에서는 `http://서비스명.railway.internal:<PORT>` 형태로 
 ## NEXTAUTH_URL과 NEXTAUTH_SECRET 설정 시 주의할 점은 무엇인가요?
 
 `NEXTAUTH_URL`은 프로토콜을 포함한 실제 프런트엔드 도메인으로 설정해야 하며, Google OAuth 콘솔에 동일한 리디렉션 URI를 등록해야 합니다. `NEXTAUTH_SECRET`은 환경별로 새로 생성해 두고 프런트와 백엔드의 JWT 서명 키와 일치시켜야 인증 오류를 예방할 수 있습니다.
-
-## 내부 API 호출이 실패하는 가장 흔한 원인은 무엇이었나요?
-
-백엔드 컨테이너가 기본 포트 8080에 바인딩되어 있지 않은 상태에서 `blog-api.railway.internal:8080`으로 호출했기 때문입니다. NestJS `app.listen(process.env.PORT ?? 3001, '0.0.0.0')` 형태로 수정하고 재배포하면 내부 통신이 정상화됩니다.
