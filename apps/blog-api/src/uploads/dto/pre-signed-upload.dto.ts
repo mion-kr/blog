@@ -56,10 +56,10 @@ export class PreSignedUploadRequestDto
 
   @ApiProperty({
     description: '업로드 타입',
-    enum: ['thumbnail', 'content'],
+    enum: ['thumbnail', 'content', 'about'],
     example: 'thumbnail',
   })
-  @IsIn(['thumbnail', 'content'])
+  @IsIn(['thumbnail', 'content', 'about'])
   type!: UploadType;
 }
 

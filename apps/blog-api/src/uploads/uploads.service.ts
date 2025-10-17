@@ -152,6 +152,64 @@ export class UploadsService {
     return this.buildPublicUrl(destinationKey);
   }
 
+  async finalizeAboutImage(tempPublicUrl: string): Promise<string> {
+    const objectKey = this.extractObjectKeyFromUrl(tempPublicUrl);
+
+    if (!objectKey) {
+      this.logger.warn('About 이미지 URL에서 objectKey를 추출할 수 없습니다.', {
+        tempPublicUrl,
+      });
+      throw new BadRequestException('잘못된 업로드 URL입니다.');
+    }
+
+    const basePath = this.getObjectKeyBasePath();
+    const expectedPrefix = `${basePath}draft/`;
+
+    if (!objectKey.startsWith(expectedPrefix)) {
+      this.logger.warn('About 이미지 objectKey가 draft 경로와 일치하지 않습니다.', {
+        objectKey,
+        tempPublicUrl,
+      });
+      throw new BadRequestException('잘못된 업로드 객체 키입니다.');
+    }
+
+    const relativePath = objectKey.substring(expectedPrefix.length);
+    const segments = relativePath.split('/');
+
+    if (segments.length < 3 || segments[1] !== 'about') {
+      this.logger.warn('About 이미지 경로가 예상된 구조와 다릅니다.', {
+        objectKey,
+        tempPublicUrl,
+      });
+      throw new BadRequestException('잘못된 업로드 객체 키입니다.');
+    }
+
+    const fileName = segments[segments.length - 1];
+    if (!fileName) {
+      throw new BadRequestException('유효하지 않은 파일 경로입니다.');
+    }
+
+    const destinationKey = `${basePath}about/${fileName}`;
+
+    await this.copyObject(objectKey, destinationKey);
+    await this.deleteObject(objectKey, 'about-draft');
+
+    return this.buildPublicUrl(destinationKey);
+  }
+
+  async deleteObjectByUrl(publicUrl?: string | null): Promise<void> {
+    if (!publicUrl) {
+      return;
+    }
+
+    const objectKey = this.extractObjectKeyFromUrl(publicUrl);
+    if (!objectKey) {
+      return;
+    }
+
+    await this.deleteObject(objectKey, 'about-remove');
+  }
+
   private validateFile(mimeType: string, size: number): void {
     if (this.allowedMimeTypes.size > 0 && !this.allowedMimeTypes.has(mimeType)) {
       throw new BadRequestException(
@@ -314,6 +372,7 @@ export class UploadsService {
     extension: string,
   ): string {
     const basePath = this.getObjectKeyBasePath();
-    return `${basePath}draft/${dto.draftUuid}/${dto.type}/${timestamp}-${sanitizedBaseName}${extension}`;
+    const folder = dto.type === 'about' ? 'about' : dto.type;
+    return `${basePath}draft/${dto.draftUuid}/${folder}/${timestamp}-${sanitizedBaseName}${extension}`;
   }
 }

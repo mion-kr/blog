@@ -80,6 +80,13 @@ export class SettingsResponseDto {
   @Expose()
   postsPerPage: number;
 
+  @ApiPropertyOptional({
+    description: 'About 페이지에서 사용하는 프로필 이미지 URL',
+    example: 'https://bucket-production-d421.up.railway.app:443/production/about/01JD-profile.png',
+  })
+  @Expose()
+  profileImageUrl?: string | null;
+
   constructor(partial: Partial<SettingsResponseDto>) {
     Object.assign(this, partial);
   }

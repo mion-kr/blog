@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
+import { PublicSettingsController } from './public-settings.controller';
+import { UploadsModule } from '../uploads/uploads.module';
 
 /**
  * 설정 모듈
@@ -11,7 +13,8 @@ import { SettingsService } from './settings.service';
  * - ADMIN 권한 전용
  */
 @Module({
-  controllers: [SettingsController],
+  imports: [UploadsModule],
+  controllers: [SettingsController, PublicSettingsController],
   providers: [SettingsService],
   exports: [SettingsService],
 })

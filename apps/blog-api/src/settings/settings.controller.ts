@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -24,6 +25,7 @@ import { SettingsResponseDto, UpdateSettingsDto } from './dto';
  * - PATCH /api/admin/settings - 설정 업데이트 (ADMIN 전용)
  */
 @ApiTags('admin/settings')
+@ApiExtraModels(SettingsResponseDto)
 @ApiBearerAuth()
 @UseGuards(AdminGuard)
 @Controller('admin/settings')

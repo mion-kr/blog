@@ -78,6 +78,16 @@ function parseString(value: FormDataEntryValue | null | undefined): string | und
   return trimmed.length > 0 ? trimmed : undefined
 }
 
+function parseBoolean(value: FormDataEntryValue | null | undefined): boolean | undefined {
+  if (value === null || value === undefined) return undefined
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true') return true
+    if (normalized === 'false') return false
+  }
+  return undefined
+}
+
 async function updateAdminSettings(
   payload: UpdateBlogSettingsDto
 ): Promise<SettingsActionState> {
@@ -91,6 +101,7 @@ async function updateAdminSettings(
       return {
         success: true,
         message: response.message ?? '설정이 저장되었어요.',
+        updatedSettings: response.data,
       }
     }
 
@@ -137,6 +148,17 @@ export async function updateAdminBlogInfoAction(
     siteTitle: parseString(formData.get('siteTitle')),
     siteDescription: parseString(formData.get('siteDescription')),
     siteUrl: parseString(formData.get('siteUrl')),
+  }
+
+  const profileImageRemove = parseBoolean(formData.get('profileImageRemove')) ?? false
+  const profileImageUrl = parseString(formData.get('profileImageUrl'))
+
+  if (profileImageRemove) {
+    payload.profileImageRemove = true
+  } else {
+    if (profileImageUrl !== undefined) {
+      payload.profileImageUrl = profileImageUrl
+    }
   }
 
   return updateAdminSettings(payload)

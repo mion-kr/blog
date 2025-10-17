@@ -98,6 +98,16 @@ export interface BlogSettings {
   siteDescription: string;
   siteUrl: string;
   postsPerPage: number;
+  profileImageUrl?: string;
 }
 
-export interface UpdateBlogSettingsDto extends Partial<BlogSettings> {}
+export interface UpdateBlogSettingsDto extends Partial<BlogSettings> {
+  profileImageRemove?: boolean;
+}
+
+export interface PublicSiteSettings {
+  siteTitle: string;
+  siteDescription: string;
+  siteUrl: string;
+  profileImageUrl?: string | null;
+}

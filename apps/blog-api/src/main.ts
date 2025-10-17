@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationError } from 'class-validator';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
-import { ValidationError } from 'class-validator';
 import { AppModule } from './app.module';
 import { CategoriesModule } from './categories/categories.module';
 import {
@@ -16,9 +16,11 @@ import {
   ApiResponseMeta,
   PaginatedApiResponseDto,
 } from './common/dto';
-import { PostsModule } from './posts/posts.module';
-import { TagsModule } from './tags/tags.module';
 import { formatValidationErrors } from './common/utils';
+import { PostsModule } from './posts/posts.module';
+import { SettingsModule } from './settings/settings.module';
+import { TagsModule } from './tags/tags.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -105,7 +107,13 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
-    include: [PostsModule, CategoriesModule, TagsModule],
+    include: [
+      PostsModule,
+      CategoriesModule,
+      TagsModule,
+      SettingsModule,
+      UploadsModule,
+    ],
     extraModels: [ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta],
   });
   SwaggerModule.setup('api-docs', app, document, {

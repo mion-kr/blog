@@ -16,7 +16,7 @@ export class DatabaseService {
    * 데이터베이스 연결 상태를 확인합니다.
    * @returns 연결 상태
    */
-  async healthCheck(): Promise<{ status: string; timestamp: string }> {
+  async healthCheck(): Promise<{ status: 'healthy' | 'unhealthy'; timestamp: string }> {
     try {
       // 간단한 쿼리로 연결 상태 확인
       await db.execute(sql`SELECT 1`);

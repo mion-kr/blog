@@ -1,21 +1,24 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiExtraModels, ApiTags } from '@nestjs/swagger';
+
+import { ApiPublicSingle } from '../common/decorators';
 import { DatabaseService } from './database.service';
+import { DatabaseHealthResponseDto } from './dto/database-health-response.dto';
 
 @ApiTags('database')
+@ApiExtraModels(DatabaseHealthResponseDto)
 @Controller('database')
 export class DatabaseController {
   constructor(private readonly databaseService: DatabaseService) {}
 
   @Get('health')
-  @ApiOperation({ summary: 'Check database health' })
-  @ApiResponse({ status: 200, description: 'Database health status' })
-  async getHealth() {
+  @ApiPublicSingle(
+    DatabaseHealthResponseDto,
+    '데이터베이스 헬스 체크',
+    '현재 데이터베이스 연결 상태를 반환합니다.',
+  )
+  async getHealth(): Promise<DatabaseHealthResponseDto> {
     const healthResult = await this.databaseService.healthCheck();
-    const isHealthy = healthResult.status === 'healthy';
-    return {
-      success: isHealthy,
-      message: isHealthy ? 'Database is healthy' : 'Database is not healthy',
-    };
+    return healthResult;
   }
 }

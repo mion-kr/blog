@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExtraModels, ApiTags } from '@nestjs/swagger';
 
 import { ApiAdminCreate } from '../common/decorators/api-responses.decorator';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -10,6 +10,7 @@ import {
 import { UploadsService } from './uploads.service';
 
 @ApiTags('uploads')
+@ApiExtraModels(PreSignedUploadResponseDto)
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}

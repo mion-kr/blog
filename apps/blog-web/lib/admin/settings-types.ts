@@ -1,4 +1,4 @@
-import type { ValidationError } from '@repo/shared'
+import type { BlogSettings, ValidationError } from '@repo/shared'
 
 export interface SettingsActionState {
   success: boolean
@@ -6,4 +6,5 @@ export interface SettingsActionState {
   error?: string
   validationErrors?: ValidationError[]
   fieldErrors?: Record<string, string[]>
+  updatedSettings?: BlogSettings
 }
