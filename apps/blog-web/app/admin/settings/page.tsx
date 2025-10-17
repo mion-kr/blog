@@ -82,6 +82,7 @@ export default async function AdminSettingsPage() {
           siteTitle: settings.siteTitle,
           siteDescription: settings.siteDescription,
           siteUrl: settings.siteUrl,
+          profileImageUrl: settings.profileImageUrl ?? undefined,
         }}
       />
 

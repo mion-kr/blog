@@ -308,3 +308,35 @@ export function ApiPublicDetail<TModel extends Type<any>>(
     ApiCommonErrors(),
   );
 }
+
+/**
+ * 공개 단건 조회 엔드포인트 데코레이터 (경로 파라미터 없음)
+ */
+export function ApiPublicSingle<TModel extends Type<any>>(
+  responseType: TModel,
+  summary: string,
+  description: string,
+) {
+  return applyDecorators(
+    ApiOperation({
+      summary,
+      description,
+    }),
+    ApiResponse({
+      status: 200,
+      description: '조회 성공',
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(ApiResponseDto) },
+          {
+            properties: {
+              data: { $ref: getSchemaPath(responseType) },
+              message: { example: '조회가 완료되었습니다.' },
+            },
+          },
+        ],
+      },
+    }),
+    ApiCommonErrors(),
+  );
+}

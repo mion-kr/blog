@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -61,4 +62,21 @@ export class UpdateSettingsDto {
   @Min(5, { message: '페이지당 포스트 수는 최소 5개 이상이어야 해요.' })
   @Max(50, { message: '페이지당 포스트 수는 최대 50개까지 설정할 수 있어요.' })
   postsPerPage?: number;
+
+  @ApiPropertyOptional({
+    description: 'About 페이지용 프로필 이미지 URL (http/https)',
+    example: 'https://bucket-production-d421.up.railway.app:443/production/about/01JD-image.png',
+  })
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'] }, { message: '프로필 이미지는 http(s) URL이어야 해요.' })
+  profileImageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: '프로필 이미지를 제거할지 여부',
+    example: true,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: '프로필 이미지를 제거할지 여부는 true/false로 입력해주세요.' })
+  profileImageRemove?: boolean;
 }

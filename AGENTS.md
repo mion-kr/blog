@@ -22,6 +22,12 @@
 - React 컴포넌트와 Nest 프로바이더·서비스는 `PascalCase`, 유틸 함수와 파일은 `camelCase`를 사용합니다.
 - 폴더 구조는 feature-first를 지향하며, Next `app` 라우트는 폴더명 소문자-kebab-case, Nest 모듈은 `*.module.ts` 패턴을 유지합니다.
 
+### Swagger Documentation Baseline
+
+- NestJS 컨트롤러의 Swagger 데코레이터 구성은 `apps/blog-api/src/posts/posts.controller.ts`에 정의된 패턴을 기준으로 삼습니다.
+- 신규/수정 컨트롤러는 `@ApiTags`, `@ApiExtraModels`와 커스텀 데코레이터(`@ApiPublicList`, `@ApiPublicDetail`, `@ApiAdminCreate`, 등)를 동일한 수준으로 적용해 문서 일관성을 유지해야 합니다.
+- 공용/관리자 API 모두 성공·실패 응답을 명시하고, 필요한 경우 커스텀 데코레이터 내부를 확장하거나 추가 Swagger 데코레이터로 보완합니다.
+
 ## Testing Guidelines
 
 - 백엔드 단위 테스트: `pnpm --filter blog-api test`로 Jest 스위트를 실행하며, 스펙 파일명은 `*.spec.ts`입니다.
