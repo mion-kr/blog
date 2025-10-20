@@ -50,8 +50,12 @@ export function CategoryForm({
 
   useEffect(() => {
     if (state.success) {
-      const message = defaultValues?.slug ? '카테고리가 수정되었어요.' : '카테고리가 생성되었어요.'
-      router.push(`/admin/categories?status=${defaultValues?.slug ? 'updated' : 'created'}&message=${encodeURIComponent(message)}`)
+      const isEditing = Boolean(defaultValues?.slug)
+      const statusParam = isEditing ? 'updated' : 'created'
+      const message = isEditing ? '카테고리가 수정되었어요.' : '카테고리가 생성되었어요.'
+
+      router.refresh()
+      router.push(`/admin/categories?status=${statusParam}&message=${encodeURIComponent(message)}`)
     }
   }, [state.success, router, defaultValues?.slug])
 

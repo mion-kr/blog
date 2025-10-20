@@ -46,6 +46,7 @@ export function DeleteConfirmButton({
         if (result?.success) {
           setOpen(false)
           if (redirectUrl) {
+            router.refresh()
             router.push(`${redirectUrl}?status=deleted&message=${encodeURIComponent(successMessage)}`)
           }
         } else if (result?.error) {

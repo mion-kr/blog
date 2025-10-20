@@ -26,6 +26,8 @@ interface AdminTagsContentProps {
     search?: string
     modal?: string
     slug?: string
+    status?: string
+    message?: string
   }
 }
 
@@ -96,7 +98,7 @@ export function AdminTagsContent({ searchParams }: AdminTagsContentProps) {
       isMounted = false
       controller.abort()
     }
-  }, [queryString, reloadFlag])
+  }, [queryString, reloadFlag, searchParams.status, searchParams.message])
 
   const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
   const limit = data?.query.limit ?? 30
