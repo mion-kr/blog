@@ -45,8 +45,12 @@ export function TagForm({ action, defaultValues, submitLabel = '저장하기', c
 
   useEffect(() => {
     if (state.success) {
-      const message = defaultValues?.slug ? '태그가 수정되었어요.' : '태그가 생성되었어요.'
-      router.push(`/admin/tags?status=${defaultValues?.slug ? 'updated' : 'created'}&message=${encodeURIComponent(message)}`)
+      const isEditing = Boolean(defaultValues?.slug)
+      const statusParam = isEditing ? 'updated' : 'created'
+      const message = isEditing ? '태그가 수정되었어요.' : '태그가 생성되었어요.'
+
+      router.refresh()
+      router.push(`/admin/tags?status=${statusParam}&message=${encodeURIComponent(message)}`)
     }
   }, [state.success, router, defaultValues?.slug])
 
