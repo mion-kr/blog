@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
 
-import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { HeroActions } from "@/components/hero-actions";
 import { PostCard } from "@/components/post-card";
+import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 
 import type { PostResponseDto } from "@repo/shared";
 import {
@@ -31,34 +31,35 @@ type HomeStats = {
 };
 
 export default async function HomePage() {
-  const [latestResult, trendingResult, categoriesResult, tagsResult] = await Promise.allSettled([
-    postsApi.getPosts({
-      page: 1,
-      limit: LATEST_POSTS_LIMIT,
-      published: true,
-      sort: "publishedAt",
-      order: "desc",
-    }),
-    postsApi.getPosts({
-      page: 1,
-      limit: TRENDING_POSTS_LIMIT + 2,
-      published: true,
-      sort: "viewCount",
-      order: "desc",
-    }),
-    categoriesApi.getCategories({
-      page: 1,
-      limit: CATEGORY_LIMIT,
-      sort: "name",
-      order: "asc",
-    }),
-    tagsApi.getTags({
-      page: 1,
-      limit: TAG_LIMIT,
-      sort: "name",
-      order: "asc",
-    }),
-  ]);
+  const [latestResult, trendingResult, categoriesResult, tagsResult] =
+    await Promise.allSettled([
+      postsApi.getPosts({
+        page: 1,
+        limit: LATEST_POSTS_LIMIT,
+        published: true,
+        sort: "publishedAt",
+        order: "desc",
+      }),
+      postsApi.getPosts({
+        page: 1,
+        limit: TRENDING_POSTS_LIMIT + 2,
+        published: true,
+        sort: "viewCount",
+        order: "desc",
+      }),
+      categoriesApi.getCategories({
+        page: 1,
+        limit: CATEGORY_LIMIT,
+        sort: "name",
+        order: "asc",
+      }),
+      tagsApi.getTags({
+        page: 1,
+        limit: TAG_LIMIT,
+        sort: "name",
+        order: "asc",
+      }),
+    ]);
 
   if (latestResult.status === "rejected") {
     console.error("Failed to load latest posts", latestResult.reason);
@@ -73,14 +74,20 @@ export default async function HomePage() {
     console.error("Failed to load tags", tagsResult.reason);
   }
 
-  const latestResponse = latestResult.status === "fulfilled" ? latestResult.value : null;
-  const trendingResponse = trendingResult.status === "fulfilled" ? trendingResult.value : null;
-  const categoriesResponse = categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
-  const tagsResponse = tagsResult.status === "fulfilled" ? tagsResult.value : null;
+  const latestResponse =
+    latestResult.status === "fulfilled" ? latestResult.value : null;
+  const trendingResponse =
+    trendingResult.status === "fulfilled" ? trendingResult.value : null;
+  const categoriesResponse =
+    categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
+  const tagsResponse =
+    tagsResult.status === "fulfilled" ? tagsResult.value : null;
 
   const latestPosts = latestResponse?.data ?? [];
   const featuredPost = latestPosts[0] ?? null;
-  const highlightPosts = featuredPost ? latestPosts.slice(1, Math.min(latestPosts.length, 4)) : [];
+  const highlightPosts = featuredPost
+    ? latestPosts.slice(1, Math.min(latestPosts.length, 4))
+    : [];
   const latestGridPosts = featuredPost
     ? latestPosts.slice(1 + highlightPosts.length)
     : latestPosts;
@@ -106,7 +113,10 @@ export default async function HomePage() {
 
       <section className="py-8 max-md:py-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <FeaturedSection featuredPost={featuredPost} highlightPosts={highlightPosts} />
+          <FeaturedSection
+            featuredPost={featuredPost}
+            highlightPosts={highlightPosts}
+          />
 
           {latestGridPosts.length > 0 && (
             <LatestPostsSection posts={latestGridPosts} total={stats.posts} />
@@ -120,7 +130,9 @@ export default async function HomePage() {
 }
 
 function HeroSection({ stats }: { stats: HomeStats }) {
-  const formattedLastUpdated = stats.lastUpdated ? formatDate(stats.lastUpdated) : "작성 예정";
+  const formattedLastUpdated = stats.lastUpdated
+    ? formatDate(stats.lastUpdated)
+    : "작성 예정";
 
   const statCards = [
     {
@@ -136,7 +148,9 @@ function HeroSection({ stats }: { stats: HomeStats }) {
     {
       label: "마지막 업데이트",
       value: formattedLastUpdated,
-      helper: stats.lastUpdated ? "가장 최근에 발행된 글" : "첫 글을 준비 중입니다",
+      helper: stats.lastUpdated
+        ? "가장 최근에 발행된 글"
+        : "첫 글을 준비 중입니다",
     },
   ];
 
@@ -159,7 +173,8 @@ function HeroSection({ stats }: { stats: HomeStats }) {
           </h1>
 
           <p className="text-lg text-[var(--color-text-secondary)] md:text-xl">
-            실무에서 얻은 경험과 실험을 통해 축적한 개발 인사이트를 공유합니다. 프론트엔드, 백엔드, 인프라를 넘나드는 Mion의 여정을 만나보세요.
+            실무에서 얻은 경험과 실험을 통해 축적한 개발 인사이트를 공유합니다.
+            프론트엔드, 백엔드, 인프라를 넘나드는 Mion의 여정을 만나보세요.
           </p>
 
           <HeroActions />
@@ -174,7 +189,9 @@ function HeroSection({ stats }: { stats: HomeStats }) {
               <p className="text-2xl font-semibold text-[var(--color-text-primary)]">
                 {card.value}
               </p>
-              <p className="text-sm text-[var(--color-text-secondary)]">{card.helper}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {card.helper}
+              </p>
             </div>
           ))}
         </div>
@@ -191,14 +208,14 @@ function FeaturedSection({
   highlightPosts: PostResponseDto[];
 }) {
   if (!featuredPost) {
-      return (
-        <EmptyState
-          icon={<PenSquare className="h-5 w-5" aria-hidden />}
-          title="첫 번째 포스트를 기다리고 있어요"
-          description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
-        />
-      );
-    }
+    return (
+      <EmptyState
+        icon={<PenSquare className="h-5 w-5" aria-hidden />}
+        title="첫 번째 포스트를 기다리고 있어요"
+        description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
+      />
+    );
+  }
 
   const displayDate = featuredPost.publishedAt ?? featuredPost.createdAt;
 
@@ -206,7 +223,9 @@ function FeaturedSection({
     <div className="space-y-8">
       <div className="blog-section-header">
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Editor&apos;s Pick</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+            Editor&apos;s Pick
+          </p>
           <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">
             가장 주목받는 포스트
           </h2>
@@ -234,16 +253,24 @@ function FeaturedSection({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-200)]">
-                <PenSquare className="h-10 w-10 text-[var(--color-primary-500)]" aria-hidden />
+                <PenSquare
+                  className="h-10 w-10 text-[var(--color-primary-500)]"
+                  aria-hidden
+                />
               </div>
             )}
           </div>
 
           <div className="flex flex-col gap-4 p-6 md:p-8">
-            <span className="blog-category-badge w-max">{featuredPost.category.name}</span>
+            <span className="blog-category-badge w-max">
+              {featuredPost.category.name}
+            </span>
 
             <h3 className="text-3xl font-bold leading-tight text-[var(--color-text-primary)] md:text-4xl">
-              <Link href={`/posts/${featuredPost.slug}`} className="stretched-link">
+              <Link
+                href={`/posts/${featuredPost.slug}`}
+                className="stretched-link"
+              >
                 {featuredPost.title}
               </Link>
             </h3>
@@ -263,7 +290,9 @@ function FeaturedSection({
                   </span>
                 ))}
                 {featuredPost.tags.length > 4 && (
-                  <span className="blog-tag">+{featuredPost.tags.length - 4}</span>
+                  <span className="blog-tag">
+                    +{featuredPost.tags.length - 4}
+                  </span>
                 )}
               </div>
             )}
@@ -277,7 +306,9 @@ function FeaturedSection({
                 <Eye className="h-4 w-4" aria-hidden />
                 {formatNumber(featuredPost.viewCount)} views
               </span>
-              <span className="font-medium text-[var(--color-text-primary)]">{featuredPost.author.name}</span>
+              <span className="font-medium text-[var(--color-text-primary)]">
+                {featuredPost.author.name}
+              </span>
             </div>
           </div>
         </article>
@@ -315,7 +346,9 @@ function LatestPostsSection({
     <div className="space-y-6">
       <div className="blog-section-header">
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Latest</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+            Latest
+          </p>
           <h2 className="text-3xl font-semibold text-[var(--color-text-primary)]">
             방금 올라온 기술 노트
           </h2>
@@ -324,7 +357,8 @@ function LatestPostsSection({
           href="/posts"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
         >
-          전체 포스트 {typeof total === "number" ? `(${formatNumber(total)})` : ""}
+          전체 포스트{" "}
+          {typeof total === "number" ? `(${formatNumber(total)})` : ""}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
@@ -353,61 +387,70 @@ function DiscoverySection({
     <div className="space-y-8">
       <div className="blog-section-header">
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Discover</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+            Discover
+          </p>
           <h2 className="text-3xl font-semibold text-[var(--color-text-primary)]">
             지금 가장 많이 읽는 주제
           </h2>
         </div>
         <Link
-          href="/search"
+          href="/posts"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
         >
-          검색으로 더 찾아보기
+          모든 포스트
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
 
       <div className="space-y-4">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
-            <Flame className="h-5 w-5 text-[var(--color-accent-warning)]" aria-hidden />
-            인기 포스트 Top {trendingPosts.length}
-          </h3>
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
+          <Flame
+            className="h-5 w-5 text-[var(--color-accent-warning)]"
+            aria-hidden
+          />
+          인기 포스트 Top {trendingPosts.length}
+        </h3>
 
-          {hasTrending ? (
-            <div className="blog-trending-list">
-              {trendingPosts.map((post, index) => (
-                <Link key={post.id} href={`/posts/${post.slug}`} className="blog-trending-item">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-secondary)] text-sm font-semibold text-[var(--color-secondary-foreground)]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1 space-y-1">
-                    <p className="font-semibold text-[var(--color-text-primary)] line-clamp-2">
-                      {post.title}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3 w-3" aria-hidden />
-                        {formatNumber(post.viewCount)}회 조회
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="h-3 w-3" aria-hidden />
-                        {formatDate(post.publishedAt ?? post.createdAt)}
-                      </span>
-                      <span className="font-medium text-[var(--color-text-primary)]">
-                        {post.category.name}
-                      </span>
-                    </div>
+        {hasTrending ? (
+          <div className="blog-trending-list">
+            {trendingPosts.map((post, index) => (
+              <Link
+                key={post.id}
+                href={`/posts/${post.slug}`}
+                className="blog-trending-item"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-secondary)] text-sm font-semibold text-[var(--color-secondary-foreground)]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="flex-1 space-y-1">
+                  <p className="font-semibold text-[var(--color-text-primary)] line-clamp-2">
+                    {post.title}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" aria-hidden />
+                      {formatNumber(post.viewCount)}회 조회
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" aria-hidden />
+                      {formatDate(post.publishedAt ?? post.createdAt)}
+                    </span>
+                    <span className="font-medium text-[var(--color-text-primary)]">
+                      {post.category.name}
+                    </span>
                   </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={<Flame className="h-5 w-5" aria-hidden />}
-              title="아직 인기 포스트가 없어요"
-              description="새로운 포스트가 발행되면 조회수 기준으로 자동 집계됩니다."
-            />
-          )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<Flame className="h-5 w-5" aria-hidden />}
+            title="아직 인기 포스트가 없어요"
+            description="새로운 포스트가 발행되면 조회수 기준으로 자동 집계됩니다."
+          />
+        )}
       </div>
     </div>
   );
@@ -427,8 +470,12 @@ function EmptyState({
       <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{description}</p>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+        {title}
+      </h3>
+      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+        {description}
+      </p>
     </div>
   );
 }

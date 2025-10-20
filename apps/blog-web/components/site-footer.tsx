@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
@@ -12,9 +10,6 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-text-secondary)]">
-          <Link href="/rss.xml" className="transition-colors hover:text-[var(--color-primary)]">
-            RSS
-          </Link>
           <a
             href="https://github.com/mion-kr"
             target="_blank"
