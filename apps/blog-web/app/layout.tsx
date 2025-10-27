@@ -14,17 +14,32 @@ const geistMono = localFont({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blog.mion-space.dev";
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Mion's Blog",
   description: "Mion의 기술 블로그 - 개발 이야기",
   keywords: ["블로그", "개발", "Next.js", "TypeScript", "프론트엔드"],
   authors: [{ name: "Mion" }],
   creator: "Mion",
+  applicationName: "Mion Blog",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Mion's Blog",
     description: "Mion의 기술 블로그 - 개발 이야기",
     type: "website",
     locale: "ko_KR",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mion's Blog",
+    description: "Mion의 기술 블로그 - 개발 이야기",
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
   robots: {
     index: true,

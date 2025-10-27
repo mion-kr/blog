@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     }
 
     const post = response.data;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion.dev';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev';
 
     return {
       title: `${post.title} | Mion Blog`,
@@ -85,9 +85,19 @@ export default async function PostPage({ params }: PostPageProps) {
     }
 
     const post = response.data;
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev').replace(/\/$/, '');
+
+    const jsonLd = buildPostJsonLd(post, `${baseUrl}/posts/${slug}`);
 
     return (
       <article className="blog-post-page">
+        {/* JSON-LD: BlogPosting */}
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {/* 상단 네비게이션 */}
         <PostNavigation />
 
@@ -336,4 +346,45 @@ function formatDate(date: Date | string): string {
  */
 function formatNumber(value: number): string {
   return new Intl.NumberFormat('ko-KR').format(value);
+}
+
+/**
+ * BlogPosting JSON-LD 생성기
+ */
+function buildPostJsonLd(post: PostResponseDto, url: string) {
+  const publisherName = "Mion's Blog";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev').replace(/\/$/, '');
+  const logoUrl = `${siteUrl}/favicon.ico`;
+
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description:
+      post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+    url,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    image: post.coverImage ? [post.coverImage] : undefined,
+    author: {
+      '@type': 'Person',
+      name: post.author?.name ?? 'Mion',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: publisherName,
+      logo: {
+        '@type': 'ImageObject',
+        url: logoUrl,
+      },
+    },
+    datePublished: new Date(post.publishedAt ?? post.createdAt).toISOString(),
+    dateModified: new Date(post.updatedAt).toISOString(),
+    keywords: post.tags?.map((t) => t.name).join(', '),
+    articleSection: post.category?.name,
+  } as const;
+
+  return data;
 }

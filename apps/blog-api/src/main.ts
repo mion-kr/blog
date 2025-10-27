@@ -54,7 +54,7 @@ async function bootstrap() {
   app.use(
     cors({
       origin: [
-        'https://blog.mion.dev', // 프로덕션 도메인
+        process.env.CORS_ORIGIN ?? 'https://blog.mion-space.dev', // 프로덕션 도메인
         'http://localhost:3000', // 개발 환경
       ],
       credentials: true,
@@ -62,6 +62,12 @@ async function bootstrap() {
       allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
     }),
   );
+
+  // 검색 엔진 색인 방지 (API 레벨)
+  app.use((req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
 
   // 전역 ValidationPipe 설정
   app.useGlobalPipes(
@@ -84,45 +90,47 @@ async function bootstrap() {
 
   // 전역 인터셉터와 필터는 CommonModule에서 APP_INTERCEPTOR, APP_FILTER Provider로 등록됨
 
-  // Swagger API 문서 설정
-  const config = new DocumentBuilder()
-    .setTitle("Mion's Blog API")
-    .setDescription('Mion의 기술 블로그 API 문서')
-    .setVersion('1.0')
-    .addServer(`http://localhost:${port}`, '개발 환경')
-    .addServer('https://blog-api.mion.dev', '프로덕션 환경')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      name: 'JWT',
-      description: 'NextAuth.js에서 발급된 JWT 토큰을 입력하세요.',
-      in: 'header',
-    })
-    .addTag('auth', '인증 관련 API')
-    .addTag('posts', '블로그 포스트 API')
-    .addTag('categories', '카테고리 API')
-    .addTag('tags', '태그 API')
-    .addTag('database', '데이터베이스 테스트 API (개발 환경 전용)')
-    .build();
+  // Swagger API 문서: 운영(prod)에서는 비활성화
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (!isProduction) {
+    const config = new DocumentBuilder()
+      .setTitle("Mion's Blog API")
+      .setDescription('Mion의 기술 블로그 API 문서')
+      .setVersion('1.0')
+      .addServer(`http://localhost:${port}`, '개발 환경')
+      .addBearerAuth({
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'NextAuth.js에서 발급된 JWT 토큰을 입력하세요.',
+        in: 'header',
+      })
+      .addTag('auth', '인증 관련 API')
+      .addTag('posts', '블로그 포스트 API')
+      .addTag('categories', '카테고리 API')
+      .addTag('tags', '태그 API')
+      .addTag('database', '데이터베이스 테스트 API (개발 환경 전용)')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config, {
-    include: [
-      PostsModule,
-      CategoriesModule,
-      TagsModule,
-      SettingsModule,
-      UploadsModule,
-    ],
-    extraModels: [ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta],
-  });
-  SwaggerModule.setup('api-docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-    },
-  });
+    const document = SwaggerModule.createDocument(app, config, {
+      include: [
+        PostsModule,
+        CategoriesModule,
+        TagsModule,
+        SettingsModule,
+        UploadsModule,
+      ],
+      extraModels: [ApiResponseDto, PaginatedApiResponseDto, ApiResponseMeta],
+    });
+    SwaggerModule.setup('api-docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+    });
+  }
 
   await app.listen(port);
 
