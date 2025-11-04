@@ -15,84 +15,43 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "mion-blog-theme";
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
-  const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("dark");
   const [isReady, setIsReady] = useState(false);
-  const [hasUserPreference, setHasUserPreference] = useState(false);
 
+  // 다크모드 강제 고정: 마운트 시 항상 dark로 설정
   useEffect(() => {
-    const stored = (typeof window !== "undefined"
-      ? (window.localStorage.getItem(STORAGE_KEY) as Theme | null)
-      : null);
-
-    if (stored === "light" || stored === "dark") {
-      setThemeState(stored);
-      setHasUserPreference(true);
-    } else {
-      setThemeState(getInitialTheme());
-    }
-
+    setThemeState("dark");
+    const root = document.documentElement;
+    root.setAttribute("data-theme", "dark");
+    try {
+      window.localStorage.setItem(STORAGE_KEY, "dark");
+    } catch {}
     setIsReady(true);
   }, []);
 
+  // data-theme 동기화 (보수적 유지)
   useEffect(() => {
     if (!isReady) return;
-
     const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-
-    if (hasUserPreference) {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+    if (root.getAttribute("data-theme") !== "dark") {
+      root.setAttribute("data-theme", "dark");
     }
-  }, [theme, isReady, hasUserPreference]);
+  }, [isReady, theme]);
 
-  useEffect(() => {
-    if (!isReady) return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (event: MediaQueryListEvent) => {
-      if (!hasUserPreference) {
-        setThemeState(event.matches ? "dark" : "light");
-      }
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [isReady, hasUserPreference]);
-
-  const setTheme = (next: Theme) => {
-    setHasUserPreference(true);
-    window.localStorage.setItem(STORAGE_KEY, next);
-    setThemeState(next);
+  // 외부에서 호출되어도 항상 dark 유지
+  const setTheme = () => {
+    setThemeState("dark");
+    try { window.localStorage.setItem(STORAGE_KEY, "dark"); } catch {}
+    const root = document.documentElement;
+    root.setAttribute("data-theme", "dark");
   };
 
-  const toggleTheme = () => {
-    setThemeState((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      window.localStorage.setItem(STORAGE_KEY, next);
-      return next;
-    });
-    setHasUserPreference(true);
-  };
+  const toggleTheme = () => setTheme();
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, setTheme, toggleTheme, isReady }),
-    [theme, isReady]
+    () => ({ theme: "dark", setTheme, toggleTheme, isReady }),
+    [isReady]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -140,16 +140,8 @@ function PostHeader({ post }: { post: PostResponseDto }) {
     <header className="py-8 max-md:py-6 bg-gradient-to-b from-[var(--color-hero-gradient-from)] to-[var(--color-background)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl space-y-8 py-16">
-          {/* 카테고리 및 메타 정보 */}
+          {/* 메타 정보 (카테고리 배지 제거) */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <Link
-              href={`/category/${post.category.slug}`}
-              className="blog-category-badge"
-            >
-              <FolderOpen className="h-3 w-3" />
-              {post.category.name}
-            </Link>
-
             <span className="flex items-center gap-1 text-[var(--color-text-secondary)]">
               <CalendarDays className="h-4 w-4" />
               {formatDate(displayDate)}
@@ -173,21 +165,27 @@ function PostHeader({ post }: { post: PostResponseDto }) {
             </p>
           )}
 
-          {/* 태그 목록 */}
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/tag/${tag.slug}`}
-                  className="blog-tag"
-                >
-                  <TagIcon className="h-3 w-3" />
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          )}
+          {/* 카테고리(칩) + 태그 목록 */}
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/posts?categorySlug=${post.category.slug}`}
+              className="blog-tag gap-1"
+            >
+              <FolderOpen className="h-3 w-3" />
+              {post.category.name}
+            </Link>
+
+            {post.tags.map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/posts?tagSlug=${tag.slug}`}
+                className="blog-tag gap-1"
+              >
+                <TagIcon className="h-3 w-3" />
+                {tag.name}
+              </Link>
+            ))}
+          </div>
 
         </div>
       </div>
@@ -245,9 +243,9 @@ function PostFooter({ post }: { post: PostResponseDto }) {
                 {post.tags.map((tag) => (
                   <Link
                     key={tag.id}
-                    href={`/tag/${tag.slug}`}
-                    className={cn(
-                      "blog-tag text-sm",
+                    href={`/posts?tagSlug=${tag.slug}`}
+                  className={cn(
+                      "blog-tag gap-1 text-sm",
                       "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
                     )}
                   >
@@ -270,7 +268,7 @@ function PostFooter({ post }: { post: PostResponseDto }) {
                   카테고리
                 </p>
                 <Link
-                  href={`/category/${post.category.slug}`}
+                  href={`/posts?categorySlug=${post.category.slug}`}
                   className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
                 >
                   {post.category.name}
