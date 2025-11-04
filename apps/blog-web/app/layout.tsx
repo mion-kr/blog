@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "../components/providers";
+import { getSiteUrl } from "@/lib/site";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,17 +15,32 @@ const geistMono = localFont({
   display: "swap",
 });
 
+const SITE_URL = getSiteUrl();
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Mion's Blog",
   description: "Mion의 기술 블로그 - 개발 이야기",
   keywords: ["블로그", "개발", "Next.js", "TypeScript", "프론트엔드"],
   authors: [{ name: "Mion" }],
   creator: "Mion",
+  applicationName: "Mion Blog",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Mion's Blog",
     description: "Mion의 기술 블로그 - 개발 이야기",
     type: "website",
     locale: "ko_KR",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mion's Blog",
+    description: "Mion의 기술 블로그 - 개발 이야기",
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
   robots: {
     index: true,

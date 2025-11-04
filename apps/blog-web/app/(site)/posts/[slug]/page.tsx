@@ -1,15 +1,22 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { CalendarDays, Eye, Tag as TagIcon, FolderOpen, ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  Eye,
+  FolderOpen,
+  Tag as TagIcon,
+} from "lucide-react";
+import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { postsApi } from '@/lib/api-client';
-import { MDXRenderer } from '@/components/mdx-renderer';
-import { ShareButton } from '@/components/share-button';
-import { cn } from '@/lib/utils';
+import { MDXRenderer } from "@/components/mdx-renderer";
+import { ShareButton } from "@/components/share-button";
+import { postsApi } from "@/lib/api-client";
+import { getSiteUrl } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
-import type { PostResponseDto } from '@repo/shared';
+import type { PostResponseDto } from "@repo/shared";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -20,43 +27,56 @@ export const revalidate = 60; // 1분마다 재검증
 /**
  * 동적 메타데이터 생성
  */
-export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
     const response = await postsApi.getPostBySlug(slug);
 
     if (!response.success || !response.data) {
       return {
-        title: '포스트를 찾을 수 없습니다 | Mion Blog',
+        title: "포스트를 찾을 수 없습니다 | Mion Blog",
       };
     }
 
     const post = response.data;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion.dev';
+    const baseUrl = getSiteUrl();
 
     return {
       title: `${post.title} | Mion Blog`,
-      description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+      description:
+        post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
       openGraph: {
         title: post.title,
-        description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
-        type: 'article',
-        publishedTime: new Date(post.publishedAt ?? post.createdAt).toISOString(),
+        description:
+          post.excerpt ??
+          `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+        type: "article",
+        publishedTime: new Date(
+          post.publishedAt ?? post.createdAt
+        ).toISOString(),
         modifiedTime: new Date(post.updatedAt).toISOString(),
         authors: [post.author.name],
-        tags: post.tags.map(tag => tag.name),
-        images: post.coverImage ? [{
-          url: post.coverImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        }] : undefined,
+        tags: post.tags.map((tag) => tag.name),
+        images: post.coverImage
+          ? [
+              {
+                url: post.coverImage,
+                width: 1200,
+                height: 630,
+                alt: post.title,
+              },
+            ]
+          : undefined,
         url: `${baseUrl}/posts/${slug}`,
       },
       twitter: {
-        card: 'summary_large_image',
+        card: "summary_large_image",
         title: post.title,
-        description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+        description:
+          post.excerpt ??
+          `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
         images: post.coverImage ? [post.coverImage] : undefined,
       },
       alternates: {
@@ -65,7 +85,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     };
   } catch {
     return {
-      title: '포스트를 찾을 수 없습니다 | Mion Blog',
+      title: "포스트를 찾을 수 없습니다 | Mion Blog",
     };
   }
 }
@@ -85,9 +105,20 @@ export default async function PostPage({ params }: PostPageProps) {
     }
 
     const post = response.data;
+    const { getSiteUrl } = await import("@/lib/site");
+    const baseUrl = getSiteUrl();
+
+    const jsonLd = buildPostJsonLd(post, `${baseUrl}/posts/${slug}`);
 
     return (
       <article className="blog-post-page">
+        {/* JSON-LD: BlogPosting */}
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {/* 상단 네비게이션 */}
         <PostNavigation />
 
@@ -102,7 +133,7 @@ export default async function PostPage({ params }: PostPageProps) {
       </article>
     );
   } catch (error) {
-    console.error('Error loading post:', error);
+    console.error("Error loading post:", error);
     notFound();
   }
 }
@@ -186,7 +217,6 @@ function PostHeader({ post }: { post: PostResponseDto }) {
               </Link>
             ))}
           </div>
-
         </div>
       </div>
     </header>
@@ -244,7 +274,7 @@ function PostFooter({ post }: { post: PostResponseDto }) {
                   <Link
                     key={tag.id}
                     href={`/posts?tagSlug=${tag.slug}`}
-                  className={cn(
+                    className={cn(
                       "blog-tag gap-1 text-sm",
                       "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
                     )}
@@ -321,11 +351,11 @@ function PostFooter({ post }: { post: PostResponseDto }) {
  * 날짜 포맷팅 함수
  */
 function formatDate(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(dateObj);
 }
 
@@ -333,5 +363,46 @@ function formatDate(date: Date | string): string {
  * 숫자 포맷팅 함수
  */
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat('ko-KR').format(value);
+  return new Intl.NumberFormat("ko-KR").format(value);
+}
+
+/**
+ * BlogPosting JSON-LD 생성기
+ */
+function buildPostJsonLd(post: PostResponseDto, url: string) {
+  const publisherName = "Mion's Blog";
+  const siteUrl = getSiteUrl();
+  const logoUrl = `${siteUrl}/favicon.ico`;
+
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description:
+      post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+    url,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    image: post.coverImage ? [post.coverImage] : undefined,
+    author: {
+      "@type": "Person",
+      name: post.author?.name ?? "Mion",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: publisherName,
+      logo: {
+        "@type": "ImageObject",
+        url: logoUrl,
+      },
+    },
+    datePublished: new Date(post.publishedAt ?? post.createdAt).toISOString(),
+    dateModified: new Date(post.updatedAt).toISOString(),
+    keywords: post.tags?.map((t) => t.name).join(", "),
+    articleSection: post.category?.name,
+  } as const;
+
+  return data;
 }
