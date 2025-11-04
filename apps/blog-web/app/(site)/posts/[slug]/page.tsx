@@ -1,16 +1,22 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { CalendarDays, Eye, Tag as TagIcon, FolderOpen, ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  Eye,
+  FolderOpen,
+  Tag as TagIcon,
+} from "lucide-react";
+import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { postsApi } from '@/lib/api-client';
-import { getSiteUrl } from '@/lib/site';
-import { MDXRenderer } from '@/components/mdx-renderer';
-import { ShareButton } from '@/components/share-button';
-import { cn } from '@/lib/utils';
+import { MDXRenderer } from "@/components/mdx-renderer";
+import { ShareButton } from "@/components/share-button";
+import { postsApi } from "@/lib/api-client";
+import { getSiteUrl } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
-import type { PostResponseDto } from '@repo/shared';
+import type { PostResponseDto } from "@repo/shared";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -21,14 +27,16 @@ export const revalidate = 60; // 1분마다 재검증
 /**
  * 동적 메타데이터 생성
  */
-export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
     const response = await postsApi.getPostBySlug(slug);
 
     if (!response.success || !response.data) {
       return {
-        title: '포스트를 찾을 수 없습니다 | Mion Blog',
+        title: "포스트를 찾을 수 없습니다 | Mion Blog",
       };
     }
 
@@ -37,27 +45,38 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
     return {
       title: `${post.title} | Mion Blog`,
-      description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+      description:
+        post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
       openGraph: {
         title: post.title,
-        description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
-        type: 'article',
-        publishedTime: new Date(post.publishedAt ?? post.createdAt).toISOString(),
+        description:
+          post.excerpt ??
+          `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+        type: "article",
+        publishedTime: new Date(
+          post.publishedAt ?? post.createdAt
+        ).toISOString(),
         modifiedTime: new Date(post.updatedAt).toISOString(),
         authors: [post.author.name],
-        tags: post.tags.map(tag => tag.name),
-        images: post.coverImage ? [{
-          url: post.coverImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        }] : undefined,
+        tags: post.tags.map((tag) => tag.name),
+        images: post.coverImage
+          ? [
+              {
+                url: post.coverImage,
+                width: 1200,
+                height: 630,
+                alt: post.title,
+              },
+            ]
+          : undefined,
         url: `${baseUrl}/posts/${slug}`,
       },
       twitter: {
-        card: 'summary_large_image',
+        card: "summary_large_image",
         title: post.title,
-        description: post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
+        description:
+          post.excerpt ??
+          `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
         images: post.coverImage ? [post.coverImage] : undefined,
       },
       alternates: {
@@ -66,7 +85,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     };
   } catch {
     return {
-      title: '포스트를 찾을 수 없습니다 | Mion Blog',
+      title: "포스트를 찾을 수 없습니다 | Mion Blog",
     };
   }
 }
@@ -86,7 +105,7 @@ export default async function PostPage({ params }: PostPageProps) {
     }
 
     const post = response.data;
-    const { getSiteUrl } = await import('@/lib/site');
+    const { getSiteUrl } = await import("@/lib/site");
     const baseUrl = getSiteUrl();
 
     const jsonLd = buildPostJsonLd(post, `${baseUrl}/posts/${slug}`);
@@ -114,7 +133,7 @@ export default async function PostPage({ params }: PostPageProps) {
       </article>
     );
   } catch (error) {
-    console.error('Error loading post:', error);
+    console.error("Error loading post:", error);
     notFound();
   }
 }
@@ -152,16 +171,8 @@ function PostHeader({ post }: { post: PostResponseDto }) {
     <header className="py-8 max-md:py-6 bg-gradient-to-b from-[var(--color-hero-gradient-from)] to-[var(--color-background)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl space-y-8 py-16">
-          {/* 카테고리 및 메타 정보 */}
+          {/* 메타 정보 (카테고리 배지 제거) */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <Link
-              href={`/category/${post.category.slug}`}
-              className="blog-category-badge"
-            >
-              <FolderOpen className="h-3 w-3" />
-              {post.category.name}
-            </Link>
-
             <span className="flex items-center gap-1 text-[var(--color-text-secondary)]">
               <CalendarDays className="h-4 w-4" />
               {formatDate(displayDate)}
@@ -185,22 +196,27 @@ function PostHeader({ post }: { post: PostResponseDto }) {
             </p>
           )}
 
-          {/* 태그 목록 */}
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/tag/${tag.slug}`}
-                  className="blog-tag"
-                >
-                  <TagIcon className="h-3 w-3" />
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          )}
+          {/* 카테고리(칩) + 태그 목록 */}
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/posts?categorySlug=${post.category.slug}`}
+              className="blog-tag gap-1"
+            >
+              <FolderOpen className="h-3 w-3" />
+              {post.category.name}
+            </Link>
 
+            {post.tags.map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/posts?tagSlug=${tag.slug}`}
+                className="blog-tag gap-1"
+              >
+                <TagIcon className="h-3 w-3" />
+                {tag.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </header>
@@ -257,9 +273,9 @@ function PostFooter({ post }: { post: PostResponseDto }) {
                 {post.tags.map((tag) => (
                   <Link
                     key={tag.id}
-                    href={`/tag/${tag.slug}`}
+                    href={`/posts?tagSlug=${tag.slug}`}
                     className={cn(
-                      "blog-tag text-sm",
+                      "blog-tag gap-1 text-sm",
                       "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary)]/80"
                     )}
                   >
@@ -282,7 +298,7 @@ function PostFooter({ post }: { post: PostResponseDto }) {
                   카테고리
                 </p>
                 <Link
-                  href={`/category/${post.category.slug}`}
+                  href={`/posts?categorySlug=${post.category.slug}`}
                   className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
                 >
                   {post.category.name}
@@ -335,11 +351,11 @@ function PostFooter({ post }: { post: PostResponseDto }) {
  * 날짜 포맷팅 함수
  */
 function formatDate(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(dateObj);
 }
 
@@ -347,7 +363,7 @@ function formatDate(date: Date | string): string {
  * 숫자 포맷팅 함수
  */
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat('ko-KR').format(value);
+  return new Intl.NumberFormat("ko-KR").format(value);
 }
 
 /**
@@ -359,32 +375,32 @@ function buildPostJsonLd(post: PostResponseDto, url: string) {
   const logoUrl = `${siteUrl}/favicon.ico`;
 
   const data = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
     headline: post.title,
     description:
       post.excerpt ?? `${post.title}에 대한 Mion의 기술 블로그 포스트입니다.`,
     url,
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': url,
+      "@type": "WebPage",
+      "@id": url,
     },
     image: post.coverImage ? [post.coverImage] : undefined,
     author: {
-      '@type': 'Person',
-      name: post.author?.name ?? 'Mion',
+      "@type": "Person",
+      name: post.author?.name ?? "Mion",
     },
     publisher: {
-      '@type': 'Organization',
+      "@type": "Organization",
       name: publisherName,
       logo: {
-        '@type': 'ImageObject',
+        "@type": "ImageObject",
         url: logoUrl,
       },
     },
     datePublished: new Date(post.publishedAt ?? post.createdAt).toISOString(),
     dateModified: new Date(post.updatedAt).toISOString(),
-    keywords: post.tags?.map((t) => t.name).join(', '),
+    keywords: post.tags?.map((t) => t.name).join(", "),
     articleSection: post.category?.name,
   } as const;
 

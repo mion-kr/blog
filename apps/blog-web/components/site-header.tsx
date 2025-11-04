@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -58,7 +57,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle className="hidden sm:inline-flex" />
           <AuthButton className="hidden sm:inline-flex" />
           <button
             type="button"
@@ -107,7 +105,6 @@ export function SiteHeader() {
               })}
             </nav>
 
-            <ThemeToggle />
             <AuthButton className="sm:hidden" />
           </div>
         </div>

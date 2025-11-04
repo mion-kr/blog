@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PostResponseDto } from '@repo/shared';
 import { cn } from '@/lib/utils';
-import { CalendarDays, Eye, ImageOff, Tag } from 'lucide-react';
+import { CalendarDays, Eye, ImageOff, Tag, FolderOpen } from 'lucide-react';
 
 interface PostCardProps {
   post: PostResponseDto;
@@ -104,15 +104,7 @@ export function PostCard({ post, className, viewMode = 'grid' }: PostCardProps) 
           </div>
         )}
 
-        {/* 카테고리 배지 */}
-        <div className={cn(
-          "absolute",
-          viewMode === 'list' ? "top-2 left-2" : "top-3 left-3"
-        )}>
-          <span className="blog-category-badge">
-            {category.name}
-          </span>
-        </div>
+        {/* (변경) 썸네일 오버레이 카테고리 배지 제거 */}
       </div>
 
       {/* 카드 콘텐츠 */}
@@ -147,6 +139,20 @@ export function PostCard({ post, className, viewMode = 'grid' }: PostCardProps) 
             {truncateText(excerpt, viewMode === 'list' ? 100 : 150)}
           </p>
         )}
+
+        {/* (변경) 카테고리 - 태그 스타일 칩 + 아이콘 우측 배치 */}
+        <div className="mb-2">
+          <Link
+            href={`/posts?categorySlug=${category.slug}`}
+            className={cn(
+              "blog-tag gap-1",
+              viewMode === 'list' ? "text-xs px-2 py-1" : ""
+            )}
+          >
+            <FolderOpen className={cn(viewMode === 'list' ? "h-2.5 w-2.5" : "h-3 w-3")} />
+            {category.name}
+          </Link>
+        </div>
 
         {/* 태그 목록 - 리스트 뷰에서는 개수 제한 */}
         {tags.length > 0 && (
