@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "../components/providers";
+import { getSiteUrl } from "@/lib/site";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,7 +15,7 @@ const geistMono = localFont({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blog.mion-space.dev";
+const SITE_URL = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Mion's Blog",

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CalendarDays, Eye, Tag as TagIcon, FolderOpen, ArrowLeft } from 'lucide-react';
 
 import { postsApi } from '@/lib/api-client';
+import { getSiteUrl } from '@/lib/site';
 import { MDXRenderer } from '@/components/mdx-renderer';
 import { ShareButton } from '@/components/share-button';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     }
 
     const post = response.data;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev';
+    const baseUrl = getSiteUrl();
 
     return {
       title: `${post.title} | Mion Blog`,
@@ -85,7 +86,8 @@ export default async function PostPage({ params }: PostPageProps) {
     }
 
     const post = response.data;
-    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev').replace(/\/$/, '');
+    const { getSiteUrl } = await import('@/lib/site');
+    const baseUrl = getSiteUrl();
 
     const jsonLd = buildPostJsonLd(post, `${baseUrl}/posts/${slug}`);
 
@@ -353,7 +355,7 @@ function formatNumber(value: number): string {
  */
 function buildPostJsonLd(post: PostResponseDto, url: string) {
   const publisherName = "Mion's Blog";
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev').replace(/\/$/, '');
+  const siteUrl = getSiteUrl();
   const logoUrl = `${siteUrl}/favicon.ico`;
 
   const data = {

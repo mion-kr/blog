@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://blog.mion-space.dev";
+const SITE_URL = getSiteUrl();
 const STAGE = process.env.NODE_ENV ?? "production";
 
 export default function robots(): MetadataRoute.Robots {

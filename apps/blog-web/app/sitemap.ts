@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { postsApi } from "@/lib/api-client";
 import type { PostResponseDto } from "@repo/shared";
+import { getSiteUrl } from "@/lib/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blog.mion-space.dev";
+const SITE_URL = getSiteUrl();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -65,4 +66,3 @@ async function fetchAllPosts(): Promise<PostResponseDto[]> {
 
   return items;
 }
-

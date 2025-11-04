@@ -2,14 +2,19 @@ import Link from "next/link"
 import type { Metadata } from "next"
 
 import type { ApiResponse, PublicSiteSettings } from "@repo/shared"
+import { getSiteUrl } from "@/lib/site"
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://mion.blog").replace(/\/$/, "")
+// 사이트 URL은 중앙 유틸을 통해 일관 관리합니다.
+const siteUrl = getSiteUrl()
 const aboutOgImage = `${siteUrl}/og/about.png`
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001").replace(/\/$/, "")
 
 export const metadata: Metadata = {
   title: "About | Mion's Blog",
   description: "Next.js와 NestJS를 기반으로 제품 문제를 해결하며 개발자 경험을 사랑하는 백엔드 개발자 미온을 소개합니다.",
+  alternates: {
+    canonical: "/about",
+  },
   openGraph: {
     title: "About | Mion's Blog",
     description: "웹 성능, DX, 인프라 자동화에 집중하는 백엔드 개발자 미온의 관심사와 협업 방식을 소개합니다.",
