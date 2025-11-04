@@ -8,10 +8,14 @@ import { WithSidebar } from '@/components/layout/with-sidebar';
 export const metadata: Metadata = {
   title: '전체 포스트 | Mion\'s Blog',
   description: '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.',
+  alternates: {
+    canonical: '/posts',
+  },
   openGraph: {
     title: '전체 포스트 | Mion\'s Blog',
     description: '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.',
     type: 'website',
+    url: '/posts',
   },
 };
 

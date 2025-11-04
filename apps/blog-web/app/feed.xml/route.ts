@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { postsApi } from "@/lib/api-client";
 import type { PostResponseDto } from "@repo/shared";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://blog.mion-space.dev").replace(/\/$/, "");
+import { getSiteUrl } from "@/lib/site";
+const SITE_URL = getSiteUrl();
 const FEED_TITLE = "Mion's Blog";
 const FEED_DESCRIPTION = "Mion의 기술 블로그 최신 글";
 const FEED_LINK = SITE_URL;
@@ -72,4 +73,3 @@ function escapeXml(value: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
-
