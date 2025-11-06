@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 
 import { postsApi, categoriesApi, tagsApi } from '@/lib/api-client';
 import { PostCard, PostCardSkeleton } from '@/components/post-card';
@@ -13,65 +18,65 @@ import type {
   PostResponseDto,
   Category,
   Tag,
-  PaginatedResponse,
-  PostsQuery
+  PostsQuery,
+  ApiPaginationMeta,
 } from '@repo/shared';
 import {
   AlertCircle,
-  Search,
-  Filter,
   Grid3X3,
   List,
-  SortAsc,
-  SortDesc
+  Search,
 } from 'lucide-react';
+import {
+  parsePostsSearchParams,
+  buildPostsQueryKey,
+  extractPostsSearchParams,
+} from './query-utils';
 
 interface PostsContentProps {
-  searchParams: {
-    page?: string;
-    limit?: string;
-    search?: string;
-    categorySlug?: string;
-    category?: string;
-    tagSlug?: string;
-    tag?: string;
-    sort?: string;
-    order?: 'asc' | 'desc';
-  };
+  initialPosts: PostResponseDto[];
+  initialMeta: ApiPaginationMeta;
+  initialQuery: PostsQuery;
+  initialError?: string | null;
 }
 
 type ViewMode = 'grid' | 'list';
 
-export function PostsContent({ searchParams }: PostsContentProps) {
+export function PostsContent({
+  initialPosts,
+  initialMeta,
+  initialQuery,
+  initialError,
+}: PostsContentProps) {
   const router = useRouter();
   const urlSearchParams = useSearchParams();
 
   // State
-  const [posts, setPosts] = useState<PostResponseDto[]>([]);
+  const [posts, setPosts] = useState<PostResponseDto[]>(initialPosts);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    hasNext: false,
-    hasPrev: false
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState(() =>
+    mapPagination(initialMeta, initialQuery, initialPosts.length),
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // URL에서 쿼리 파라미터 파싱
-  const currentQuery: PostsQuery = {
-    page: parseInt(searchParams.page ?? '1', 10),
-    limit: parseInt(searchParams.limit ?? '12', 10),
-    search: searchParams.search || undefined,
-    categorySlug: searchParams.categorySlug || searchParams.category || undefined,
-    tagSlug: searchParams.tagSlug || searchParams.tag || undefined,
-    sort: searchParams.sort || 'publishedAt',
-    order: searchParams.order || 'desc',
-    published: true, // 발행된 포스트만 보여줌
-  };
+  const searchParamsString = useMemo(
+    () => urlSearchParams.toString(),
+    [urlSearchParams],
+  );
+  const currentQuery = useMemo(
+    () =>
+      parsePostsSearchParams(extractPostsSearchParams(urlSearchParams)),
+    [searchParamsString, urlSearchParams],
+  );
+  const currentQueryKey = useMemo(
+    () => buildPostsQueryKey(currentQuery),
+    [currentQuery],
+  );
+  const initialQueryKeyRef = useRef(buildPostsQueryKey(initialQuery));
+  const shouldSkipFirstFetchRef = useRef(initialError ? false : true);
 
   // URL 업데이트 함수
   const updateURL = useCallback((newParams: Partial<PostsQuery>) => {
@@ -111,13 +116,9 @@ export function PostsContent({ searchParams }: PostsContentProps) {
 
       if (response.success && response.data) {
         setPosts(response.data);
-        setPagination({
-          page: response.meta?.page ?? 1,
-          limit: response.meta?.limit ?? 12,
-          total: response.meta?.total ?? 0,
-          hasNext: response.meta?.hasNext ?? false,
-          hasPrev: response.meta?.hasPrev ?? false
-        });
+        setPagination(
+          mapPagination(response.meta, query, response.data.length),
+        );
       }
     } catch (err) {
       console.error('Failed to load posts:', err);
@@ -152,8 +153,19 @@ export function PostsContent({ searchParams }: PostsContentProps) {
   }, [loadFilters]);
 
   useEffect(() => {
+    const queryKey = currentQueryKey;
+
+    if (
+      shouldSkipFirstFetchRef.current &&
+      queryKey === initialQueryKeyRef.current
+    ) {
+      shouldSkipFirstFetchRef.current = false;
+      return;
+    }
+
+    shouldSkipFirstFetchRef.current = false;
     loadPosts(currentQuery);
-  }, [loadPosts, JSON.stringify(currentQuery)]);
+  }, [currentQuery, currentQueryKey, loadPosts]);
 
   // 핸들러 함수들
   const handleSearch = useCallback((search: string) => {
@@ -327,4 +339,24 @@ export function PostsContent({ searchParams }: PostsContentProps) {
       )}
     </div>
   );
+}
+
+function mapPagination(
+  meta?: ApiPaginationMeta,
+  query?: PostsQuery,
+  fallbackLength: number = 0,
+) {
+  const page = meta?.page ?? query?.page ?? 1;
+  const limit = meta?.limit ?? query?.limit ?? 12;
+  const total = meta?.total ?? fallbackLength;
+  const totalPages =
+    meta?.totalPages ?? (limit > 0 ? Math.ceil(total / limit) : 0);
+
+  return {
+    page,
+    limit,
+    total,
+    hasNext: meta?.hasNext ?? page < totalPages,
+    hasPrev: meta?.hasPrev ?? page > 1,
+  };
 }

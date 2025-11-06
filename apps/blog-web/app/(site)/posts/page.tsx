@@ -4,6 +4,13 @@ import { Metadata } from 'next';
 import { PostsContent } from './posts-content';
 import { PostsPageSkeleton } from './loading';
 import { WithSidebar } from '@/components/layout/with-sidebar';
+import { postsApi } from '@/lib/api-client';
+import { parsePostsSearchParams } from './query-utils';
+import type {
+  ApiPaginationMeta,
+  PostResponseDto,
+  PostsQuery,
+} from '@repo/shared';
 
 export const metadata: Metadata = {
   title: '전체 포스트 | Mion\'s Blog',
@@ -37,6 +44,33 @@ interface PostsPageProps {
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = await searchParams;
+  const initialQuery = parsePostsSearchParams(resolvedSearchParams);
+
+  let initialPosts: PostResponseDto[] = [];
+  let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
+  let initialError: string | null = null;
+
+  try {
+    const response = await postsApi.getPosts(initialQuery);
+
+    if (response.success) {
+      initialPosts = response.data ?? [];
+      initialMeta = normalizePaginationMeta(
+        response.meta,
+        initialQuery,
+        initialPosts.length,
+      );
+    } else {
+      initialError =
+        response.message ?? '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
+    }
+  } catch (error) {
+    initialError =
+      error instanceof Error
+        ? error.message
+        : '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
+  }
+
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
       {/* 페이지 헤더 */}
@@ -57,9 +91,35 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       {/* 메인 콘텐츠 (사이드바 포함) */}
       <WithSidebar>
         <Suspense fallback={<PostsPageSkeleton />}>
-          <PostsContent searchParams={resolvedSearchParams} />
+          <PostsContent
+            initialPosts={initialPosts}
+            initialMeta={initialMeta}
+            initialQuery={initialQuery}
+            initialError={initialError}
+          />
         </Suspense>
       </WithSidebar>
     </div>
   );
+}
+
+function normalizePaginationMeta(
+  meta: ApiPaginationMeta | undefined,
+  query: PostsQuery,
+  fallbackLength: number,
+): ApiPaginationMeta {
+  const page = meta?.page ?? query.page ?? 1;
+  const limit = meta?.limit ?? query.limit ?? 12;
+  const total = meta?.total ?? fallbackLength;
+  const totalPages =
+    meta?.totalPages ?? (limit > 0 ? Math.ceil(total / limit) : 0);
+
+  return {
+    page,
+    limit,
+    total,
+    hasNext: meta?.hasNext ?? page < totalPages,
+    hasPrev: meta?.hasPrev ?? page > 1,
+    totalPages,
+  };
 }
