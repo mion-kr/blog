@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>홈 Featured 레이아웃 프리뷰</title>
+    <style>
+      :root{
+        --bg:#0b1220; /* background */
+        --card:#0f172a; /* surface */
+        --muted:#111827; /* muted */
+        --border:#1f2937; /* border */
+        --text:#e5e7eb; /* text primary */
+        --text-2:#94a3b8; /* text secondary */
+        --primary:#3b82f6; /* accent primary */
+        --radius:14px;
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%}
+      body{
+        margin:0; background:var(--bg); color:var(--text);
+        font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial;
+      }
+      .container{max-width:1120px; margin:32px auto; padding:0 16px}
+      .section-title{display:flex; align-items:center; justify-content:space-between; margin:0 0 16px}
+      .section-title h2{margin:4px 0 0; font-size:28px}
+      .grid{display:grid; grid-template-columns: 2fr 1fr; gap:16px}
+      @media (max-width: 1024px){.grid{grid-template-columns:1fr}}
+      .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+      .main{display:grid; grid-template-columns: 1.2fr 1fr; height:100%}
+      @media (max-width: 768px){.main{grid-template-columns:1fr}}
+      .media{position:relative; min-height:260px; background:linear-gradient(135deg,#1e293b,#0ea5e9)}
+      .media img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+      .content{padding:20px}
+      .category{display:inline-flex; align-items:center; gap:6px; background:#111827; color:#e5e7eb; padding:4px 10px; border-radius:999px; font-size:12px}
+      .title{margin:10px 0; font-size:24px; line-height:1.2}
+      .excerpt{color:var(--text-2); margin:6px 0 14px}
+      .meta{display:flex; flex-wrap:wrap; gap:14px; color:var(--text-2); font-size:12px}
+      .side{display:flex; flex-direction:column; gap:12px}
+      .mini{display:flex; gap:12px; padding:12px}
+      .mini .thumb{flex:0 0 112px; height:84px; background:var(--muted); border-radius:10px; overflow:hidden}
+      .mini .thumb img{width:100%; height:100%; object-fit:cover}
+      .mini .info{min-width:0}
+      .mini .mini-title{margin:0 0 6px; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+      .mini .mini-meta{display:flex; gap:10px; color:var(--text-2); font-size:12px}
+      .link{color:var(--primary); text-decoration:none}
+      .pill{display:inline-flex; align-items:center; gap:6px; background:#0b1324; padding:4px 10px; border-radius:8px; font-size:12px}
+      /* 태그 칩 - 목록 화면의 .blog-tag 톤과 유사하게 */
+      :root{ --secondary: #1e293b; --secondary-fg: #e5e7eb; }
+      .tags{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 6px}
+      .tag{display:inline-flex; align-items:center; gap:6px; background:var(--secondary); color:var(--secondary-fg); padding:2px 10px; border-radius:4px; font-size:12px; font-weight:500; transition:background-color .2s ease}
+      .tag:hover{ background:#243047 }
+      .tag svg{width:14px; height:14px}
+      /* Empty state */
+      .empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; padding:48px; border:1px dashed var(--border); border-radius:var(--radius); background:var(--card)}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="section-title">
+        <div>
+          <div style="color:var(--text-2); font-weight:600; font-size:12px">Editor's Pick</div>
+          <h2>가장 주목받는 포스트</h2>
+        </div>
+        <a class="link" href="#">모든 포스트 보기 →</a>
+      </div>
+
+      <div class="grid" id="featuredGrid">
+        <article class="card main" id="mainCard">
+          <div class="media" id="mainMedia"></div>
+          <div class="content">
+            <h3 class="title" id="mainTitle">제목</h3>
+            <div class="tags" id="mainTags"></div>
+            <p class="excerpt" id="mainExcerpt">요약</p>
+            <div class="meta"><span id="mainDate">2025년 10월 17일</span><span id="mainViews">58 views</span><span id="mainAuthor">미온</span></div>
+          </div>
+        </article>
+
+        <div class="side" id="sideList"></div>
+      </div>
+    </div>
+
+    <script>
+      // 샘플 데이터 (실서비스와 무관)
+      const sample = [
+        {title:'[이슈] Grpc로 구성된 마이크로서비스의 트래픽 편향 발생', category:'개발', tags:['gRPC','Nest.js'], excerpt:'Grpc로 구성된 마이크로서비스의 트래픽 편향 발생 이슈를 공유합니다.', date:'2025년 10월 27일', views:37, author:'미온', cover:''},
+        {title:'JWT와 JWE의 차이점', category:'Security', tags:['Security','JWT'], excerpt:'JWT와 JWE의 차이점을 분석합니다.', date:'2025년 10월 20일', views:53, author:'미온', cover:''},
+        {title:'AWS와 Railway 비교', category:'Infra', tags:['Infra','Cloud'], excerpt:'업무용으로 사용해본 소감과 차이를 비교합니다.', date:'2025년 10월 17일', views:60, author:'미온', cover:''},
+        {title:'NestJS로 블로그 API 만들기', category:'Nest.js', tags:['Nest.js','API'], excerpt:'NestJS 11을 사용한 API 설계기.', date:'2025년 9월 22일', views:44, author:'미온', cover:''},
+        {title:'Next.js 15 업그레이드 체크리스트', category:'Next.js', tags:['Next.js','Upgrade','Guide'], excerpt:'안전한 마이그레이션 팁 모음.', date:'2025년 9월 2일', views:120, author:'미온', cover:''},
+      ];
+
+      // 우측 아이템 개수 (1~4) — URL 파라미터 ?count=3 로 조절 가능
+      // 빈 상태 시뮬레이터: ?empty=1 또는 ?empty=true
+      const params = new URLSearchParams(location.search);
+      const count = Math.max(1, Math.min(4, Number(params.get('count')) || 4));
+      const isEmpty = params.get('empty') === '1' || params.get('empty') === 'true';
+
+      // 메인 카드 렌더
+      const data = isEmpty ? [] : sample;
+
+      // 빈 상태: 섹션 전체 EmptyState로 대체
+      if (data.length === 0) {
+        const grid = document.getElementById('featuredGrid');
+        grid.innerHTML = `
+          <div class="card empty" style="grid-column:1 / -1">
+            <div class="mb-2" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:9999px;background:var(--secondary);color:var(--secondary-fg)">📝</div>
+            <h3 style="margin:0;font-size:18px">첫 번째 포스트를 기다리고 있어요</h3>
+            <p style="margin:0;color:var(--text-2)">새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요.</p>
+          </div>`;
+      } else {
+        const main = data[0];
+      document.getElementById('mainTitle').textContent = main.title;
+      document.getElementById('mainExcerpt').textContent = main.excerpt;
+      document.getElementById('mainDate').textContent = main.date;
+      document.getElementById('mainViews').textContent = main.views + ' views';
+      document.getElementById('mainAuthor').textContent = main.author;
+      if (main.cover){
+        const img = new Image(); img.src = main.cover; document.getElementById('mainMedia').appendChild(img);
+      }
+      // 메인 카드 태그 (제목 뒤)
+      const mainTagsEl = document.getElementById('mainTags');
+      const TAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden><path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82z"></path><path d="M7 7h.01"></path></svg>';
+      const mainTags = (main.tags || []).slice(0,4);
+      const mainMore = (main.tags || []).length - mainTags.length;
+      mainTagsEl.innerHTML = mainTags.map(t => `<span class="tag">${TAG_ICON}${t}</span>`).join('') + (mainMore>0 ? `<span class="tag">+${mainMore}</span>` : '');
+
+      // 우측 리스트 렌더 (최대 4)
+      const side = document.getElementById('sideList');
+      const sideItems = data.slice(1, 1 + count);
+      sideItems.forEach(p => {
+        const item = document.createElement('article');
+        item.className = 'card mini';
+        const tags = (p.tags || []).slice(0,2);
+        const more = (p.tags || []).length - tags.length;
+        const tagHtml = tags.map(t => `<span class="tag">${TAG_ICON}${t}</span>`).join('') + (more>0 ? `<span class="tag">+${more}</span>` : '');
+        item.innerHTML = `
+          <div class="thumb"></div>
+          <div class="info">
+            <h4 class="mini-title">${p.title}</h4>
+            <div class="tags">${tagHtml}</div>
+            <div class="mini-meta"><span>${p.date}</span><span>${p.views} views</span></div>
+          </div>`;
+        side.appendChild(item);
+      });
+
+      // 우측에 표시할 글이 없는 경우 보조 EmptyState
+      if (sideItems.length === 0) {
+        side.innerHTML = `
+          <div class="card empty">
+            <h4 style="margin:0;font-size:16px">추가 포스트가 준비 중입니다</h4>
+            <p style="margin:0;color:var(--text-2)">새로운 글이 발행되면 이곳에서 바로 확인할 수 있어요.</p>
+          </div>`;
+      }
+    }
+    </script>
+  </body>
+</html>

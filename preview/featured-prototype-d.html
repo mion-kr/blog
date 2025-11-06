@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>옵션 D — 우측 스냅 캐러셀 프리뷰</title>
+    <style>
+      :root{
+        --bg:#0b1220; --card:#0f172a; --muted:#111827; --border:#1f2937;
+        --text:#e5e7eb; --text-2:#94a3b8; --primary:#3b82f6; --radius:14px;
+        --secondary:#1e293b; --secondary-fg:#e5e7eb;
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%}
+      body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica Neue,Arial}
+      .container{max-width:1120px;margin:32px auto;padding:0 16px}
+      .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+      .header h2{margin:4px 0 0;font-size:28px}
+      .link{color:var(--primary);text-decoration:none}
+      .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+      @media (max-width:1024px){.grid{grid-template-columns:1fr}}
+      .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+      .main{display:grid;grid-template-columns:1.2fr 1fr}
+      @media (max-width:768px){.main{grid-template-columns:1fr}}
+      .media{position:relative;min-height:260px;background:linear-gradient(135deg,#1e293b,#0ea5e9)}
+      .content{padding:20px}
+      .title{margin:10px 0;font-size:24px;line-height:1.2}
+      .excerpt{color:var(--text-2);margin:6px 0 14px}
+      .meta{display:flex;flex-wrap:wrap;gap:14px;color:var(--text-2);font-size:12px}
+      .tags{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+      .tag{display:inline-flex;align-items:center;gap:6px;background:var(--secondary);color:var(--secondary-fg);padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500}
+      .tag svg{width:14px;height:14px}
+
+      .carousel-wrap{position:relative}
+      /* 좌우 네비 버튼 영역 확보를 위해 좌우 패딩을 넉넉히 제공 */
+      .carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 56px 12px}
+      .carousel::-webkit-scrollbar{height:10px}
+      .carousel::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+      .item{flex:0 0 260px;scroll-snap-align:start}
+      @media (max-width:420px){.item{flex-basis:88%}}
+      .mini{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:12px}
+      .thumb{width:110px;height:84px;background:var(--muted);border-radius:10px;overflow:hidden}
+      .mini-title{margin:0 0 6px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+      .mini-meta{display:flex;gap:10px;color:var(--text-2);font-size:12px}
+      /* 버튼은 캐러셀 높이에 맞춰 세로 중앙 정렬, 클릭만 이벤트 허용 */
+      .nav{position:absolute;top:0;bottom:0;width:48px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+      .btn{border:1px solid var(--border);background:var(--card);color:var(--text);width:36px;height:36px;border-radius:999px;display:grid;place-items:center;cursor:pointer;pointer-events:auto}
+      .prev{left:0}
+      .next{right:0}
+      .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:48px;border:1px dashed var(--border);border-radius:var(--radius);background:var(--card)}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <div style="color:var(--text-2);font-weight:600;font-size:12px">Editor's Pick</div>
+          <h2>가장 주목받는 포스트</h2>
+        </div>
+        <a class="link" href="#">모든 포스트 보기 →</a>
+      </div>
+
+      <div class="grid" id="grid">
+        <article class="card main">
+          <div class="media" id="mainMedia"></div>
+          <div class="content">
+            <h3 class="title" id="mainTitle">제목</h3>
+            <div class="tags" id="mainTags"></div>
+            <p class="excerpt" id="mainExcerpt">요약</p>
+            <div class="meta"><span id="mainDate">2025년 10월 17일</span><span id="mainViews">58 views</span><span id="mainAuthor">미온</span></div>
+          </div>
+        </article>
+
+        <div class="carousel-wrap">
+          <div class="carousel" id="carousel"></div>
+          <div class="nav prev"><button class="btn" id="btnPrev" aria-label="이전">◀</button></div>
+          <div class="nav next"><button class="btn" id="btnNext" aria-label="다음">▶</button></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const sample = [
+        {title:'[이슈] Grpc로 구성된 마이크로서비스의 트래픽 편향 발생', tags:['gRPC','Nest.js','Issue'], excerpt:'Grpc로 구성된 마이크로서비스의 트래픽 편향 발생 이슈를 공유합니다.', date:'2025년 10월 27일', views:37, author:'미온'},
+        {title:'JWT와 JWE의 차이점', tags:['Security','JWT'], excerpt:'JWT와 JWE의 차이점을 분석합니다.', date:'2025년 10월 20일', views:53, author:'미온'},
+        {title:'AWS와 Railway 비교', tags:['Infra','Cloud'], excerpt:'업무용으로 사용해본 소감과 차이를 비교합니다.', date:'2025년 10월 17일', views:60, author:'미온'},
+        {title:'NestJS로 블로그 API 만들기', tags:['Nest.js','API'], excerpt:'NestJS 11을 사용한 API 설계기.', date:'2025년 9월 22일', views:44, author:'미온'},
+        {title:'Next.js 15 업그레이드 체크리스트', tags:['Next.js','Upgrade','Guide'], excerpt:'안전한 마이그레이션 팁 모음.', date:'2025년 9월 2일', views:120, author:'미온'},
+      ];
+
+      const q = new URLSearchParams(location.search);
+      const count = Math.max(1, Math.min(4, Number(q.get('count')) || 4));
+      const isEmpty = q.get('empty') === '1' || q.get('empty') === 'true';
+      const data = isEmpty ? [] : sample;
+      const grid = document.getElementById('grid');
+      const TAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden><path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82z"></path><path d="M7 7h.01"></path></svg>';
+
+      if (data.length === 0) {
+        grid.innerHTML = `<div class=\"card empty\" style=\"grid-column:1 / -1\"><div class=\"mb-2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:9999px;background:var(--secondary);color:var(--secondary-fg)\">📝</div><h3 style=\"margin:0;font-size:18px\">첫 번째 포스트를 기다리고 있어요</h3><p style=\"margin:0;color:var(--text-2)\">새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요.</p></div>`;
+      } else {
+        const main = data[0];
+        document.getElementById('mainTitle').textContent = main.title;
+        document.getElementById('mainExcerpt').textContent = main.excerpt;
+        document.getElementById('mainDate').textContent = main.date;
+        document.getElementById('mainViews').textContent = main.views + ' views';
+        document.getElementById('mainAuthor').textContent = main.author;
+        const tags = (main.tags||[]).slice(0,4); const more = (main.tags||[]).length - tags.length;
+        document.getElementById('mainTags').innerHTML = tags.map(x=>`<span class=\"tag\">${TAG_ICON}${x}</span>`).join('') + (more>0?`<span class=\"tag\">+${more}</span>`:'');
+
+        const carousel = document.getElementById('carousel');
+        const items = data.slice(1, 1+count);
+        items.forEach(p=>{
+          const wrap = document.createElement('div');
+          wrap.className = 'item card';
+          const t = (p.tags||[]).slice(0,2); const m = (p.tags||[]).length - t.length;
+          const tagHtml = t.map(x=>`<span class=\"tag\">${TAG_ICON}${x}</span>`).join('') + (m>0?`<span class=\"tag\">+${m}</span>`:'');
+          wrap.innerHTML = `<div class=\"mini\"><div class=\"thumb\"></div><div class=\"info\"><h4 class=\"mini-title\">${p.title}</h4><div class=\"tags\">${tagHtml}</div><div class=\"mini-meta\"><span>${p.date}</span><span>${p.views} views</span></div></div></div>`;
+          carousel.appendChild(wrap);
+        });
+        if (items.length === 0) {
+          carousel.innerHTML = `<div class=\"card empty item\"><h4 style=\"margin:0;font-size:16px\">추가 포스트가 준비 중입니다</h4><p style=\"margin:0;color:var(--text-2)\">새로운 글이 발행되면 이곳에서 바로 확인할 수 있어요.</p></div>`;
+        }
+
+        // Nav buttons
+        const prev = document.getElementById('btnPrev');
+        const next = document.getElementById('btnNext');
+        const scrollBy = 280; // item width + gap
+        prev.addEventListener('click', ()=> carousel.scrollBy({left:-scrollBy, behavior:'smooth'}));
+        next.addEventListener('click', ()=> carousel.scrollBy({left: scrollBy, behavior:'smooth'}));
+        // 항목이 1개 이하라면 네비 버튼 숨김
+        const showNav = items.length > 1;
+        prev.style.display = showNav ? 'grid' : 'none';
+        next.style.display = showNav ? 'grid' : 'none';
+      }
+    </script>
+  </body>
+  </html>

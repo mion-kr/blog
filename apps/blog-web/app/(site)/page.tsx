@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
 
@@ -13,7 +12,6 @@ import {
   Eye,
   Flame,
   PenSquare,
-  Tag as TagIcon,
 } from "lucide-react";
 
 const LATEST_POSTS_LIMIT = 10;
@@ -84,16 +82,12 @@ export default async function HomePage() {
     tagsResult.status === "fulfilled" ? tagsResult.value : null;
 
   const latestPosts = latestResponse?.data ?? [];
-  const featuredPost = latestPosts[0] ?? null;
-  const highlightPosts = featuredPost
-    ? latestPosts.slice(1, Math.min(latestPosts.length, 4))
-    : [];
-  const latestGridPosts = featuredPost
-    ? latestPosts.slice(1 + highlightPosts.length)
-    : latestPosts;
+  // 홈 Featured 섹션을 작은 카드 그리드(최대 4개)로 표시
+  const featuredGridPosts = latestPosts.slice(0, Math.min(latestPosts.length, 4));
+  // 나머지 최신 포스트는 아래 그리드 섹션으로
+  const latestGridPosts = latestPosts.slice(featuredGridPosts.length);
 
   const trendingPosts = (trendingResponse?.data ?? [])
-    .filter((post) => post.id !== featuredPost?.id)
     .slice(0, TRENDING_POSTS_LIMIT);
   const categories = categoriesResponse?.data ?? [];
   const tags = tagsResponse?.data ?? [];
@@ -102,8 +96,8 @@ export default async function HomePage() {
     posts: latestResponse?.meta?.total ?? latestPosts.length,
     categories: categoriesResponse?.meta?.total ?? categories.length,
     tags: tagsResponse?.meta?.total ?? tags.length,
-    lastUpdated: featuredPost
-      ? new Date(featuredPost.publishedAt ?? featuredPost.createdAt)
+    lastUpdated: latestPosts[0]
+      ? new Date(latestPosts[0].publishedAt ?? latestPosts[0].createdAt)
       : undefined,
   };
 
@@ -113,10 +107,7 @@ export default async function HomePage() {
 
       <section className="py-8 max-md:py-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <FeaturedSection
-            featuredPost={featuredPost}
-            highlightPosts={highlightPosts}
-          />
+          <FeaturedSection posts={featuredGridPosts} />
 
           {latestGridPosts.length > 0 && (
             <LatestPostsSection posts={latestGridPosts} total={stats.posts} />
@@ -200,133 +191,33 @@ function HeroSection({ stats }: { stats: HomeStats }) {
   );
 }
 
-function FeaturedSection({
-  featuredPost,
-  highlightPosts,
-}: {
-  featuredPost: PostResponseDto | null;
-  highlightPosts: PostResponseDto[];
-}) {
-  if (!featuredPost) {
-    return (
-      <EmptyState
-        icon={<PenSquare className="h-5 w-5" aria-hidden />}
-        title="첫 번째 포스트를 기다리고 있어요"
-        description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
-      />
-    );
-  }
-
-  const displayDate = featuredPost.publishedAt ?? featuredPost.createdAt;
-
+function FeaturedSection({ posts }: { posts: PostResponseDto[] }) {
   return (
     <div className="space-y-8">
       <div className="blog-section-header">
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-            Editor&apos;s Pick
-          </p>
-          <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">
-            가장 주목받는 포스트
-          </h2>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Editor&apos;s Pick</p>
+          <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">가장 주목받는 포스트</h2>
         </div>
-        <Link
-          href="/posts"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
-        >
+        <Link href="/posts" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]">
           모든 포스트 보기
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
 
-      <div className="blog-featured-grid">
-        <article className="blog-featured-card">
-          <div className="relative h-56 w-full bg-[var(--color-muted)] md:h-full">
-            {featuredPost.coverImage ? (
-              <Image
-                src={featuredPost.coverImage}
-                alt={featuredPost.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-200)]">
-                <PenSquare
-                  className="h-10 w-10 text-[var(--color-primary-500)]"
-                  aria-hidden
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4 p-6 md:p-8">
-            <span className="blog-category-badge w-max">
-              {featuredPost.category.name}
-            </span>
-
-            <h3 className="text-3xl font-bold leading-tight text-[var(--color-text-primary)] md:text-4xl">
-              <Link
-                href={`/posts/${featuredPost.slug}`}
-                className="stretched-link"
-              >
-                {featuredPost.title}
-              </Link>
-            </h3>
-
-            {featuredPost.excerpt && (
-              <p className="text-base leading-relaxed text-[var(--color-text-secondary)]">
-                {featuredPost.excerpt}
-              </p>
-            )}
-
-            {featuredPost.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {featuredPost.tags.slice(0, 4).map((tag) => (
-                  <span key={tag.id} className="blog-tag">
-                    <TagIcon className="h-3 w-3" aria-hidden />
-                    {tag.name}
-                  </span>
-                ))}
-                {featuredPost.tags.length > 4 && (
-                  <span className="blog-tag">
-                    +{featuredPost.tags.length - 4}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-text-secondary)]">
-              <span className="flex items-center gap-1">
-                <CalendarDays className="h-4 w-4" aria-hidden />
-                {formatDate(displayDate)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Eye className="h-4 w-4" aria-hidden />
-                {formatNumber(featuredPost.viewCount)} views
-              </span>
-              <span className="font-medium text-[var(--color-text-primary)]">
-                {featuredPost.author.name}
-              </span>
-            </div>
-          </div>
-        </article>
-
-        <div className="blog-featured-list">
-          {highlightPosts.length > 0 ? (
-            highlightPosts.map((post) => (
-              <PostCard key={post.id} post={post} className="h-full" />
-            ))
-          ) : (
-            <EmptyState
-              icon={<PenSquare className="h-5 w-5" aria-hidden />}
-              title="추가 포스트가 준비 중입니다"
-              description="새로운 글이 발행되면 이곳에서 바로 확인할 수 있어요."
-            />
-          )}
+      {posts.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {posts.slice(0, 4).map((post) => (
+            <PostCard key={post.id} post={post} className="h-full" />
+          ))}
         </div>
-      </div>
+      ) : (
+        <EmptyState
+          icon={<PenSquare className="h-5 w-5" aria-hidden />}
+          title="첫 번째 포스트를 기다리고 있어요"
+          description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
+        />
+      )}
     </div>
   );
 }
@@ -398,7 +289,7 @@ function DiscoverySection({
           href="/posts"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
         >
-          모든 포스트
+          모든 포스트 보기
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
