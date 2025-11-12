@@ -10,23 +10,37 @@ import { Folder, Tag as TagIcon, Hash } from 'lucide-react';
 
 interface BlogSidebarProps {
   className?: string;
+  initialCategories?: Category[];
+  initialTags?: Tag[];
 }
 
-export function BlogSidebar({ className }: BlogSidebarProps) {
+export function BlogSidebar({
+  className,
+  initialCategories: initialCategoriesProp,
+  initialTags: initialTagsProp,
+}: BlogSidebarProps) {
   const searchParams = useSearchParams();
   const currentCategorySlug = searchParams.get('categorySlug') ?? searchParams.get('category');
   const currentTagSlug = searchParams.get('tagSlug') ?? searchParams.get('tag');
 
   // State
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const hasInitialCategories = initialCategoriesProp !== undefined;
+  const hasInitialTags = initialTagsProp !== undefined;
+  const [categories, setCategories] = useState<Category[]>(initialCategoriesProp ?? []);
+  const [tags, setTags] = useState<Tag[]>(initialTagsProp ?? []);
+  const [loading, setLoading] = useState(
+    !(hasInitialCategories && hasInitialTags),
+  );
 
   // 전체 포스트 수 계산
   const totalPostCount = categories.reduce((sum, category) => sum + category.postCount, 0);
 
   // 데이터 로딩 함수
   const loadData = useCallback(async () => {
+    if (hasInitialCategories && hasInitialTags) {
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -47,11 +61,16 @@ export function BlogSidebar({ className }: BlogSidebarProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hasInitialCategories, hasInitialTags]);
 
   useEffect(() => {
+    if (hasInitialCategories && hasInitialTags) {
+      setLoading(false);
+      return;
+    }
+
     loadData();
-  }, [loadData]);
+  }, [hasInitialCategories, hasInitialTags, loadData]);
 
   const buildPostsHref = useCallback((updates: { categorySlug?: string | null; tagSlug?: string | null }) => {
     const params = new URLSearchParams(searchParams.toString());

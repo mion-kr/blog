@@ -4,12 +4,14 @@ import { Metadata } from 'next';
 import { PostsContent } from './posts-content';
 import { PostsPageSkeleton } from './loading';
 import { WithSidebar } from '@/components/layout/with-sidebar';
-import { postsApi } from '@/lib/api-client';
+import { categoriesApi, postsApi, tagsApi } from '@/lib/api-client';
 import { parsePostsSearchParams } from './query-utils';
 import type {
   ApiPaginationMeta,
+  Category,
   PostResponseDto,
   PostsQuery,
+  Tag,
 } from '@repo/shared';
 
 export const metadata: Metadata = {
@@ -49,9 +51,16 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   let initialPosts: PostResponseDto[] = [];
   let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
   let initialError: string | null = null;
+  let initialSidebarCategories: Category[] | undefined;
+  let initialSidebarTags: Tag[] | undefined;
+  const [postsResult, categoriesResult, tagsResult] = await Promise.allSettled([
+    postsApi.getPosts(initialQuery),
+    categoriesApi.getCategories({ limit: 20, sort: 'name', order: 'asc' }),
+    tagsApi.getTags({ limit: 30, sort: 'name', order: 'asc' }),
+  ]);
 
-  try {
-    const response = await postsApi.getPosts(initialQuery);
+  if (postsResult.status === 'fulfilled') {
+    const response = postsResult.value;
 
     if (response.success) {
       initialPosts = response.data ?? [];
@@ -64,11 +73,23 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       initialError =
         response.message ?? '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
     }
-  } catch (error) {
+  } else {
+    const error = postsResult.reason;
     initialError =
       error instanceof Error
         ? error.message
         : '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
+  }
+
+  if (
+    categoriesResult.status === 'fulfilled' &&
+    categoriesResult.value.success
+  ) {
+    initialSidebarCategories = categoriesResult.value.data ?? [];
+  }
+
+  if (tagsResult.status === 'fulfilled' && tagsResult.value.success) {
+    initialSidebarTags = tagsResult.value.data ?? [];
   }
 
   return (
@@ -89,7 +110,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       </section>
 
       {/* 메인 콘텐츠 (사이드바 포함) */}
-      <WithSidebar>
+      <WithSidebar
+        sidebarInitialCategories={initialSidebarCategories}
+        sidebarInitialTags={initialSidebarTags}
+      >
         <Suspense fallback={<PostsPageSkeleton />}>
           <PostsContent
             initialPosts={initialPosts}

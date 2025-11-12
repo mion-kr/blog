@@ -76,7 +76,6 @@ export function PostsContent({
     [currentQuery],
   );
   const initialQueryKeyRef = useRef(buildPostsQueryKey(initialQuery));
-  const shouldSkipFirstFetchRef = useRef(initialError ? false : true);
 
   // URL 업데이트 함수
   const updateURL = useCallback((newParams: Partial<PostsQuery>) => {
@@ -153,19 +152,12 @@ export function PostsContent({
   }, [loadFilters]);
 
   useEffect(() => {
-    const queryKey = currentQueryKey;
-
-    if (
-      shouldSkipFirstFetchRef.current &&
-      queryKey === initialQueryKeyRef.current
-    ) {
-      shouldSkipFirstFetchRef.current = false;
+    if (currentQueryKey === initialQueryKeyRef.current && !initialError) {
       return;
     }
 
-    shouldSkipFirstFetchRef.current = false;
     loadPosts(currentQuery);
-  }, [currentQuery, currentQueryKey, loadPosts]);
+  }, [currentQuery, currentQueryKey, initialError, loadPosts]);
 
   // 핸들러 함수들
   const handleSearch = useCallback((search: string) => {
