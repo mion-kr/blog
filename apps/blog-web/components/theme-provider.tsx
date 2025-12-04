@@ -42,7 +42,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [isReady, theme]);
 
   // 외부에서 호출되어도 항상 dark 유지
-  const stableSetTheme = useCallback(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const stableSetTheme = useCallback((_theme: Theme) => {
     setThemeState("dark");
     try { window.localStorage.setItem(STORAGE_KEY, "dark"); } catch {
       // 로컬 스토리지가 막힌 경우 무시
@@ -50,7 +51,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.setAttribute("data-theme", "dark");
   }, []);
-  const toggleTheme = useCallback(() => stableSetTheme(), [stableSetTheme]);
+  const toggleTheme = useCallback(() => stableSetTheme("dark"), [stableSetTheme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme: "dark", setTheme: stableSetTheme, toggleTheme, isReady }),
