@@ -13,7 +13,8 @@
     "NEXTAUTH_SECRET",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
-    "ADMIN_EMAIL"
+    "ADMIN_EMAIL",
+    "RSS_ITEMS_LIMIT"
   ],
   "tasks": {
     "build": {
@@ -28,7 +29,7 @@
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "!dist/cache/**"],
       "outputLogs": "new-only",
-      "env": ["NODE_ENV"]
+      "env": ["NODE_ENV", "RSS_ITEMS_LIMIT"]
     },
     "dev": {
       "dependsOn": ["^build"],
@@ -80,7 +81,8 @@
         "NEXTAUTH_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
-        "ADMIN_EMAIL"
+        "ADMIN_EMAIL",
+        "RSS_ITEMS_LIMIT"
       ]
     },
     "format": {

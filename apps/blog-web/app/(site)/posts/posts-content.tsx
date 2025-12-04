@@ -62,14 +62,10 @@ export function PostsContent({
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  const searchParamsString = useMemo(
-    () => urlSearchParams.toString(),
-    [urlSearchParams],
-  );
   const currentQuery = useMemo(
     () =>
       parsePostsSearchParams(extractPostsSearchParams(urlSearchParams)),
-    [searchParamsString, urlSearchParams],
+    [urlSearchParams],
   );
   const currentQueryKey = useMemo(
     () => buildPostsQueryKey(currentQuery),

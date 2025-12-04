@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode, useEffect } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 
@@ -15,7 +15,6 @@ interface AdminModalProps {
 export function AdminModal({ title, description, children, returnQuery }: AdminModalProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

@@ -1,20 +1,17 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import Link from 'next/link';
 
 import type { Category, Tag } from '@repo/shared';
 import { cn } from '@/lib/utils';
 import {
   Search,
-  Filter,
   X,
   ChevronDown,
   SortAsc,
   SortDesc,
   Calendar,
   Eye,
-  Heart,
   Hash,
   FolderOpen
 } from 'lucide-react';

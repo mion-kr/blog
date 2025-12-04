@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type Theme = "light" | "dark";
 
@@ -26,7 +26,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.setAttribute("data-theme", "dark");
     try {
       window.localStorage.setItem(STORAGE_KEY, "dark");
-    } catch {}
+    } catch {
+      // 로컬 스토리지가 막힌 경우 무시
+    }
     setIsReady(true);
   }, []);
 
@@ -40,18 +42,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [isReady, theme]);
 
   // 외부에서 호출되어도 항상 dark 유지
-  const setTheme = () => {
+  const stableSetTheme = useCallback(() => {
     setThemeState("dark");
-    try { window.localStorage.setItem(STORAGE_KEY, "dark"); } catch {}
+    try { window.localStorage.setItem(STORAGE_KEY, "dark"); } catch {
+      // 로컬 스토리지가 막힌 경우 무시
+    }
     const root = document.documentElement;
     root.setAttribute("data-theme", "dark");
-  };
-
-  const toggleTheme = () => setTheme();
+  }, []);
+  const toggleTheme = useCallback(() => stableSetTheme(), [stableSetTheme]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme: "dark", setTheme, toggleTheme, isReady }),
-    [isReady]
+    () => ({ theme: "dark", setTheme: stableSetTheme, toggleTheme, isReady }),
+    [isReady, stableSetTheme, toggleTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

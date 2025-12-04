@@ -116,7 +116,6 @@ export default async function PostPage({ params }: PostPageProps) {
         <script
           type="application/ld+json"
           suppressHydrationWarning
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {/* 상단 네비게이션 */}
