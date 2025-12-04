@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import type { Category, Tag } from "@repo/shared";
 
 import { BlogSidebar } from "./sidebar";
@@ -24,19 +25,23 @@ export function WithSidebar({
           {children}
         </div>
         {/* 데스크톱: 우측 고정 사이드바 */}
-        <BlogSidebar
-          className="hidden lg:block"
-          initialCategories={sidebarInitialCategories}
-          initialTags={sidebarInitialTags}
-        />
+        <Suspense fallback={<div className="hidden lg:block h-full" aria-label="사이드바 로딩 중" />}>
+          <BlogSidebar
+            className="hidden lg:block"
+            initialCategories={sidebarInitialCategories}
+            initialTags={sidebarInitialTags}
+          />
+        </Suspense>
       </div>
       {/* 태블릿/모바일: 하단 사이드바 */}
       <div className="lg:hidden">
-        <BlogSidebar
-          className="mt-8"
-          initialCategories={sidebarInitialCategories}
-          initialTags={sidebarInitialTags}
-        />
+        <Suspense fallback={<div className="mt-8" aria-label="사이드바 로딩 중" />}>
+          <BlogSidebar
+            className="mt-8"
+            initialCategories={sidebarInitialCategories}
+            initialTags={sidebarInitialTags}
+          />
+        </Suspense>
       </div>
     </div>
   );

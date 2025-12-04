@@ -1,4 +1,3 @@
-import type { NextRequest } from "next/server";
 import { postsApi } from "@/lib/api-client";
 import type { PostResponseDto } from "@repo/shared";
 
@@ -9,7 +8,7 @@ const FEED_DESCRIPTION = "Mion의 기술 블로그 최신 글";
 const FEED_LINK = SITE_URL;
 const ITEMS_LIMIT = Number(process.env.RSS_ITEMS_LIMIT ?? 50);
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const posts = await fetchRecentPosts(ITEMS_LIMIT);
   const xml = buildRssXml(posts);
 
