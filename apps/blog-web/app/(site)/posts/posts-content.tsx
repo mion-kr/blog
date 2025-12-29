@@ -89,7 +89,7 @@ export function PostsContent({
       return 'viewed';
     }
     return 'latest';
-  }, [currentQuery.sort, searchParamsString, urlSearchParams]);
+  }, [currentQuery.sort, urlSearchParams]);
 
   // URL 업데이트 함수
   const updateURL = useCallback((newParams: PostsURLParams) => {

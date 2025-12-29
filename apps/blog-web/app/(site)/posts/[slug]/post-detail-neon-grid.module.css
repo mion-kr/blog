@@ -1,6 +1,6 @@
 .root {}
 
-:global(.neon-grid-post-detail) {
+.root {
   color-scheme: dark;
 
   /* Neon Core */
@@ -47,17 +47,17 @@
   position: relative;
 }
 
-:global(.neon-grid-post-detail) {
+.root {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-:global(.neon-grid-post-detail *) {
+.root :global(*) {
   box-sizing: border-box;
 }
 
-:global(.neon-grid-post-detail a) {
+.root :global(a) {
   color: inherit;
   text-decoration: none;
 }
@@ -65,7 +65,7 @@
 /* ============================================
  NEON GRID BACKGROUND
  ============================================ */
-:global(.neon-grid-post-detail .neon-grid-bg) {
+.root :global(.neon-grid-bg) {
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -76,7 +76,7 @@
     var(--bg-deep);
 }
 
-:global(.neon-grid-post-detail .neon-grid-bg::before) {
+.root :global(.neon-grid-bg::before) {
   content: "";
   position: absolute;
   inset: 0;
@@ -100,7 +100,7 @@
 /* ============================================
  ARTICLE LAYOUT
  ============================================ */
-:global(.neon-grid-post-detail .article-container) {
+.root :global(.article-container) {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 80px 24px 120px;
@@ -109,7 +109,7 @@
 }
 
 @media (max-width: 768px) {
-  :global(.neon-grid-post-detail .article-container) {
+  .root :global(.article-container) {
     padding-top: 56px;
   }
 }
@@ -117,12 +117,12 @@
 /* ============================================
  HEADER
  ============================================ */
-:global(.neon-grid-post-detail .post-header) {
+.root :global(.post-header) {
   margin-bottom: 60px;
   text-align: center;
 }
 
-:global(.neon-grid-post-detail .post-category) {
+.root :global(.post-category) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -140,13 +140,13 @@
   transition: all 0.2s ease;
 }
 
-:global(.neon-grid-post-detail .post-category:hover) {
+.root :global(.post-category:hover) {
   border-color: var(--neon-cyan);
   box-shadow: 0 0 22px rgba(0, 229, 255, 0.2);
   transform: translateY(-1px);
 }
 
-:global(.neon-grid-post-detail .post-title) {
+.root :global(.post-title) {
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 950;
   letter-spacing: -0.04em;
@@ -159,7 +159,7 @@
   text-shadow: 0 0 40px rgba(0, 229, 255, 0.1);
 }
 
-:global(.neon-grid-post-detail .post-meta) {
+.root :global(.post-meta) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,7 +170,7 @@
   font-weight: 500;
 }
 
-:global(.neon-grid-post-detail .meta-item) {
+.root :global(.meta-item) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -179,7 +179,7 @@
 /* ============================================
  COVER
  ============================================ */
-:global(.neon-grid-post-detail .cover-wrapper) {
+.root :global(.cover-wrapper) {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -192,7 +192,7 @@
     0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
-:global(.neon-grid-post-detail .cover-image) {
+.root :global(.cover-image) {
   position: absolute;
   inset: 0;
 }
@@ -200,7 +200,7 @@
 /* ============================================
  CONTENT CARD + PROSE
  ============================================ */
-:global(.neon-grid-post-detail .content-card) {
+.root :global(.content-card) {
   background: var(--bg-card);
   border: 1px solid var(--border-dim);
   border-radius: var(--radius);
@@ -211,7 +211,7 @@
 }
 
 @media (max-width: 768px) {
-  :global(.neon-grid-post-detail .content-card) {
+  .root :global(.content-card) {
     padding: 30px;
     border-radius: 0;
     margin: 0 -24px;
@@ -220,7 +220,7 @@
   }
 }
 
-:global(.neon-grid-post-detail .content-card::before) {
+.root :global(.content-card::before) {
   content: "";
   position: absolute;
   top: 0;
@@ -230,11 +230,11 @@
   background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
 }
 
-:global(.neon-grid-post-detail .prose) {
+.root :global(.prose) {
   position: relative;
 }
 
-:global(.neon-grid-post-detail .prose h2) {
+.root :global(.prose h2) {
   font-size: 28px;
   font-weight: 800;
   margin: 48px 0 24px;
@@ -244,7 +244,7 @@
   gap: 12px;
 }
 
-:global(.neon-grid-post-detail .prose h1) {
+.root :global(.prose h1) {
   font-size: 36px;
   font-weight: 900;
   margin: 54px 0 24px;
@@ -252,7 +252,7 @@
   letter-spacing: -0.03em;
 }
 
-:global(.neon-grid-post-detail .prose h2::before) {
+.root :global(.prose h2::before) {
   content: "";
   width: 4px;
   height: 24px;
@@ -261,21 +261,21 @@
   box-shadow: 0 0 10px var(--neon-cyan);
 }
 
-:global(.neon-grid-post-detail .prose h3) {
+.root :global(.prose h3) {
   font-size: 20px;
   font-weight: 800;
   margin: 36px 0 18px;
   color: var(--text-primary);
 }
 
-:global(.neon-grid-post-detail .prose p) {
+.root :global(.prose p) {
   font-size: 17px;
   margin-bottom: 24px;
   color: var(--text-secondary);
   line-height: 1.85;
 }
 
-:global(.neon-grid-post-detail .prose a) {
+.root :global(.prose a) {
   color: var(--neon-cyan);
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -283,11 +283,11 @@
   transition: all 0.2s ease;
 }
 
-:global(.neon-grid-post-detail .prose a:hover) {
+.root :global(.prose a:hover) {
   text-decoration-color: rgba(0, 229, 255, 0.75);
 }
 
-:global(.neon-grid-post-detail .prose code) {
+.root :global(.prose code) {
   font-family: var(--font-mono);
   background: rgba(0, 229, 255, 0.1);
   color: var(--neon-cyan);
@@ -296,7 +296,7 @@
   font-size: 0.92em;
 }
 
-:global(.neon-grid-post-detail .prose pre) {
+.root :global(.prose pre) {
   font-family: var(--font-mono);
   background: rgba(2, 4, 10, 0.88);
   border: 1px solid var(--border-dim);
@@ -306,7 +306,7 @@
   margin: 28px 0;
 }
 
-:global(.neon-grid-post-detail .prose pre code) {
+.root :global(.prose pre code) {
   background: transparent;
   padding: 0;
   border-radius: 0;
@@ -319,36 +319,36 @@
  - mdx-renderer CodeBlock이 기본 라이트(gray) 유틸 클래스를 사용합니다.
  - neon 상세 페이지 범위에서만 다크 톤으로 덮어씁니다.
  ============================================ */
-:global(.neon-grid-post-detail .prose div.bg-gray-50) {
+.root :global(.prose div.bg-gray-50) {
   background: rgba(10, 16, 28, 0.92);
   border-color: var(--border-dim);
 }
 
-:global(.neon-grid-post-detail .prose div.bg-gray-100) {
+.root :global(.prose div.bg-gray-100) {
   background: rgba(6, 10, 18, 0.95);
 }
 
-:global(.neon-grid-post-detail .prose div.border-gray-200) {
+.root :global(.prose div.border-gray-200) {
   border-color: var(--border-dim);
 }
 
-:global(.neon-grid-post-detail .prose span.text-gray-600),
-:global(.neon-grid-post-detail .prose button.text-gray-600) {
+.root :global(.prose span.text-gray-600),
+.root :global(.prose button.text-gray-600) {
   color: var(--text-muted);
 }
 
-:global(.neon-grid-post-detail .prose button.hover\:bg-gray-200:hover) {
+.root :global(.prose button.hover\:bg-gray-200:hover) {
   background: rgba(0, 229, 255, 0.08);
   color: var(--text-primary);
 }
 
-:global(.neon-grid-post-detail .prose code.bg-gray-100) {
+.root :global(.prose code.bg-gray-100) {
   background: rgba(0, 229, 255, 0.1);
   color: var(--neon-cyan);
   border: 1px solid rgba(0, 229, 255, 0.14);
 }
 
-:global(.neon-grid-post-detail .prose blockquote) {
+.root :global(.prose blockquote) {
   border-left: 4px solid var(--neon-purple);
   background: rgba(168, 85, 247, 0.05);
   padding: 24px 32px;
@@ -358,18 +358,18 @@
   color: var(--text-primary);
 }
 
-:global(.neon-grid-post-detail .prose ul),
-:global(.neon-grid-post-detail .prose ol) {
+.root :global(.prose ul),
+.root :global(.prose ol) {
   margin: 18px 0 28px;
   padding-left: 22px;
   color: var(--text-secondary);
 }
 
-:global(.neon-grid-post-detail .prose li) {
+.root :global(.prose li) {
   margin: 10px 0;
 }
 
-:global(.neon-grid-post-detail .prose img) {
+.root :global(.prose img) {
   max-width: 100%;
   height: auto;
   border-radius: 14px;
@@ -380,26 +380,26 @@
 /* ============================================
  TAG FOOTER
  ============================================ */
-:global(.neon-grid-post-detail .post-footer) {
+.root :global(.post-footer) {
   margin-top: 60px;
   padding-top: 40px;
   border-top: 1px solid var(--border-dim);
 }
 
-:global(.neon-grid-post-detail .post-footer-title) {
+.root :global(.post-footer-title) {
   font-size: 15px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
-:global(.neon-grid-post-detail .tag-row) {
+.root :global(.tag-row) {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 20px;
 }
 
-:global(.neon-grid-post-detail .tag-pill) {
+.root :global(.tag-pill) {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -410,7 +410,7 @@
   transition: all 0.2s ease;
 }
 
-:global(.neon-grid-post-detail .tag-pill:hover) {
+.root :global(.tag-pill:hover) {
   color: var(--text-primary);
   background: rgba(0, 229, 255, 0.08);
   border-color: var(--border-active);
@@ -420,7 +420,7 @@
 /* ============================================
  TABLE
  ============================================ */
-:global(.neon-grid-post-detail .prose table) {
+.root :global(.prose table) {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -432,45 +432,45 @@
   margin: 28px 0;
 }
 
-:global(.neon-grid-post-detail .prose thead th) {
+.root :global(.prose thead th) {
   background: rgba(0, 229, 255, 0.08);
   color: var(--text-primary);
   letter-spacing: 0.02em;
 }
 
-:global(.neon-grid-post-detail .prose th),
-:global(.neon-grid-post-detail .prose td) {
+.root :global(.prose th),
+.root :global(.prose td) {
   border-right: 1px solid var(--border-dim);
   border-bottom: 1px solid var(--border-dim);
   padding: 12px 14px;
   text-align: left;
 }
 
-:global(.neon-grid-post-detail .prose th:last-child),
-:global(.neon-grid-post-detail .prose td:last-child) {
+.root :global(.prose th:last-child),
+.root :global(.prose td:last-child) {
   border-right: none;
 }
 
-:global(.neon-grid-post-detail .prose tbody tr:last-child td) {
+.root :global(.prose tbody tr:last-child td) {
   border-bottom: none;
 }
 
-:global(.neon-grid-post-detail .prose td) {
+.root :global(.prose td) {
   color: var(--text-secondary);
 }
 
-:global(.neon-grid-post-detail .prose tbody tr:nth-child(odd)) {
+.root :global(.prose tbody tr:nth-child(odd)) {
   background: rgba(255, 255, 255, 0.01);
 }
 
-:global(.neon-grid-post-detail .prose tbody tr:hover) {
+.root :global(.prose tbody tr:hover) {
   background: rgba(0, 229, 255, 0.06);
 }
 
 /* ============================================
  SHARE
  ============================================ */
-:global(.neon-grid-post-detail .share-section) {
+.root :global(.share-section) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -480,7 +480,7 @@
   z-index: 1;
 }
 
-:global(.neon-grid-post-detail .btn-neon) {
+.root :global(.btn-neon) {
   appearance: none;
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(168, 85, 247, 0.1));
   border: 1px solid var(--border-active);
@@ -498,20 +498,20 @@
   user-select: none;
 }
 
-:global(.neon-grid-post-detail .btn-neon:hover) {
+.root :global(.btn-neon:hover) {
   box-shadow: 0 0 30px rgba(0, 229, 255, 0.25);
   transform: scale(1.05);
   border-color: var(--neon-cyan);
 }
 
-:global(.neon-grid-post-detail .btn-neon:focus-visible) {
+.root :global(.btn-neon:focus-visible) {
   outline: none;
   box-shadow:
     0 0 0 3px rgba(0, 229, 255, 0.18),
     0 0 30px rgba(0, 229, 255, 0.22);
 }
 
-:global(.neon-grid-post-detail .btn-neon[data-copied="true"]) {
+.root :global(.btn-neon[data-copied="true"]) {
   border-color: rgba(34, 211, 187, 0.7);
   box-shadow: 0 0 30px rgba(34, 211, 187, 0.22);
 }
