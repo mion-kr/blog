@@ -1,0 +1,517 @@
+.root {}
+
+:global(.neon-grid-post-detail) {
+  color-scheme: dark;
+
+  /* Neon Core */
+  --neon-cyan: #00e5ff;
+  --neon-cyan-dim: rgba(0, 229, 255, 0.85);
+  --neon-cyan-glow: rgba(0, 229, 255, 0.35);
+  --neon-cyan-subtle: rgba(0, 229, 255, 0.12);
+  --neon-purple: #a855f7;
+  --neon-purple-dim: rgba(168, 85, 247, 0.65);
+  --neon-green: #22d3bb;
+
+  /* Backgrounds */
+  --bg-deep: #02040a;
+  --bg-surface: rgba(6, 10, 18, 0.95);
+  --bg-card: rgba(10, 16, 28, 0.92);
+  --bg-card-hover: rgba(14, 22, 38, 0.95);
+
+  /* Text */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-muted: rgba(255, 255, 255, 0.45);
+
+  /* Borders */
+  --border-dim: rgba(0, 229, 255, 0.12);
+  --border-active: rgba(0, 229, 255, 0.28);
+  --border-glow: rgba(0, 229, 255, 0.45);
+
+  /* Grid */
+  --grid-line: rgba(0, 229, 255, 0.05);
+
+  /* Layout */
+  --max-width: 900px;
+  --radius: 20px;
+
+  /* Font */
+  --font: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  font-family: var(--font);
+  color: var(--text-primary);
+  line-height: 1.7;
+  position: relative;
+}
+
+:global(.neon-grid-post-detail) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:global(.neon-grid-post-detail *) {
+  box-sizing: border-box;
+}
+
+:global(.neon-grid-post-detail a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================
+ NEON GRID BACKGROUND
+ ============================================ */
+:global(.neon-grid-post-detail .neon-grid-bg) {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 1000px 600px at 50% -10%, rgba(0, 229, 255, 0.15), transparent 60%),
+    radial-gradient(ellipse 800px 500px at 80% 80%, rgba(168, 85, 247, 0.08), transparent 50%),
+    var(--bg-deep);
+}
+
+:global(.neon-grid-post-detail .neon-grid-bg::before) {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--grid-line) 0px,
+      var(--grid-line) 1px,
+      transparent 1px,
+      transparent 100px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      var(--grid-line) 0px,
+      var(--grid-line) 1px,
+      transparent 1px,
+      transparent 100px
+    );
+}
+
+/* ============================================
+ ARTICLE LAYOUT
+ ============================================ */
+:global(.neon-grid-post-detail .article-container) {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 80px 24px 120px;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  :global(.neon-grid-post-detail .article-container) {
+    padding-top: 56px;
+  }
+}
+
+/* ============================================
+ HEADER
+ ============================================ */
+:global(.neon-grid-post-detail .post-header) {
+  margin-bottom: 60px;
+  text-align: center;
+}
+
+:global(.neon-grid-post-detail .post-category) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--neon-cyan);
+  margin-bottom: 16px;
+  padding: 4px 12px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid var(--border-active);
+  border-radius: 999px;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+:global(.neon-grid-post-detail .post-category:hover) {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+:global(.neon-grid-post-detail .post-title) {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff 0%, var(--neon-cyan-dim) 50%, #fff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(0, 229, 255, 0.1);
+}
+
+:global(.neon-grid-post-detail .post-meta) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+:global(.neon-grid-post-detail .meta-item) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ============================================
+ COVER
+ ============================================ */
+:global(.neon-grid-post-detail .cover-wrapper) {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 60px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-dim);
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.03),
+    0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+:global(.neon-grid-post-detail .cover-image) {
+  position: absolute;
+  inset: 0;
+}
+
+/* ============================================
+ CONTENT CARD + PROSE
+ ============================================ */
+:global(.neon-grid-post-detail .content-card) {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius);
+  padding: 60px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  :global(.neon-grid-post-detail .content-card) {
+    padding: 30px;
+    border-radius: 0;
+    margin: 0 -24px;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+:global(.neon-grid-post-detail .content-card::before) {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
+}
+
+:global(.neon-grid-post-detail .prose) {
+  position: relative;
+}
+
+:global(.neon-grid-post-detail .prose h2) {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 48px 0 24px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:global(.neon-grid-post-detail .prose h1) {
+  font-size: 36px;
+  font-weight: 900;
+  margin: 54px 0 24px;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+:global(.neon-grid-post-detail .prose h2::before) {
+  content: "";
+  width: 4px;
+  height: 24px;
+  background: var(--neon-cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+:global(.neon-grid-post-detail .prose h3) {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 36px 0 18px;
+  color: var(--text-primary);
+}
+
+:global(.neon-grid-post-detail .prose p) {
+  font-size: 17px;
+  margin-bottom: 24px;
+  color: var(--text-secondary);
+  line-height: 1.85;
+}
+
+:global(.neon-grid-post-detail .prose a) {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(0, 229, 255, 0.35);
+  transition: all 0.2s ease;
+}
+
+:global(.neon-grid-post-detail .prose a:hover) {
+  text-decoration-color: rgba(0, 229, 255, 0.75);
+}
+
+:global(.neon-grid-post-detail .prose code) {
+  font-family: var(--font-mono);
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--neon-cyan);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.92em;
+}
+
+:global(.neon-grid-post-detail .prose pre) {
+  font-family: var(--font-mono);
+  background: rgba(2, 4, 10, 0.88);
+  border: 1px solid var(--border-dim);
+  border-radius: 14px;
+  padding: 18px;
+  overflow: auto;
+  margin: 28px 0;
+}
+
+:global(.neon-grid-post-detail .prose pre code) {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9em;
+}
+
+/* ============================================
+ MDX CODEBLOCK (Tailwind utility overrides)
+ - mdx-renderer CodeBlock이 기본 라이트(gray) 유틸 클래스를 사용합니다.
+ - neon 상세 페이지 범위에서만 다크 톤으로 덮어씁니다.
+ ============================================ */
+:global(.neon-grid-post-detail .prose div.bg-gray-50) {
+  background: rgba(10, 16, 28, 0.92);
+  border-color: var(--border-dim);
+}
+
+:global(.neon-grid-post-detail .prose div.bg-gray-100) {
+  background: rgba(6, 10, 18, 0.95);
+}
+
+:global(.neon-grid-post-detail .prose div.border-gray-200) {
+  border-color: var(--border-dim);
+}
+
+:global(.neon-grid-post-detail .prose span.text-gray-600),
+:global(.neon-grid-post-detail .prose button.text-gray-600) {
+  color: var(--text-muted);
+}
+
+:global(.neon-grid-post-detail .prose button.hover\:bg-gray-200:hover) {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--text-primary);
+}
+
+:global(.neon-grid-post-detail .prose code.bg-gray-100) {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--neon-cyan);
+  border: 1px solid rgba(0, 229, 255, 0.14);
+}
+
+:global(.neon-grid-post-detail .prose blockquote) {
+  border-left: 4px solid var(--neon-purple);
+  background: rgba(168, 85, 247, 0.05);
+  padding: 24px 32px;
+  margin: 40px 0;
+  border-radius: 0 12px 12px 0;
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+:global(.neon-grid-post-detail .prose ul),
+:global(.neon-grid-post-detail .prose ol) {
+  margin: 18px 0 28px;
+  padding-left: 22px;
+  color: var(--text-secondary);
+}
+
+:global(.neon-grid-post-detail .prose li) {
+  margin: 10px 0;
+}
+
+:global(.neon-grid-post-detail .prose img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--border-dim);
+  margin: 28px 0;
+}
+
+/* ============================================
+ TAG FOOTER
+ ============================================ */
+:global(.neon-grid-post-detail .post-footer) {
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-dim);
+}
+
+:global(.neon-grid-post-detail .post-footer-title) {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+:global(.neon-grid-post-detail .tag-row) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+:global(.neon-grid-post-detail .tag-pill) {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dim);
+  padding: 6px 16px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+:global(.neon-grid-post-detail .tag-pill:hover) {
+  color: var(--text-primary);
+  background: rgba(0, 229, 255, 0.08);
+  border-color: var(--border-active);
+  transform: translateY(-2px);
+}
+
+/* ============================================
+ TABLE
+ ============================================ */
+:global(.neon-grid-post-detail .prose table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(6, 10, 18, 0.72);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  margin: 28px 0;
+}
+
+:global(.neon-grid-post-detail .prose thead th) {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+:global(.neon-grid-post-detail .prose th),
+:global(.neon-grid-post-detail .prose td) {
+  border-right: 1px solid var(--border-dim);
+  border-bottom: 1px solid var(--border-dim);
+  padding: 12px 14px;
+  text-align: left;
+}
+
+:global(.neon-grid-post-detail .prose th:last-child),
+:global(.neon-grid-post-detail .prose td:last-child) {
+  border-right: none;
+}
+
+:global(.neon-grid-post-detail .prose tbody tr:last-child td) {
+  border-bottom: none;
+}
+
+:global(.neon-grid-post-detail .prose td) {
+  color: var(--text-secondary);
+}
+
+:global(.neon-grid-post-detail .prose tbody tr:nth-child(odd)) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+:global(.neon-grid-post-detail .prose tbody tr:hover) {
+  background: rgba(0, 229, 255, 0.06);
+}
+
+/* ============================================
+ SHARE
+ ============================================ */
+:global(.neon-grid-post-detail .share-section) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 80px;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+:global(.neon-grid-post-detail .btn-neon) {
+  appearance: none;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(168, 85, 247, 0.1));
+  border: 1px solid var(--border-active);
+  color: var(--neon-cyan);
+  padding: 12px 32px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  user-select: none;
+}
+
+:global(.neon-grid-post-detail .btn-neon:hover) {
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.25);
+  transform: scale(1.05);
+  border-color: var(--neon-cyan);
+}
+
+:global(.neon-grid-post-detail .btn-neon:focus-visible) {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(0, 229, 255, 0.18),
+    0 0 30px rgba(0, 229, 255, 0.22);
+}
+
+:global(.neon-grid-post-detail .btn-neon[data-copied="true"]) {
+  border-color: rgba(34, 211, 187, 0.7);
+  box-shadow: 0 0 30px rgba(34, 211, 187, 0.22);
+}
