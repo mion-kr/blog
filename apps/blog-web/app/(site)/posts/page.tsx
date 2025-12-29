@@ -1,17 +1,18 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 import { PostsContent } from './posts-content';
-import { PostsPageSkeleton } from './loading';
-import { WithSidebar } from '@/components/layout/with-sidebar';
-import { categoriesApi, postsApi, tagsApi } from '@/lib/api-client';
+import { PostsPageSkeleton } from './posts-skeleton';
+import { postsApi } from '@/lib/api-client';
 import { parsePostsSearchParams } from './query-utils';
+import { PostsNeonSidebar } from './posts-neon-sidebar';
+import styles from './posts-neon-grid.module.css';
+import { cn } from '@/lib/utils';
 import type {
   ApiPaginationMeta,
-  Category,
   PostResponseDto,
   PostsQuery,
-  Tag,
 } from '@repo/shared';
 
 export const metadata: Metadata = {
@@ -51,12 +52,8 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   let initialPosts: PostResponseDto[] = [];
   let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
   let initialError: string | null = null;
-  let initialSidebarCategories: Category[] | undefined;
-  let initialSidebarTags: Tag[] | undefined;
-  const [postsResult, categoriesResult, tagsResult] = await Promise.allSettled([
+  const [postsResult] = await Promise.allSettled([
     postsApi.getPosts(initialQuery),
-    categoriesApi.getCategories({ limit: 20, sort: 'name', order: 'asc' }),
-    tagsApi.getTags({ limit: 30, sort: 'name', order: 'asc' }),
   ]);
 
   if (postsResult.status === 'fulfilled') {
@@ -81,48 +78,55 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         : '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
   }
 
-  if (
-    categoriesResult.status === 'fulfilled' &&
-    categoriesResult.value.success
-  ) {
-    initialSidebarCategories = categoriesResult.value.data ?? [];
-  }
-
-  if (tagsResult.status === 'fulfilled' && tagsResult.value.success) {
-    initialSidebarTags = tagsResult.value.data ?? [];
-  }
-
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      {/* 페이지 헤더 */}
-      <section className="bg-gradient-to-b from-[var(--color-hero-gradient-from)] via-[var(--color-hero-gradient-via)] to-[var(--color-background)] py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-5xl">
-              모든 기술 이야기
-            </h1>
-            <p className="text-lg text-[var(--color-text-secondary)] md:text-xl max-w-2xl mx-auto">
-              실무에서 쌓아온 개발 경험과 기술적 깨달음을 정리한 모든 글들이 여기에 있습니다.
-              필터와 검색으로 원하는 이야기를 찾아보세요.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className={cn(styles.root, 'neon-grid-posts')}>
+      <div className="neon-grid-bg" aria-hidden="true" />
 
-      {/* 메인 콘텐츠 (사이드바 포함) */}
-      <WithSidebar
-        sidebarInitialCategories={initialSidebarCategories}
-        sidebarInitialTags={initialSidebarTags}
-      >
-        <Suspense fallback={<PostsPageSkeleton />}>
-          <PostsContent
-            initialPosts={initialPosts}
-            initialMeta={initialMeta}
-            initialQuery={initialQuery}
-            initialError={initialError}
-          />
-        </Suspense>
-      </WithSidebar>
+      <header className="header" aria-label="페이지 헤더">
+        <div className="header-inner">
+          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
+            <div className="brand-icon" aria-hidden="true">
+              M
+            </div>
+            <span>Mion&apos;s Blog</span>
+          </Link>
+          <nav className="nav" aria-label="메인 네비게이션">
+            <Link href="/" className="nav-link">
+              Home
+            </Link>
+            <Link href="/posts" className="nav-link active" aria-current="page">
+              Posts
+            </Link>
+            <Link href="/about" className="nav-link">
+              About
+            </Link>
+          </nav>
+          <div className="header-actions" />
+        </div>
+      </header>
+
+      <div className="page-hero">
+        <div className="page-hero-content">
+          <h1>All Technical Stories</h1>
+          <p>실무에서 쌓아온 개발 경험과 기술적 깨달음을 정리한 모든 글들을 여기에 있습니다.</p>
+        </div>
+      </div>
+
+      <main id="main" className="container">
+        <div className="main-layout">
+          <div className="content-area">
+            <Suspense fallback={<PostsPageSkeleton />}>
+              <PostsContent
+                initialPosts={initialPosts}
+                initialMeta={initialMeta}
+                initialQuery={initialQuery}
+                initialError={initialError}
+              />
+            </Suspense>
+          </div>
+          <PostsNeonSidebar />
+        </div>
+      </main>
     </div>
   );
 }

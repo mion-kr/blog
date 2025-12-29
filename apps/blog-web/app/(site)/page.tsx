@@ -1,63 +1,68 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { cva } from "class-variance-authority";
 
-import { HeroActions } from "@/components/hero-actions";
-import { PostCard } from "@/components/post-card";
+import styles from "./home-neon-grid.module.css";
+
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 import type { PostResponseDto } from "@repo/shared";
-import {
-  ArrowRight,
-  CalendarDays,
-  Eye,
-  Flame,
-  PenSquare,
-} from "lucide-react";
 
-const LATEST_POSTS_LIMIT = 10;
+// 데이터 로딩 설정
+const LATEST_POSTS_LIMIT = 9;
 const TRENDING_POSTS_LIMIT = 5;
 const CATEGORY_LIMIT = 8;
-const TAG_LIMIT = 14;
+const TAG_LIMIT = 12;
 
 export const revalidate = 60;
 
-type HomeStats = {
-  posts: number;
-  categories: number;
-  tags: number;
-  lastUpdated?: Date;
-};
+const neonButtonVariants = cva("btn", {
+  variants: {
+    variant: {
+      default: "",
+      primary: "btn-primary",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
 
+/**
+ * 홈 페이지(샘플 `sample-neon-grid.html` 1:1 포팅).
+ * - 홈에서만 sample header/footer/배경을 직접 렌더링합니다.
+ * - 데이터(포스트/카테고리/태그)는 기존 API를 그대로 사용합니다.
+ */
 export default async function HomePage() {
-  const [latestResult, trendingResult, categoriesResult, tagsResult] =
-    await Promise.allSettled([
-      postsApi.getPosts({
-        page: 1,
-        limit: LATEST_POSTS_LIMIT,
-        published: true,
-        sort: "publishedAt",
-        order: "desc",
-      }),
-      postsApi.getPosts({
-        page: 1,
-        limit: TRENDING_POSTS_LIMIT + 2,
-        published: true,
-        sort: "viewCount",
-        order: "desc",
-      }),
-      categoriesApi.getCategories({
-        page: 1,
-        limit: CATEGORY_LIMIT,
-        sort: "name",
-        order: "asc",
-      }),
-      tagsApi.getTags({
-        page: 1,
-        limit: TAG_LIMIT,
-        sort: "name",
-        order: "asc",
-      }),
-    ]);
+  const [latestResult, trendingResult, categoriesResult, tagsResult] = await Promise.allSettled([
+    postsApi.getPosts({
+      page: 1,
+      limit: LATEST_POSTS_LIMIT,
+      published: true,
+      sort: "publishedAt",
+      order: "desc",
+    }),
+    postsApi.getPosts({
+      page: 1,
+      limit: TRENDING_POSTS_LIMIT + 2,
+      published: true,
+      sort: "viewCount",
+      order: "desc",
+    }),
+    categoriesApi.getCategories({
+      page: 1,
+      limit: CATEGORY_LIMIT,
+      sort: "name",
+      order: "asc",
+    }),
+    tagsApi.getTags({
+      page: 1,
+      limit: TAG_LIMIT,
+      sort: "name",
+      order: "asc",
+    }),
+  ]);
 
   if (latestResult.status === "rejected") {
     console.error("Failed to load latest posts", latestResult.reason);
@@ -72,305 +77,393 @@ export default async function HomePage() {
     console.error("Failed to load tags", tagsResult.reason);
   }
 
-  const latestResponse =
-    latestResult.status === "fulfilled" ? latestResult.value : null;
-  const trendingResponse =
-    trendingResult.status === "fulfilled" ? trendingResult.value : null;
-  const categoriesResponse =
-    categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
-  const tagsResponse =
-    tagsResult.status === "fulfilled" ? tagsResult.value : null;
+  const latestResponse = latestResult.status === "fulfilled" ? latestResult.value : null;
+  const trendingResponse = trendingResult.status === "fulfilled" ? trendingResult.value : null;
+  const categoriesResponse = categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
+  const tagsResponse = tagsResult.status === "fulfilled" ? tagsResult.value : null;
 
   const latestPosts = latestResponse?.data ?? [];
-  // 홈 Featured 섹션을 작은 카드 그리드(최대 4개)로 표시
-  const featuredGridPosts = latestPosts.slice(0, Math.min(latestPosts.length, 4));
-  // 나머지 최신 포스트는 아래 그리드 섹션으로
-  const latestGridPosts = latestPosts.slice(featuredGridPosts.length);
-
-  const trendingPosts = (trendingResponse?.data ?? [])
-    .slice(0, TRENDING_POSTS_LIMIT);
+  const trendingPosts = (trendingResponse?.data ?? []).slice(0, TRENDING_POSTS_LIMIT);
   const categories = categoriesResponse?.data ?? [];
   const tags = tagsResponse?.data ?? [];
 
-  const stats: HomeStats = {
+  const featuredPost = latestPosts[0] ?? null;
+  const recentPosts = latestPosts.slice(1, 5);
+
+  const stats = {
     posts: latestResponse?.meta?.total ?? latestPosts.length,
     categories: categoriesResponse?.meta?.total ?? categories.length,
     tags: tagsResponse?.meta?.total ?? tags.length,
-    lastUpdated: latestPosts[0]
-      ? new Date(latestPosts[0].publishedAt ?? latestPosts[0].createdAt)
-      : undefined,
+    lastUpdated: featuredPost ? new Date(featuredPost.publishedAt ?? featuredPost.createdAt) : undefined,
   };
 
   return (
-    <div className="flex flex-col">
-      <HeroSection stats={stats} />
+    <div className={cn(styles.root, "neon-grid-home")}>
+      <div className="neon-grid-bg" aria-hidden="true" />
 
-      <section className="py-8 max-md:py-6">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <FeaturedSection posts={featuredGridPosts} />
-
-          {latestGridPosts.length > 0 && (
-            <LatestPostsSection posts={latestGridPosts} total={stats.posts} />
-          )}
-
-          <DiscoverySection trendingPosts={trendingPosts} />
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function HeroSection({ stats }: { stats: HomeStats }) {
-  const formattedLastUpdated = stats.lastUpdated
-    ? formatDate(stats.lastUpdated)
-    : "작성 예정";
-
-  const statCards = [
-    {
-      label: "전체 포스트",
-      value: `${formatNumber(stats.posts)}개`,
-      helper: "깊이 있는 기술 인사이트",
-    },
-    {
-      label: "카테고리 & 태그",
-      value: `${formatNumber(stats.categories)} 카테고리`,
-      helper: `${formatNumber(stats.tags)}개의 태그 수록`,
-    },
-    {
-      label: "마지막 업데이트",
-      value: formattedLastUpdated,
-      helper: stats.lastUpdated
-        ? "가장 최근에 발행된 글"
-        : "첫 글을 준비 중입니다",
-    },
-  ];
-
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-[var(--color-hero-gradient-from)] via-[var(--color-hero-gradient-via)] to-[var(--color-background)] py-20">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 left-0 h-72 w-72 -translate-x-1/3 rounded-full bg-[var(--color-primary-100)] blur-3xl md:-top-32 md:h-96 md:w-96" />
-        <div className="absolute bottom-0 right-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-[var(--color-primary-200)] blur-3xl" />
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="mx-auto max-w-3xl text-center space-y-8">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-hero-chip)] px-4 py-1 text-sm font-medium text-[var(--color-primary)] shadow-sm backdrop-blur">
-            <SparklesIcon />
-            Next.js 15 · Nest.js · MDX
-          </span>
-
-          <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-5xl">
-            Mion&apos;s 기술 블로그에 오신 것을 환영합니다
-          </h1>
-
-          <p className="text-lg text-[var(--color-text-secondary)] md:text-xl">
-            실무에서 얻은 경험과 실험을 통해 축적한 개발 인사이트를 공유합니다.
-            프론트엔드, 백엔드, 인프라를 넘나드는 Mion의 여정을 만나보세요.
-          </p>
-
-          <HeroActions />
-        </div>
-
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {statCards.map((card) => (
-            <div key={card.label} className="blog-stat-card">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
-                {card.label}
-              </p>
-              <p className="text-2xl font-semibold text-[var(--color-text-primary)]">
-                {card.value}
-              </p>
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                {card.helper}
-              </p>
+      <header className="header">
+        <div className="header-inner">
+          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
+            <div className="brand-icon" aria-hidden="true">
+              M
             </div>
-          ))}
+            <span>Mion&apos;s Blog</span>
+          </Link>
+
+          <nav className="nav" aria-label="메인 네비게이션">
+            <Link href="/" className="nav-link active" aria-current="page">
+              Home
+            </Link>
+            <Link href="/posts" className="nav-link">
+              Posts
+            </Link>
+            <Link href="/about" className="nav-link">
+              About
+            </Link>
+          </nav>
+
+          <div className="header-actions" />
         </div>
-      </div>
-    </section>
-  );
-}
+      </header>
 
-function FeaturedSection({ posts }: { posts: PostResponseDto[] }) {
-  return (
-    <div className="space-y-8">
-      <div className="blog-section-header">
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Editor&apos;s Pick</p>
-          <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">가장 주목받는 포스트</h2>
-        </div>
-        <Link href="/posts" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]">
-          모든 포스트 보기
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div>
+      <div className="container">
+        <section className="hero" aria-label="홈 히어로">
+          <div className="hero-grid">
+            <div className="hero-content">
+              <h1>백엔드 개발 기록</h1>
+              <p>
+                NestJS를 중심으로 백엔드 설계/운영 경험을 정리합니다. 이전에는 Spring Boot로 서비스를 개발했어요.
+                실무에서 배운 것과 실험 기록을, 읽기 좋은 형태로 꾸준히 업데이트합니다.
+              </p>
+              <div className="hero-actions">
+                <Link
+                  href="/posts"
+                  className={neonButtonVariants({ variant: "primary" })}
+                >
+                  포스트 보러가기 <span className="icon-arrow" aria-hidden="true" />
+                </Link>
+                <Link href="/about" className={neonButtonVariants({ variant: "default" })}>
+                  소개 보기
+                </Link>
+              </div>
+            </div>
 
-      {posts.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {posts.slice(0, 4).map((post) => (
-            <PostCard key={post.id} post={post} className="h-full" />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon={<PenSquare className="h-5 w-5" aria-hidden />}
-          title="첫 번째 포스트를 기다리고 있어요"
-          description="새로운 포스트가 준비되면 이곳에서 바로 확인하실 수 있어요."
-        />
-      )}
-    </div>
-  );
-}
+            <div className="hero-stats" aria-label="블로그 통계">
+              <HeroStatCard value={formatNumber(stats.posts)} label="총 포스트" />
+              <HeroStatCard value={formatNumber(stats.categories)} label="카테고리" />
+              <HeroStatCard value={formatNumber(stats.tags)} label="태그" />
+              <HeroStatCard value={stats.lastUpdated ? formatShortDate(stats.lastUpdated) : "작성 예정"} label="마지막 업데이트" />
+            </div>
+          </div>
+        </section>
 
-function LatestPostsSection({
-  posts,
-  total,
-}: {
-  posts: PostResponseDto[];
-  total?: number;
-}) {
-  if (posts.length === 0) {
-    return null;
-  }
+        <div className="main-grid">
+          <main id="main">
+            <section aria-label="추천 글">
+              <SectionHeader
+                eyebrow="Featured"
+                title="오늘의 추천"
+                actionHref="/posts"
+                actionLabel="전체 보기"
+              />
 
-  return (
-    <div className="space-y-6">
-      <div className="blog-section-header">
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-            Latest
-          </p>
-          <h2 className="text-3xl font-semibold text-[var(--color-text-primary)]">
-            방금 올라온 기술 노트
-          </h2>
-        </div>
-        <Link
-          href="/posts"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
-        >
-          전체 포스트{" "}
-          {typeof total === "number" ? `(${formatNumber(total)})` : ""}
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div>
-
-      <div className="blog-posts-grid">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DiscoverySection({
-  trendingPosts,
-}: {
-  trendingPosts: PostResponseDto[];
-}) {
-  const hasTrending = trendingPosts.length > 0;
-
-  if (!hasTrending) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-8">
-      <div className="blog-section-header">
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-            Discover
-          </p>
-          <h2 className="text-3xl font-semibold text-[var(--color-text-primary)]">
-            지금 가장 많이 읽는 주제
-          </h2>
-        </div>
-        <Link
-          href="/posts"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent-primary-hover)]"
-        >
-          모든 포스트 보기
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
-          <Flame
-            className="h-5 w-5 text-[var(--color-accent-warning)]"
-            aria-hidden
-          />
-          인기 포스트 Top {trendingPosts.length}
-        </h3>
-
-        {hasTrending ? (
-          <div className="blog-trending-list">
-            {trendingPosts.map((post, index) => (
-              <Link
-                key={post.id}
-                href={`/posts/${post.slug}`}
-                className="blog-trending-item"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-secondary)] text-sm font-semibold text-[var(--color-secondary-foreground)]">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="flex-1 space-y-1">
-                  <p className="font-semibold text-[var(--color-text-primary)] line-clamp-2">
-                    {post.title}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" aria-hidden />
-                      {formatNumber(post.viewCount)}회 조회
+              {featuredPost ? (
+                <FeaturedPost post={featuredPost} />
+              ) : (
+                <article className="featured-post">
+                  <div className="featured-cover">
+                    <div className="featured-cover-placeholder">Cover Image</div>
+                  </div>
+                  <div className="featured-meta">
+                    <span className="category-badge">
+                      <span className="dot" aria-hidden="true" />
+                      준비중
                     </span>
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" aria-hidden />
-                      {formatDate(post.publishedAt ?? post.createdAt)}
+                    <span className="meta-item">
+                      <span className="icon-calendar" aria-hidden="true" /> 작성 예정
                     </span>
-                    <span className="font-medium text-[var(--color-text-primary)]">
-                      {post.category.name}
+                    <span className="meta-item">
+                      <span className="icon-eye" aria-hidden="true" /> 0회
                     </span>
                   </div>
+                  <h3 className="featured-title">아직 추천할 글이 없어요</h3>
+                  <p className="featured-excerpt">첫 글이 발행되면 여기에서 바로 확인할 수 있어요.</p>
+                </article>
+              )}
+            </section>
+
+            <section aria-label="최근 글">
+              <SectionHeader eyebrow="Latest" title="최근 글" actionHref="/posts" actionLabel="더 보기" />
+
+              <div className="posts-grid">
+                {recentPosts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+            </section>
+          </main>
+
+          <aside className="sidebar" aria-label="사이드바">
+            <div className="sidebar-card">
+              <h3 className="sidebar-title">
+                <span className="sidebar-title-icon icon-flame" aria-hidden="true" />
+                인기 글
+              </h3>
+              <div className="trending-list">
+                {trendingPosts.map((post, index) => (
+                  <TrendingItem key={post.id} post={post} rank={index + 1} />
+                ))}
+              </div>
+            </div>
+
+            <div className="sidebar-card">
+              <h3 className="sidebar-title">
+                <span className="sidebar-title-icon icon-compass" aria-hidden="true" />
+                탐색하기
+              </h3>
+              <div className="explore-section">
+                {categories.length > 0 && (
+                  <div className="explore-group">
+                    <div className="explore-label">
+                      <span className="icon-folder" aria-hidden="true" />
+                      카테고리
+                    </div>
+                    <div className="explore-chips">
+                      {categories.slice(0, 8).map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/posts?categorySlug=${c.slug}`}
+                          className="explore-chip explore-chip-category"
+                        >
+                          {c.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {tags.length > 0 && (
+                  <div className="explore-group">
+                    <div className="explore-label">
+                      <span className="icon-hash" aria-hidden="true" />
+                      태그
+                    </div>
+                    <div className="explore-chips">
+                      {tags.slice(0, 10).map((t) => (
+                        <Link
+                          key={t.id}
+                          href={`/posts?tagSlug=${t.slug}`}
+                          className="explore-chip explore-chip-tag"
+                        >
+                          #{t.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="sidebar-card">
+              <h3 className="sidebar-title">
+                <span className="sidebar-title-icon icon-chart" aria-hidden="true" />
+                블로그 현황
+              </h3>
+              <div className="quick-stats">
+                <div className="quick-stat">
+                  <div className="quick-stat-value">{formatNumber(stats.posts)}</div>
+                  <div className="quick-stat-label">글</div>
                 </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={<Flame className="h-5 w-5" aria-hidden />}
-            title="아직 인기 포스트가 없어요"
-            description="새로운 포스트가 발행되면 조회수 기준으로 자동 집계됩니다."
-          />
-        )}
+                <div className="quick-stat">
+                  <div className="quick-stat-value">{formatNumber(stats.categories)}</div>
+                  <div className="quick-stat-label">분류</div>
+                </div>
+                <div className="quick-stat">
+                  <div className="quick-stat-value">{formatNumber(stats.tags)}</div>
+                  <div className="quick-stat-label">태그</div>
+                </div>
+              </div>
+              <div className="sidebar-divider" />
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                마지막 업데이트:{" "}
+                <span style={{ color: "var(--neon-cyan)" }}>
+                  {stats.lastUpdated ? formatDate(stats.lastUpdated) : "작성 예정"}
+                </span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <footer className="footer">
+          <p className="footer-text">
+            © {new Date().getFullYear()}{" "}
+            <Link href="/" aria-label="Mion's Blog">
+              Mion&apos;s Blog
+            </Link>
+            . Neon Grid Theme · Dark Mode Only
+          </p>
+        </footer>
       </div>
     </div>
   );
 }
 
-function EmptyState({
-  icon,
+/**
+ * 히어로 통계 카드.
+ */
+function HeroStatCard({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
+    </div>
+  );
+}
+
+/**
+ * 섹션 헤더(샘플 구조).
+ */
+function SectionHeader({
+  eyebrow,
   title,
-  description,
+  actionHref,
+  actionLabel,
 }: {
-  icon: ReactNode;
+  eyebrow: string;
   title: string;
-  description: string;
+  actionHref: string;
+  actionLabel: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] px-6 py-12 text-center">
-      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]">
-        {icon}
+    <div className="section-header">
+      <div className="section-title">
+        <div>
+          <div className="section-eyebrow">{eyebrow}</div>
+          <h2>{title}</h2>
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-        {title}
-      </h3>
-      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-        {description}
-      </p>
+      <Link href={actionHref} className={neonButtonVariants({ variant: "default" })}>
+        {actionLabel} <span className="icon-arrow" aria-hidden="true" />
+      </Link>
     </div>
   );
 }
 
+/**
+ * 추천(Featured) 포스트.
+ */
+function FeaturedPost({ post }: { post: PostResponseDto }) {
+  const href = `/posts/${post.slug}`;
+  const displayDate = post.publishedAt ?? post.createdAt;
+
+  return (
+    <article className="featured-post">
+      <div className="featured-cover">
+        {post.coverImage ? (
+          <Image
+            src={post.coverImage}
+            alt={post.title}
+            fill
+            sizes="(max-width: 1024px) 100vw, 980px"
+            className="featured-cover-img"
+            priority
+          />
+        ) : (
+          <div className="featured-cover-placeholder">Cover Image</div>
+        )}
+      </div>
+
+      <div className="featured-meta">
+        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+          <span className="dot" aria-hidden="true" />
+          {post.category.name}
+        </Link>
+        <span className="meta-item">
+          <span className="icon-calendar" aria-hidden="true" /> {formatDate(displayDate)}
+        </span>
+        <span className="meta-item">
+          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
+        </span>
+      </div>
+
+      <h3 className="featured-title">
+        <Link href={href}>{post.title}</Link>
+      </h3>
+
+      {post.excerpt && <p className="featured-excerpt">{post.excerpt}</p>}
+
+      <div className="featured-footer">
+        <div className="tags">
+          {post.tags.slice(0, 3).map((tag) => (
+            <Link
+              key={tag.id}
+              href={`/posts?tagSlug=${tag.slug}`}
+              className="tag"
+            >
+              #{tag.name}
+            </Link>
+          ))}
+        </div>
+        <Link href={href} className="read-more">
+          읽기 <span className="icon-arrow" aria-hidden="true" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * 최근 글 카드.
+ */
+function PostCard({ post }: { post: PostResponseDto }) {
+  const href = `/posts/${post.slug}`;
+  const displayDate = post.publishedAt ?? post.createdAt;
+
+  return (
+    <article className="post-card">
+      <div className="post-card-meta">
+        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+          <span className="dot" aria-hidden="true" />
+          {post.category.name}
+        </Link>
+        <span className="meta-item">{formatMonthDay(displayDate)}</span>
+      </div>
+      <h3 className="post-card-title">
+        <Link href={href}>{post.title}</Link>
+      </h3>
+      {post.excerpt && <p className="post-card-excerpt">{post.excerpt}</p>}
+      <div className="post-card-footer">
+        <span className="view-count">
+          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
+        </span>
+        <Link href={href} className="read-more">
+          읽기 <span className="icon-arrow" aria-hidden="true" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * 인기 글 행.
+ */
+function TrendingItem({ post, rank }: { post: PostResponseDto; rank: number }) {
+  return (
+    <Link href={`/posts/${post.slug}`} className="trending-item">
+      <div className="trending-rank">{String(rank).padStart(2, "0")}</div>
+      <div className="trending-content">
+        <div className="trending-title">{post.title}</div>
+        <div className="trending-views">
+          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * 날짜 포맷(긴 형식).
+ */
 function formatDate(date: Date | string): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("ko-KR", {
@@ -380,29 +473,30 @@ function formatDate(date: Date | string): string {
   }).format(dateObj);
 }
 
+/**
+ * 날짜 포맷(월/일, 샘플 카드용).
+ */
+function formatMonthDay(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const month = dateObj.getMonth() + 1;
+  const day = dateObj.getDate();
+  return `${month}월 ${day}일`;
+}
+
+/**
+ * 짧은 날짜 포맷(히어로 스탯용).
+ */
+function formatShortDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
+}
+
+/**
+ * 숫자 포맷.
+ */
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
 
-function SparklesIcon() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-4 w-4 text-[var(--color-primary)]"
-    >
-      <path
-        d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z"
-        fill="currentColor"
-        opacity="0.6"
-      />
-      <path
-        d="M18 12l.9 2.7L22 16l-3.1 1.3L18 20l-.9-2.7L14 16l3.1-1.3L18 12zM6 12l.7 2.1L9 15l-2.3.9L6 18l-.7-2.1L3 15l2.3-.9L6 12z"
-        fill="currentColor"
-        opacity="0.35"
-      />
-    </svg>
-  );
-}

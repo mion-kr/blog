@@ -8,23 +8,20 @@ import {
   useRef,
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { postsApi, categoriesApi, tagsApi } from '@/lib/api-client';
-import { PostCard, PostCardSkeleton } from '@/components/post-card';
-import { PostsFilter } from './posts-filter';
+import { postsApi } from '@/lib/api-client';
+import { PostsFilter, SortPreset } from './posts-filter';
 import { PostsPagination } from './posts-pagination';
 
 import type {
   PostResponseDto,
-  Category,
-  Tag,
   PostsQuery,
   ApiPaginationMeta,
 } from '@repo/shared';
 import {
   AlertCircle,
-  Grid3X3,
-  List,
   Search,
 } from 'lucide-react';
 import {
@@ -32,6 +29,10 @@ import {
   buildPostsQueryKey,
   extractPostsSearchParams,
 } from './query-utils';
+import {
+  calculateReadingTimeMinutesFromMdx,
+  formatReadingTimeMinutes,
+} from '@/lib/reading-time';
 
 interface PostsContentProps {
   initialPosts: PostResponseDto[];
@@ -40,8 +41,14 @@ interface PostsContentProps {
   initialError?: string | null;
 }
 
-type ViewMode = 'grid' | 'list';
+type PostsURLParams = Partial<PostsQuery> & {
+  sortPreset?: SortPreset;
+};
 
+/**
+ * posts 목록 페이지 콘텐츠(필터/목록/페이지네이션).
+ * - 네온 posts 전용 UI는 여기에서 렌더링합니다.
+ */
 export function PostsContent({
   initialPosts,
   initialMeta,
@@ -53,14 +60,11 @@ export function PostsContent({
 
   // State
   const [posts, setPosts] = useState<PostResponseDto[]>(initialPosts);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
   const [pagination, setPagination] = useState(() =>
     mapPagination(initialMeta, initialQuery, initialPosts.length),
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError ?? null);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const currentQuery = useMemo(
     () =>
@@ -71,10 +75,24 @@ export function PostsContent({
     () => buildPostsQueryKey(currentQuery),
     [currentQuery],
   );
-  const initialQueryKeyRef = useRef(buildPostsQueryKey(initialQuery));
+  const lastLoadedQueryKeyRef = useRef(buildPostsQueryKey(initialQuery));
+
+  const currentSortPreset = useMemo<SortPreset>(() => {
+    // URL에 sortPreset가 있으면 UI 상태를 고정합니다.
+    const preset = urlSearchParams.get('sortPreset');
+    if (preset === 'latest' || preset === 'viewed' || preset === 'liked') {
+      return preset;
+    }
+
+    // URL에 preset이 없을 때는 API 쿼리(sort)로부터 유추합니다.
+    if (currentQuery.sort === 'viewCount') {
+      return 'viewed';
+    }
+    return 'latest';
+  }, [currentQuery.sort, searchParamsString, urlSearchParams]);
 
   // URL 업데이트 함수
-  const updateURL = useCallback((newParams: Partial<PostsQuery>) => {
+  const updateURL = useCallback((newParams: PostsURLParams) => {
     const params = new URLSearchParams(urlSearchParams.toString());
 
     Object.entries(newParams).forEach(([key, value]) => {
@@ -114,6 +132,7 @@ export function PostsContent({
         setPagination(
           mapPagination(response.meta, query, response.data.length),
         );
+        lastLoadedQueryKeyRef.current = buildPostsQueryKey(query);
       }
     } catch (err) {
       console.error('Failed to load posts:', err);
@@ -123,32 +142,11 @@ export function PostsContent({
     }
   }, []);
 
-  const loadFilters = useCallback(async () => {
-    try {
-      const [categoriesResponse, tagsResponse] = await Promise.allSettled([
-        categoriesApi.getCategories({ limit: 50, sort: 'name', order: 'asc' }),
-        tagsApi.getTags({ limit: 100, sort: 'name', order: 'asc' })
-      ]);
-
-      if (categoriesResponse.status === 'fulfilled' && categoriesResponse.value.success) {
-        setCategories(categoriesResponse.value.data ?? []);
-      }
-
-      if (tagsResponse.status === 'fulfilled' && tagsResponse.value.success) {
-        setTags(tagsResponse.value.data ?? []);
-      }
-    } catch (err) {
-      console.error('Failed to load filters:', err);
-    }
-  }, []);
-
   // Effects
   useEffect(() => {
-    loadFilters();
-  }, [loadFilters]);
-
-  useEffect(() => {
-    if (currentQueryKey === initialQueryKeyRef.current && !initialError) {
+    // 동일한 쿼리를 이미 로드했다면 중복 요청을 막습니다.
+    // (이전 구현은 초기 쿼리로 돌아갈 때 fetch를 스킵해서 reset이 동작하지 않는 문제가 있었습니다.)
+    if (currentQueryKey === lastLoadedQueryKeyRef.current && !initialError) {
       return;
     }
 
@@ -160,16 +158,14 @@ export function PostsContent({
     updateURL({ search, page: 1 });
   }, [updateURL]);
 
-  const handleCategoryChange = useCallback((categorySlug: string) => {
-    updateURL({ categorySlug: categorySlug || undefined, page: 1 });
-  }, [updateURL]);
+  const handleSortPresetChange = useCallback((preset: SortPreset) => {
+    // 'Most Liked'는 준비 중이므로 최신순으로 fallback합니다(주인님 결정).
+    if (preset === 'viewed') {
+      updateURL({ sort: 'viewCount', order: 'desc', sortPreset: preset, page: 1 });
+      return;
+    }
 
-  const handleTagChange = useCallback((tagSlug: string) => {
-    updateURL({ tagSlug: tagSlug || undefined, page: 1 });
-  }, [updateURL]);
-
-  const handleSortChange = useCallback((sort: string, order: 'asc' | 'desc') => {
-    updateURL({ sort, order, page: 1 });
+    updateURL({ sort: 'publishedAt', order: 'desc', sortPreset: preset, page: 1 });
   }, [updateURL]);
 
   const handlePageChange = useCallback((page: number) => {
@@ -187,130 +183,98 @@ export function PostsContent({
     currentQuery.tagSlug
   );
 
+  const readingTimeByPostId = useMemo(() => {
+    // 목록 렌더링 비용을 줄이기 위해 reading time을 미리 계산합니다.
+    return new Map(
+      posts.map((post) => {
+        const minutes = calculateReadingTimeMinutesFromMdx(post.content);
+        return [post.id, minutes] as const;
+      }),
+    );
+  }, [posts]);
+
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent-error)]/10">
-          <AlertCircle className="h-6 w-6 text-[var(--color-accent-error)]" />
+      <div className="filter-bar" role="alert">
+        <div className="filter-row" style={{ justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertCircle className="h-5 w-5" aria-hidden="true" />
+            <strong>포스트를 불러올 수 없습니다</strong>
+          </div>
+          <button
+            type="button"
+            className="page-btn"
+            onClick={() => loadPosts(currentQuery)}
+          >
+            Retry
+          </button>
         </div>
-        <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-          포스트를 불러올 수 없습니다
-        </h3>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{error}</p>
-        <button
-          onClick={() => loadPosts(currentQuery)}
-          className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-md hover:bg-[var(--color-primary)] hover:text-white transition-colors"
-        >
-          다시 시도
-        </button>
+        <div className="filter-note">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* 필터 및 정렬 섹션 */}
-      <div className="space-y-6">
-        <PostsFilter
-          categories={categories}
-          tags={tags}
-          currentSearch={currentQuery.search ?? ''}
-          currentCategorySlug={currentQuery.categorySlug ?? ''}
-          currentTagSlug={currentQuery.tagSlug ?? ''}
-          currentSort={currentQuery.sort ?? 'publishedAt'}
-          currentOrder={currentQuery.order ?? 'desc'}
-          onSearch={handleSearch}
-          onCategoryChange={handleCategoryChange}
-          onTagChange={handleTagChange}
-          onSortChange={handleSortChange}
-          onClearFilters={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
-        />
+    <>
+      <PostsFilter
+        currentSearch={currentQuery.search ?? ''}
+        currentSortPreset={currentSortPreset}
+        onSearch={handleSearch}
+        onSortPresetChange={handleSortPresetChange}
+      />
 
-        {/* 결과 상태 및 뷰 모드 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              {loading ? '로딩 중...' : (
-                <>
-                  총 <span className="font-semibold text-[var(--color-text-primary)]">{pagination.total.toLocaleString()}</span>개의 포스트
-                  {hasActiveFilters && (
-                    <span className="ml-2 text-xs bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] px-2 py-1 rounded">
-                      필터 적용됨
-                    </span>
-                  )}
-                </>
-              )}
-            </p>
-          </div>
-
-          {/* 뷰 모드 토글 */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-secondary)]'
-              }`}
-              title="그리드 뷰"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-secondary)]'
-              }`}
-              title="리스트 뷰"
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
+      {hasActiveFilters && !loading && (
+        <div className="filter-note" style={{ marginBottom: 16 }}>
+          필터 적용됨 ·{' '}
+          <button
+            type="button"
+            className="tag-item"
+            onClick={handleClearFilters}
+          >
+            Reset
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* 포스트 그리드/리스트 */}
-      {loading ? (
-        <div className={`${viewMode === 'grid' ? 'blog-posts-grid' : 'space-y-2'}`}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <PostCardSkeleton key={i} viewMode={viewMode} />
-          ))}
+      {loading && posts.length > 0 && (
+        <div className="filter-note" role="status" style={{ marginBottom: 16 }}>
+          Updating…
         </div>
-      ) : posts.length > 0 ? (
-        <div className={`${viewMode === 'grid' ? 'blog-posts-grid' : 'space-y-2'}`}>
+      )}
+
+      {/* 포스트 목록 */}
+      {posts.length > 0 ? (
+        <div className={`posts-list ${loading ? 'is-updating' : ''}`} aria-busy={loading}>
           {posts.map((post) => (
-            <PostCard
+            <PostsNeonPostCard
               key={post.id}
               post={post}
-              viewMode={viewMode}
+              readingTimeMinutes={readingTimeByPostId.get(post.id) ?? 1}
             />
           ))}
         </div>
+      ) : loading ? (
+        <div className="posts-list" aria-busy="true">
+          {Array.from({ length: 10 }, (_, i) => (
+            <PostsNeonPostSkeleton key={i} />
+          ))}
+        </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-secondary)]">
-            <Search className="h-6 w-6 text-[var(--color-text-secondary)]" />
+        <div className="filter-bar">
+          <div className="filter-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Search className="h-5 w-5" aria-hidden="true" />
+              <strong>{hasActiveFilters ? '검색 결과가 없습니다' : '등록된 포스트가 없습니다'}</strong>
+            </div>
+            {hasActiveFilters && (
+              <button type="button" className="page-btn" onClick={handleClearFilters}>
+                Reset
+              </button>
+            )}
           </div>
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-            {hasActiveFilters ? '검색 결과가 없습니다' : '등록된 포스트가 없습니다'}
-          </h3>
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-            {hasActiveFilters
-              ? '다른 검색어나 필터를 시도해보세요.'
-              : '새로운 포스트가 등록되면 이곳에 표시됩니다.'
-            }
-          </p>
-          {hasActiveFilters && (
-            <button
-              onClick={handleClearFilters}
-              className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-md hover:bg-[var(--color-primary)] hover:text-white transition-colors"
-            >
-              모든 필터 지우기
-            </button>
-          )}
+          <div className="filter-note">
+            {hasActiveFilters ? '다른 검색어/정렬을 시도해보세요.' : '새로운 포스트가 등록되면 이곳에 표시됩니다.'}
+          </div>
         </div>
       )}
 
@@ -325,7 +289,7 @@ export function PostsContent({
           onPageChange={handlePageChange}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -347,4 +311,112 @@ function mapPagination(
     hasNext: meta?.hasNext ?? page < totalPages,
     hasPrev: meta?.hasPrev ?? page > 1,
   };
+}
+
+function formatCompactNumber(value: number): string {
+  return new Intl.NumberFormat('en', { notation: 'compact' }).format(value);
+}
+
+function formatNeonDate(value: Date | string): string {
+  const dateObj = typeof value === 'string' ? new Date(value) : value;
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}.${m}.${d}`;
+}
+
+function PostsNeonPostCard({
+  post,
+  readingTimeMinutes,
+}: {
+  post: PostResponseDto;
+  readingTimeMinutes: number;
+}) {
+  const displayDate = post.publishedAt ?? post.createdAt;
+  const readingTimeLabel = formatReadingTimeMinutes(readingTimeMinutes);
+
+  return (
+    <article className="post-card-neon">
+      <div className="neon-side-border" aria-hidden="true" />
+
+      <div className="post-thumbnail">
+        {post.coverImage ? (
+          <Image
+            src={post.coverImage}
+            alt={post.title}
+            fill
+            className="object-cover"
+            sizes="240px"
+          />
+        ) : (
+          <span className="post-thumbnail-placeholder" aria-hidden="true">
+            🖼️
+          </span>
+        )}
+      </div>
+
+      <div className="post-content">
+        <div className="post-content-meta">
+          <span className="category-tag">{post.category.name}</span>
+          <time className="post-date" dateTime={new Date(displayDate).toISOString()}>
+            {formatNeonDate(displayDate)}
+          </time>
+        </div>
+
+        <Link href={`/posts/${post.slug}`} className="post-title-link">
+          {post.title}
+        </Link>
+
+        {post.excerpt && <p className="post-excerpt">{post.excerpt}</p>}
+
+        <div className="post-card-footer">
+          <div className="tag-list" aria-label="태그">
+            {post.tags.slice(0, 3).map((tag) => (
+              <Link key={tag.id} href={`/posts?tagSlug=${tag.slug}`} className="tag-item">
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+          <div className="read-stats" aria-label="읽기/조회수">
+            <span>👁️ {formatCompactNumber(post.viewCount)}</span>
+            <span>⏱️ {readingTimeLabel}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PostsNeonPostSkeleton() {
+  return (
+    <article className="post-card-neon" aria-hidden="true">
+      <div className="neon-side-border" />
+      <div className="post-thumbnail">
+        <span className="post-thumbnail-placeholder">…</span>
+      </div>
+      <div className="post-content">
+        <div className="post-content-meta">
+          <span className="category-tag">Loading</span>
+          <span className="post-date">0000.00.00</span>
+        </div>
+        <div className="post-title-link" style={{ opacity: 0.6 }}>
+          Loading title…
+        </div>
+        <div className="post-excerpt" style={{ opacity: 0.5 }}>
+          Loading excerpt…
+        </div>
+        <div className="post-card-footer">
+          <div className="tag-list">
+            <span className="tag-item">#…</span>
+            <span className="tag-item">#…</span>
+            <span className="tag-item">#…</span>
+          </div>
+          <div className="read-stats">
+            <span>👁️ …</span>
+            <span>⏱️ …</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
 }

@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mion's Blog - Neon Grid Posts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            color-scheme: dark;
+            /* Neon Cyan Core */
+            --neon-cyan: #00e5ff;
+            --neon-cyan-dim: rgba(0, 229, 255, 0.85);
+            --neon-cyan-glow: rgba(0, 229, 255, 0.35);
+            --neon-cyan-subtle: rgba(0, 229, 255, 0.12);
+            --neon-purple: #a855f7;
+            --neon-purple-dim: rgba(168, 85, 247, 0.65);
+            --neon-green: #22d3bb;
+
+            /* Backgrounds */
+            --bg-deep: #02040a;
+            --bg-surface: rgba(6, 10, 18, 0.95);
+            --bg-card: rgba(10, 16, 28, 0.92);
+            --bg-card-hover: rgba(14, 22, 38, 0.95);
+
+            /* Text */
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.72);
+            --text-muted: rgba(255, 255, 255, 0.52);
+
+            /* Borders */
+            --border-dim: rgba(0, 229, 255, 0.12);
+            --border-active: rgba(0, 229, 255, 0.28);
+            --border-glow: rgba(0, 229, 255, 0.45);
+
+            /* Grid */
+            --grid-line: rgba(0, 229, 255, 0.06);
+            --grid-dot: rgba(0, 229, 255, 0.18);
+
+            /* Layout */
+            --max-width: 1280px;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+
+            /* Font */
+            --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ============================================
+         NEON GRID BACKGROUND
+         ============================================ */
+        .neon-grid-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                /* Radial glows */
+                radial-gradient(ellipse 900px 500px at 15% 5%, rgba(0, 229, 255, 0.18), transparent 55%),
+                radial-gradient(ellipse 700px 400px at 85% 15%, rgba(168, 85, 247, 0.12), transparent 50%),
+                radial-gradient(ellipse 800px 500px at 50% 95%, rgba(0, 229, 255, 0.08), transparent 50%),
+                var(--bg-deep);
+        }
+
+        .neon-grid-bg::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                repeating-linear-gradient(90deg,
+                    var(--grid-line) 0px,
+                    var(--grid-line) 1px,
+                    transparent 1px,
+                    transparent 80px),
+                repeating-linear-gradient(0deg,
+                    var(--grid-line) 0px,
+                    var(--grid-line) 1px,
+                    transparent 1px,
+                    transparent 80px);
+            mask-image: radial-gradient(ellipse 120% 80% at 50% 20%, black 20%, transparent 75%);
+        }
+
+        .neon-grid-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle 2px at center, var(--grid-dot) 0%, transparent 100%);
+            background-size: 80px 80px;
+            mask-image: radial-gradient(ellipse 100% 70% at 50% 25%, black 10%, transparent 70%);
+        }
+
+        /* ============================================
+         HEADER
+         ============================================ */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            background: rgba(2, 4, 10, 0.85);
+            border-bottom: 1px solid var(--border-dim);
+            box-shadow:
+                0 1px 0 rgba(0, 229, 255, 0.08),
+                0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-inner {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+            box-shadow:
+                0 0 20px rgba(0, 229, 255, 0.3),
+                0 8px 24px rgba(0, 0, 0, 0.4);
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(0, 229, 255, 0.08);
+            border-color: var(--border-dim);
+        }
+
+        .nav-link.active {
+            color: var(--neon-cyan);
+            background: rgba(0, 229, 255, 0.12);
+            border-color: var(--border-active);
+            box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+        }
+
+        /* ============================================
+         POSTS HERO (PAGE HEADER)
+         ============================================ */
+        .page-hero {
+            position: relative;
+            padding: 80px 24px 60px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-hero h1 {
+            font-size: 48px;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan-dim) 60%, var(--text-primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 40px rgba(0, 229, 255, 0.15);
+        }
+
+        .page-hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+         CONTAINER & MAIN GRID
+         ============================================ */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px 100px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+        }
+
+        /* ============================================
+         FILTER BAR
+         ============================================ */
+        .filter-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 48px;
+            background: rgba(2, 4, 10, 0.5);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-sm);
+            padding: 0 16px 0 48px;
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 2px var(--neon-cyan-subtle);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .filter-select {
+            height: 40px;
+            background: rgba(2, 4, 10, 0.5);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-xs);
+            color: var(--text-secondary);
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:hover {
+            border-color: var(--border-active);
+            color: var(--text-primary);
+        }
+
+        /* ============================================
+         POST CARDS (LIST & GRID)
+         ============================================ */
+        .posts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .post-card-neon {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius);
+            padding: 32px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .post-card-neon {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                gap: 20px;
+            }
+        }
+
+        .post-card-neon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(0, 229, 255, 0.03), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .post-card-neon:hover {
+            transform: translateY(-4px) scale(1.01);
+            border-color: var(--border-active);
+            box-shadow:
+                0 0 0 1px var(--border-active),
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                0 0 50px rgba(0, 229, 255, 0.1);
+        }
+
+        .post-card-neon:hover::before {
+            transform: translateX(100%);
+        }
+
+        .post-card-neon .neon-side-border {
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 2px;
+            background: linear-gradient(180deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .post-card-neon:hover .neon-side-border {
+            opacity: 1;
+        }
+
+        .post-thumbnail {
+            width: 240px;
+            aspect-ratio: 16/10;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 229, 255, 0.04);
+            border: 1px solid var(--border-dim);
+            overflow: hidden;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .post-thumbnail {
+                width: 100%;
+            }
+        }
+
+        .post-thumbnail i {
+            font-size: 24px;
+            color: var(--border-dim);
+        }
+
+        .post-content-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .category-tag {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            background: rgba(0, 229, 255, 0.08);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-dim);
+        }
+
+        .post-date {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .post-title-link {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            transition: color 0.2s ease;
+        }
+
+        .post-card-neon:hover .post-title-link {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        .post-excerpt {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 24px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .post-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-item {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tag-item:hover {
+            color: var(--text-primary);
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.2);
+        }
+
+        .read-stats {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+         SIDEBAR WIDGETS
+         ============================================ */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            position: sticky;
+            top: 24px;
+        }
+
+        .sidebar-widget {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        }
+
+        .widget-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 850;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+
+        .widget-title::before {
+            content: "";
+            width: 3px;
+            height: 14px;
+            background: var(--neon-cyan);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .category-item:hover {
+            background: rgba(0, 229, 255, 0.06);
+            color: var(--neon-cyan);
+            transform: translateX(4px);
+        }
+
+        .category-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 2px 8px;
+            border-radius: 99px;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-cloud-item {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-dim);
+            transition: all 0.2s ease;
+        }
+
+        .tag-cloud-item:hover {
+            background: var(--neon-purple-dim);
+            border-color: var(--neon-purple);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+         PAGINATION
+         ============================================ */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 60px;
+        }
+
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 700;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn:hover:not(.disabled) {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: var(--neon-cyan-subtle);
+        }
+
+        .page-btn.active {
+            background: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            color: black;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="neon-grid-bg"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="#" class="brand">
+                <div class="brand-icon">M</div>
+                MION BLOG
+            </a>
+            <nav class="nav">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link active">Posts</a>
+                <a href="#" class="nav-link">About</a>
+            </nav>
+            <div class="header-actions">
+                <button class="btn btn-primary">
+                    <span class="dot"></span>
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-hero">
+        <div class="page-hero-content">
+            <h1>All Technical Stories</h1>
+            <p>실무에서 쌓아온 개발 경험과 기술적 깨달음을 정리한 모든 글들을 여기에 있습니다.</p>
+        </div>
+    </div>
+
+    <main class="container">
+        <div class="main-layout">
+            <div class="content-area">
+
+                <!-- 필터 바 -->
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" placeholder="관심 있는 기술 키워드를 입력해보세요...">
+                        </div>
+                        <select class="filter-select">
+                            <option>Latest Updates</option>
+                            <option>Most Viewed</option>
+                            <option>Most Liked</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 포스트 목록 -->
+                <div class="posts-list">
+
+                    <!-- Post Card 1 -->
+                    <article class="post-card-neon">
+                        <div class="neon-side-border"></div>
+                        <div class="post-thumbnail">
+                            <i>🖼️</i>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-content-meta">
+                                <span class="category-tag">Frontend</span>
+                                <time class="post-date">2025.12.16</time>
+                            </div>
+                            <a href="#" class="post-title-link">Modern Design System with Neon Grid Aesthetics</a>
+                            <p class="post-excerpt">네온 그리드 디자인 시스템을 활용하여 웹 애플리케이션의 시각적 완성도를 높이는 방법과 실무에서의 적용 사례를 깊이 있게
+                                다룹니다.</p>
+                            <div class="post-card-footer">
+                                <div class="tag-list">
+                                    <span class="tag-item">#UX/UI</span>
+                                    <span class="tag-item">#CSS</span>
+                                    <span class="tag-item">#React</span>
+                                </div>
+                                <div class="read-stats">
+                                    <span>👁️ 1.2k</span>
+                                    <span>⏱️ 8 min read</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Post Card 2 -->
+                    <article class="post-card-neon">
+                        <div class="neon-side-border"></div>
+                        <div class="post-thumbnail">
+                            <i>🖼️</i>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-content-meta">
+                                <span class="category-tag">Backend</span>
+                                <time class="post-date">2025.12.10</time>
+                            </div>
+                            <a href="#" class="post-title-link">Optimizing API Performance with Redis Caching</a>
+                            <p class="post-excerpt">대규모 트래픽 처리를 위한 Redis 캐싱 전략과 데이터 정합성 유지 방법에 대해 살펴봅니다. 실무에서의 성능 개선 지표를
+                                함께 공유합니다.</p>
+                            <div class="post-card-footer">
+                                <div class="tag-list">
+                                    <span class="tag-item">#Redis</span>
+                                    <span class="tag-item">#Node.js</span>
+                                    <span class="tag-item">#Performance</span>
+                                </div>
+                                <div class="read-stats">
+                                    <span>👁️ 850</span>
+                                    <span>⏱️ 12 min read</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Post Card 3 -->
+                    <article class="post-card-neon">
+                        <div class="neon-side-border"></div>
+                        <div class="post-thumbnail">
+                            <i>🖼️</i>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-content-meta">
+                                <span class="category-tag">DevOps</span>
+                                <time class="post-date">2025.12.05</time>
+                            </div>
+                            <a href="#" class="post-title-link">Continuous Deployment with GitHub Actions</a>
+                            <p class="post-excerpt">자동화된 배포 파이프라인 구축을 위한 GitHub Actions 활용법과 안전한 프로덕션 배포를 위한 테스트 자동화 전략을
+                                소개합니다.</p>
+                            <div class="post-card-footer">
+                                <div class="tag-list">
+                                    <span class="tag-item">#CI/CD</span>
+                                    <span class="tag-item">#GitHub</span>
+                                    <span class="tag-item">#Docker</span>
+                                </div>
+                                <div class="read-stats">
+                                    <span>👁️ 1.5k</span>
+                                    <span>⏱️ 10 min read</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div class="pagination">
+                    <button class="page-btn">
+                        << /button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">2</button>
+                            <button class="page-btn">3</button>
+                            <button class="page-btn">4</button>
+                            <button class="page-btn">></button>
+                </div>
+
+            </div>
+
+            <!-- 사이드바 -->
+            <aside class="sidebar">
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Categories</h3>
+                    <div class="category-list">
+                        <div class="category-item">
+                            <span>Frontend</span>
+                            <span class="category-count">12</span>
+                        </div>
+                        <div class="category-item">
+                            <span>Backend</span>
+                            <span class="category-count">18</span>
+                        </div>
+                        <div class="category-item">
+                            <span>DevOps</span>
+                            <span class="category-count">5</span>
+                        </div>
+                        <div class="category-item">
+                            <span>Database</span>
+                            <span class="category-count">8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Popular Tags</h3>
+                    <div class="tag-cloud">
+                        <span class="tag-cloud-item">TypeScript</span>
+                        <span class="tag-cloud-item">Next.js</span>
+                        <span class="tag-cloud-item">Docker</span>
+                        <span class="tag-cloud-item">AWS</span>
+                        <span class="tag-cloud-item">Architecture</span>
+                        <span class="tag-cloud-item">Security</span>
+                        <span class="tag-cloud-item">Kubernetes</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+</body>
+
+</html>

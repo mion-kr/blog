@@ -1,9 +1,10 @@
 "use client"
 
+import { MantineProvider } from "@mantine/core"
 import { SessionProvider } from "next-auth/react"
 import { ReactNode } from "react"
 
-import { ThemeProvider } from "./theme-provider"
+import { mantineTheme } from "./mantine/theme"
 
 interface ProvidersProps {
   children: ReactNode
@@ -12,7 +13,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <ThemeProvider>{children}</ThemeProvider>
+      <MantineProvider theme={mantineTheme} defaultColorScheme="dark" forceColorScheme="dark">
+        {children}
+      </MantineProvider>
     </SessionProvider>
   )
 }

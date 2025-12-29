@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mion's Blog - Neon Grid Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            color-scheme: dark;
+            /* Neon Cyan Core */
+            --neon-cyan: #00e5ff;
+            --neon-cyan-dim: rgba(0, 229, 255, 0.85);
+            --neon-cyan-glow: rgba(0, 229, 255, 0.35);
+            --neon-cyan-subtle: rgba(0, 229, 255, 0.12);
+            --neon-purple: #a855f7;
+            --neon-purple-dim: rgba(168, 85, 247, 0.65);
+            --neon-green: #22d3bb;
+
+            /* Backgrounds */
+            --bg-deep: #02040a;
+            --bg-surface: rgba(6, 10, 18, 0.95);
+            --bg-card: rgba(10, 16, 28, 0.92);
+            --bg-card-hover: rgba(14, 22, 38, 0.95);
+
+            /* Text */
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.72);
+            --text-muted: rgba(255, 255, 255, 0.52);
+
+            /* Borders */
+            --border-dim: rgba(0, 229, 255, 0.12);
+            --border-active: rgba(0, 229, 255, 0.28);
+            --border-glow: rgba(0, 229, 255, 0.45);
+
+            /* Grid */
+            --grid-line: rgba(0, 229, 255, 0.06);
+            --grid-dot: rgba(0, 229, 255, 0.18);
+
+            /* Layout */
+            --max-width: 1280px;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+
+            /* Font */
+            --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ============================================
+         NEON GRID BACKGROUND
+         ============================================ */
+        .neon-grid-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                /* Radial glows */
+                radial-gradient(ellipse 900px 500px at 15% 5%, rgba(0, 229, 255, 0.18), transparent 55%),
+                radial-gradient(ellipse 700px 400px at 85% 15%, rgba(168, 85, 247, 0.12), transparent 50%),
+                radial-gradient(ellipse 800px 500px at 50% 95%, rgba(0, 229, 255, 0.08), transparent 50%),
+                var(--bg-deep);
+        }
+
+        /* Grid lines overlay */
+        .neon-grid-bg::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                /* Vertical lines */
+                repeating-linear-gradient(90deg,
+                    var(--grid-line) 0px,
+                    var(--grid-line) 1px,
+                    transparent 1px,
+                    transparent 80px),
+                /* Horizontal lines */
+                repeating-linear-gradient(0deg,
+                    var(--grid-line) 0px,
+                    var(--grid-line) 1px,
+                    transparent 1px,
+                    transparent 80px);
+            mask-image: radial-gradient(ellipse 120% 80% at 50% 20%, black 20%, transparent 75%);
+        }
+
+        /* Grid intersection dots */
+        .neon-grid-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle 2px at center, var(--grid-dot) 0%, transparent 100%);
+            background-size: 80px 80px;
+            mask-image: radial-gradient(ellipse 100% 70% at 50% 25%, black 10%, transparent 70%);
+        }
+
+        /* ============================================
+         HEADER
+         ============================================ */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            background: rgba(2, 4, 10, 0.85);
+            border-bottom: 1px solid var(--border-dim);
+            box-shadow:
+                0 1px 0 rgba(0, 229, 255, 0.08),
+                0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-inner {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+            box-shadow:
+                0 0 20px rgba(0, 229, 255, 0.3),
+                0 8px 24px rgba(0, 0, 0, 0.4);
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(0, 229, 255, 0.08);
+            border-color: var(--border-dim);
+        }
+
+        .nav-link.active {
+            color: var(--neon-cyan);
+            background: rgba(0, 229, 255, 0.12);
+            border-color: var(--border-active);
+            box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid var(--border-dim);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            border-color: var(--border-active);
+            background: var(--bg-card-hover);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(168, 85, 247, 0.15));
+            border-color: var(--border-active);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.12);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.3), rgba(168, 85, 247, 0.25));
+            border-color: var(--border-glow);
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+        }
+
+        .btn .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan-glow);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* ============================================
+         MAIN CONTAINER
+         ============================================ */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        /* ============================================
+         HERO SECTION
+         ============================================ */
+        .hero {
+            position: relative;
+            padding: 48px 40px;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            box-shadow:
+                0 0 0 1px var(--grid-line),
+                0 24px 64px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(0, 229, 255, 0.08);
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+            background-size: 200% 100%;
+            animation: gradient-slide 4s linear infinite;
+        }
+
+        @keyframes gradient-slide {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 200% 0%;
+            }
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+        }
+
+        .hero-content h1 {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan-dim) 60%, var(--text-primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 40px rgba(0, 229, 255, 0.15);
+        }
+
+        .hero-content p {
+            font-size: 16px;
+            line-height: 1.85;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            max-width: 520px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 229, 255, 0.04);
+            border: 1px solid var(--border-dim);
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(0, 229, 255, 0.08);
+            border-color: var(--border-active);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 24px rgba(0, 229, 255, 0.3);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================
+         MAIN GRID LAYOUT
+         ============================================ */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+         SECTION HEADER
+         ============================================ */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: "";
+            width: 4px;
+            height: 24px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+        }
+
+        .section-title h2 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .section-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--neon-cyan);
+            opacity: 0.8;
+        }
+
+        /* ============================================
+         FEATURED POST
+         ============================================ */
+        .featured-post {
+            position: relative;
+            padding: 28px;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            box-shadow:
+                0 0 0 1px var(--grid-line),
+                0 20px 48px rgba(0, 0, 0, 0.4);
+            margin-bottom: 28px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .featured-post::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .featured-post:hover {
+            border-color: var(--border-active);
+            transform: translateY(-4px);
+            box-shadow:
+                0 0 0 1px var(--border-active),
+                0 28px 64px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(0, 229, 255, 0.12);
+        }
+
+        .featured-post:hover::after {
+            opacity: 1;
+        }
+
+        .featured-cover {
+            position: relative;
+            aspect-ratio: 21/9;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.08), rgba(168, 85, 247, 0.06));
+            border: 1px solid var(--border-dim);
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: grid;
+            place-items: center;
+        }
+
+        .featured-cover-placeholder {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .featured-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(0, 229, 255, 0.12);
+            border: 1px solid var(--border-active);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
+        }
+
+        .category-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 6px var(--neon-cyan);
+        }
+
+        .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .featured-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+
+        .featured-title a {
+            transition: color 0.2s ease;
+        }
+
+        .featured-title a:hover {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+        }
+
+        .featured-excerpt {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .featured-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 6px 10px;
+            border-radius: var(--radius-xs);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-dim);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            background: rgba(0, 229, 255, 0.08);
+            border-color: var(--border-active);
+            color: var(--text-primary);
+        }
+
+        /* ============================================
+         POST GRID
+         ============================================ */
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .posts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .post-card {
+            position: relative;
+            padding: 22px;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            transition: all 0.25s ease;
+            overflow: hidden;
+        }
+
+        .post-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .post-card:hover {
+            border-color: var(--border-active);
+            transform: translateY(-3px);
+            box-shadow:
+                0 16px 40px rgba(0, 0, 0, 0.35),
+                0 0 40px rgba(0, 229, 255, 0.08);
+        }
+
+        .post-card:hover::before {
+            opacity: 1;
+        }
+
+        .post-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .post-card-title {
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .post-card-title a:hover {
+            color: var(--neon-cyan);
+        }
+
+        .post-card-excerpt {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .post-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .view-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .read-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neon-cyan);
+            transition: all 0.2s ease;
+        }
+
+        .read-more:hover {
+            text-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+        }
+
+        /* ============================================
+         SIDEBAR
+         ============================================ */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            position: sticky;
+            top: 88px;
+        }
+
+        .sidebar-card {
+            padding: 24px;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            box-shadow:
+                0 0 0 1px var(--grid-line),
+                0 16px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            letter-spacing: -0.01em;
+        }
+
+        .sidebar-title-icon {
+            width: 20px;
+            height: 20px;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-dim);
+            margin: 16px 0;
+        }
+
+        /* Trending List */
+        .trending-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .trending-item {
+            display: flex;
+            gap: 14px;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .trending-item:hover {
+            background: rgba(0, 229, 255, 0.06);
+            border-color: var(--border-dim);
+        }
+
+        .trending-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-xs);
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(168, 85, 247, 0.15));
+            border: 1px solid var(--border-dim);
+            display: grid;
+            place-items: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            flex-shrink: 0;
+        }
+
+        .trending-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .trending-title {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .trending-title a:hover {
+            color: var(--neon-cyan);
+        }
+
+        .trending-views {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Explore Section */
+        .explore-section {
+            margin-top: 8px;
+        }
+
+        .explore-group {
+            margin-bottom: 18px;
+        }
+
+        .explore-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .explore-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .explore-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .explore-chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .explore-chip-category {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid var(--border-active);
+            color: var(--neon-cyan);
+        }
+
+        .explore-chip-category:hover {
+            background: rgba(0, 229, 255, 0.18);
+            box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+        }
+
+        .explore-chip-tag {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+        }
+
+        .explore-chip-tag:hover {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.3);
+            color: var(--text-primary);
+        }
+
+        /* Quick Stats Mini */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .quick-stat {
+            padding: 14px 12px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-dim);
+            text-align: center;
+        }
+
+        .quick-stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            margin-bottom: 2px;
+        }
+
+        .quick-stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================
+         FOOTER
+         ============================================ */
+        .footer {
+            margin-top: 60px;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border-dim);
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-text a {
+            color: var(--neon-cyan);
+            transition: color 0.2s ease;
+        }
+
+        .footer-text a:hover {
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        /* ============================================
+         SVG ICONS (inline placeholders)
+         ============================================ */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .icon-arrow::after {
+            content: "→";
+        }
+
+        .icon-eye::before {
+            content: "👁";
+            font-size: 12px;
+        }
+
+        .icon-calendar::before {
+            content: "📅";
+            font-size: 12px;
+        }
+
+        .icon-flame::before {
+            content: "🔥";
+            font-size: 14px;
+        }
+
+        .icon-folder::before {
+            content: "📁";
+            font-size: 12px;
+        }
+
+        .icon-hash::before {
+            content: "#";
+            font-weight: 800;
+            color: var(--neon-purple);
+        }
+
+        .icon-chart::before {
+            content: "📊";
+            font-size: 14px;
+        }
+
+        .icon-compass::before {
+            content: "🧭";
+            font-size: 14px;
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 600px) {
+            .hero {
+                padding: 32px 24px;
+            }
+
+            .hero-content h1 {
+                font-size: 28px;
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                padding: 0 16px;
+            }
+
+            .container {
+                padding: 24px 16px 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Neon Grid Background -->
+    <div class="neon-grid-bg" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="#" class="brand">
+                <div class="brand-icon">M</div>
+                <span>Mion's Blog</span>
+            </a>
+
+            <nav class="nav">
+                <a href="#" class="nav-link active">Home</a>
+                <a href="#" class="nav-link">Posts</a>
+                <a href="#" class="nav-link">About</a>
+            </nav>
+
+            <div class="header-actions">
+                <button class="btn btn-primary">
+                    <span class="dot"></span>
+                    새 글
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <h1>백엔드 개발 기록</h1>
+                    <p>
+                        NestJS를 중심으로 백엔드 설계/운영 경험을 정리합니다.
+                        이전에는 Spring Boot로 서비스를 개발했어요.
+                        실무에서 배운 것과 실험 기록을, 읽기 좋은 형태로 꾸준히 업데이트합니다.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary">
+                            포스트 보러가기
+                            <span class="icon-arrow"></span>
+                        </button>
+                        <button class="btn">소개 보기</button>
+                    </div>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">128</div>
+                        <div class="stat-label">총 포스트</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">카테고리</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">42</div>
+                        <div class="stat-label">태그</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">15.2K</div>
+                        <div class="stat-label">총 조회수</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Content Area -->
+            <main>
+                <!-- Featured Post -->
+                <section>
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div>
+                                <div class="section-eyebrow">Featured</div>
+                                <h2>오늘의 추천</h2>
+                            </div>
+                        </div>
+                        <button class="btn">
+                            전체 보기
+                            <span class="icon-arrow"></span>
+                        </button>
+                    </div>
+
+                    <article class="featured-post">
+                        <div class="featured-cover">
+                            <div class="featured-cover-placeholder">Cover Image</div>
+                        </div>
+                        <div class="featured-meta">
+                            <span class="category-badge">
+                                <span class="dot"></span>
+                                개발
+                            </span>
+                            <span class="meta-item">
+                                <span class="icon-calendar"></span>
+                                2025년 12월 16일
+                            </span>
+                            <span class="meta-item">
+                                <span class="icon-eye"></span>
+                                1,234회
+                            </span>
+                        </div>
+                        <h3 class="featured-title">
+                            <a href="#">Next.js 15 + Mantine으로 홈부터 리디자인하기</a>
+                        </h3>
+                        <p class="featured-excerpt">
+                            우선 AppShell 구조(헤더/메인/푸터)를 잡고, 타이포 스케일과 spacing 토큰을 정한 뒤,
+                            카드/리스트 컴포넌트를 공통화해요. 홈이 안정되면 posts, admin은 같은 토큰으로 빠르게 확장할 수 있어요.
+                        </p>
+                        <div class="featured-footer">
+                            <div class="tags">
+                                <a href="#" class="tag">#Next.js</a>
+                                <a href="#" class="tag">#Mantine</a>
+                                <a href="#" class="tag">#디자인시스템</a>
+                            </div>
+                            <a href="#" class="read-more">
+                                읽기
+                                <span class="icon-arrow"></span>
+                            </a>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Recent Posts -->
+                <section>
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div>
+                                <div class="section-eyebrow">Latest</div>
+                                <h2>최근 글</h2>
+                            </div>
+                        </div>
+                        <button class="btn">
+                            더 보기
+                            <span class="icon-arrow"></span>
+                        </button>
+                    </div>
+
+                    <div class="posts-grid">
+                        <article class="post-card">
+                            <div class="post-card-meta">
+                                <span class="category-badge">
+                                    <span class="dot"></span>
+                                    회고
+                                </span>
+                                <span class="meta-item">12월 10일</span>
+                            </div>
+                            <h3 class="post-card-title">
+                                <a href="#">다크 모드만 운영하는 디자인 원칙</a>
+                            </h3>
+                            <p class="post-card-excerpt">
+                                컬러 대비, 포커스 링, 카드 레이어(표면/표면2), 테두리 농도만 잘 정하면 다크만으로도 충분히 "고급진" 인상을 만들 수 있어요.
+                            </p>
+                            <div class="post-card-footer">
+                                <span class="view-count">
+                                    <span class="icon-eye"></span>
+                                    892회
+                                </span>
+                                <a href="#" class="read-more">
+                                    읽기
+                                    <span class="icon-arrow"></span>
+                                </a>
+                            </div>
+                        </article>
+
+                        <article class="post-card">
+                            <div class="post-card-meta">
+                                <span class="category-badge">
+                                    <span class="dot"></span>
+                                    NestJS
+                                </span>
+                                <span class="meta-item">12월 8일</span>
+                            </div>
+                            <h3 class="post-card-title">
+                                <a href="#">NestJS에서 Redis 캐싱 전략 구현하기</a>
+                            </h3>
+                            <p class="post-card-excerpt">
+                                API 응답 속도를 개선하기 위해 Redis를 도입한 경험을 정리합니다. Cache-Aside 패턴과 TTL 전략에 대해 다뤄요.
+                            </p>
+                            <div class="post-card-footer">
+                                <span class="view-count">
+                                    <span class="icon-eye"></span>
+                                    1,456회
+                                </span>
+                                <a href="#" class="read-more">
+                                    읽기
+                                    <span class="icon-arrow"></span>
+                                </a>
+                            </div>
+                        </article>
+
+                        <article class="post-card">
+                            <div class="post-card-meta">
+                                <span class="category-badge">
+                                    <span class="dot"></span>
+                                    인프라
+                                </span>
+                                <span class="meta-item">12월 5일</span>
+                            </div>
+                            <h3 class="post-card-title">
+                                <a href="#">AWS RDS 블루/그린 배포 경험기</a>
+                            </h3>
+                            <p class="post-card-excerpt">
+                                프로덕션 DB 마이그레이션을 무중단으로 진행한 경험입니다. 블루/그린 배포의 장단점을 정리했어요.
+                            </p>
+                            <div class="post-card-footer">
+                                <span class="view-count">
+                                    <span class="icon-eye"></span>
+                                    678회
+                                </span>
+                                <a href="#" class="read-more">
+                                    읽기
+                                    <span class="icon-arrow"></span>
+                                </a>
+                            </div>
+                        </article>
+
+                        <article class="post-card">
+                            <div class="post-card-meta">
+                                <span class="category-badge">
+                                    <span class="dot"></span>
+                                    TypeScript
+                                </span>
+                                <span class="meta-item">12월 2일</span>
+                            </div>
+                            <h3 class="post-card-title">
+                                <a href="#">제네릭을 활용한 타입 안전한 API 클라이언트</a>
+                            </h3>
+                            <p class="post-card-excerpt">
+                                TypeScript 제네릭으로 API 응답 타입을 자동 추론하는 클라이언트를 만들어봤습니다.
+                            </p>
+                            <div class="post-card-footer">
+                                <span class="view-count">
+                                    <span class="icon-eye"></span>
+                                    1,102회
+                                </span>
+                                <a href="#" class="read-more">
+                                    읽기
+                                    <span class="icon-arrow"></span>
+                                </a>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Trending Posts -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <span class="sidebar-title-icon icon-flame"></span>
+                        인기 글
+                    </h3>
+                    <div class="trending-list">
+                        <a href="#" class="trending-item">
+                            <div class="trending-rank">01</div>
+                            <div class="trending-content">
+                                <div class="trending-title">NestJS에서 Redis 캐싱 전략 구현하기</div>
+                                <div class="trending-views">
+                                    <span class="icon-eye"></span> 1,456회
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="trending-item">
+                            <div class="trending-rank">02</div>
+                            <div class="trending-content">
+                                <div class="trending-title">Next.js 15 + Mantine으로 홈부터 리디자인하기</div>
+                                <div class="trending-views">
+                                    <span class="icon-eye"></span> 1,234회
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="trending-item">
+                            <div class="trending-rank">03</div>
+                            <div class="trending-content">
+                                <div class="trending-title">제네릭을 활용한 타입 안전한 API 클라이언트</div>
+                                <div class="trending-views">
+                                    <span class="icon-eye"></span> 1,102회
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="trending-item">
+                            <div class="trending-rank">04</div>
+                            <div class="trending-content">
+                                <div class="trending-title">다크 모드만 운영하는 디자인 원칙</div>
+                                <div class="trending-views">
+                                    <span class="icon-eye"></span> 892회
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="trending-item">
+                            <div class="trending-rank">05</div>
+                            <div class="trending-content">
+                                <div class="trending-title">AWS RDS 블루/그린 배포 경험기</div>
+                                <div class="trending-views">
+                                    <span class="icon-eye"></span> 678회
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Explore -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <span class="sidebar-title-icon icon-compass"></span>
+                        탐색하기
+                    </h3>
+                    <div class="explore-section">
+                        <div class="explore-group">
+                            <div class="explore-label">
+                                <span class="icon-folder"></span>
+                                카테고리
+                            </div>
+                            <div class="explore-chips">
+                                <a href="#" class="explore-chip explore-chip-category">개발</a>
+                                <a href="#" class="explore-chip explore-chip-category">NestJS</a>
+                                <a href="#" class="explore-chip explore-chip-category">인프라</a>
+                                <a href="#" class="explore-chip explore-chip-category">회고</a>
+                            </div>
+                        </div>
+                        <div class="explore-group">
+                            <div class="explore-label">
+                                <span class="icon-hash"></span>
+                                태그
+                            </div>
+                            <div class="explore-chips">
+                                <a href="#" class="explore-chip explore-chip-tag">#TypeScript</a>
+                                <a href="#" class="explore-chip explore-chip-tag">#Redis</a>
+                                <a href="#" class="explore-chip explore-chip-tag">#AWS</a>
+                                <a href="#" class="explore-chip explore-chip-tag">#Next.js</a>
+                                <a href="#" class="explore-chip explore-chip-tag">#디자인</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <span class="sidebar-title-icon icon-chart"></span>
+                        블로그 현황
+                    </h3>
+                    <div class="quick-stats">
+                        <div class="quick-stat">
+                            <div class="quick-stat-value">128</div>
+                            <div class="quick-stat-label">글</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-value">12</div>
+                            <div class="quick-stat-label">분류</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-value">42</div>
+                            <div class="quick-stat-label">태그</div>
+                        </div>
+                    </div>
+                    <div class="sidebar-divider"></div>
+                    <div style="font-size: 13px; color: var(--text-muted);">
+                        마지막 업데이트: <span style="color: var(--neon-cyan);">2025년 12월 16일</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer-text">
+                © 2025 <a href="#">Mion's Blog</a>. Neon Grid Theme · Dark Mode Only
+            </p>
+        </footer>
+    </div>
+</body>
+
+</html>

@@ -364,15 +364,16 @@ function MermaidChart({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex items-center gap-2 rounded-md bg-slate-800 px-3 py-1 text-xs text-slate-200 transition hover:bg-slate-700"
+        className="inline-flex items-center gap-2 rounded-md bg-slate-800 px-2 py-0.5 text-[9px] text-slate-200 transition hover:bg-slate-700"
+        style={{ fontSize: 9, lineHeight: '1' }}
       >
         {copied ? (
           <>
-            <Check className="h-3 w-3" /> 복사됨
+            <Check className="h-2.5 w-2.5" /> Copied
           </>
         ) : (
           <>
-            <Copy className="h-3 w-3" /> 코드 복사
+            <Copy className="h-2.5 w-2.5" /> Copy
           </>
         )}
       </button>
@@ -403,24 +404,25 @@ function CodeBlock({ children, className, ...props }: { children: React.ReactNod
 
     return (
       <div className="relative my-6 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2">
-          <span className="text-sm font-medium text-gray-600">
+        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-5 py-2">
+          <span className="text-[9px] font-medium tracking-widest text-gray-600">
             {language.toUpperCase()}
           </span>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium text-gray-600 hover:bg-gray-200"
             type="button"
+            style={{ fontSize: 9, lineHeight: '1' }}
           >
             {copied ? (
               <>
-                <Check className="h-3 w-3" />
-                복사됨
+                <Check className="h-2.5 w-2.5" />
+                Copied
               </>
             ) : (
               <>
-                <Copy className="h-3 w-3" />
-                복사
+                <Copy className="h-2.5 w-2.5" />
+                Copy
               </>
             )}
           </button>
