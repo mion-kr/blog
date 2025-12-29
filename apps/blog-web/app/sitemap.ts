@@ -60,7 +60,7 @@ async function fetchAllPosts(): Promise<PostResponseDto[]> {
       if (page >= totalPages || !res.meta.hasNext) break;
       page += 1;
     }
-  } catch (e) {
+  } catch {
     // ignore and return statics only
   }
 

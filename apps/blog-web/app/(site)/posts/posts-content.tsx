@@ -66,14 +66,10 @@ export function PostsContent({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError ?? null);
 
-  const searchParamsString = useMemo(
-    () => urlSearchParams.toString(),
-    [urlSearchParams],
-  );
   const currentQuery = useMemo(
     () =>
       parsePostsSearchParams(extractPostsSearchParams(urlSearchParams)),
-    [searchParamsString, urlSearchParams],
+    [urlSearchParams],
   );
   const currentQueryKey = useMemo(
     () => buildPostsQueryKey(currentQuery),

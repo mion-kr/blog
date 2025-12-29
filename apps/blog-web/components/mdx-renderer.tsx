@@ -287,6 +287,7 @@ function MermaidChart({ children }: { children: React.ReactNode }) {
     }
 
     let cancelled = false;
+    const target = chartRef.current;
     setIsLoading(true);
     setError(null);
 
@@ -304,8 +305,8 @@ function MermaidChart({ children }: { children: React.ReactNode }) {
         const { svg } = await mermaid.render(chartId, definition);
         if (cancelled) return;
 
-        if (chartRef.current) {
-          chartRef.current.innerHTML = svg;
+        if (target) {
+          target.innerHTML = svg;
         }
       } catch (err) {
         console.error('Failed to render Mermaid diagram', err);
@@ -321,8 +322,8 @@ function MermaidChart({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true;
-      if (chartRef.current) {
-        chartRef.current.innerHTML = '';
+      if (target) {
+        target.innerHTML = '';
       }
     };
   }, [chartId, definition]);

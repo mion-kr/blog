@@ -5,11 +5,11 @@ import { notFound } from "next/navigation";
 
 import { MDXRenderer } from "@/components/mdx-renderer";
 import { postsApi } from "@/lib/api-client";
-import { getSiteUrl } from "@/lib/site";
 import {
-  calculateReadingTimeMinutesFromMdx,
-  formatReadingTimeMinutes,
+    calculateReadingTimeMinutesFromMdx,
+    formatReadingTimeMinutes,
 } from "@/lib/reading-time";
+import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
 import styles from "./post-detail-neon-grid.module.css";
