@@ -14,7 +14,12 @@ import { SiteHeader } from "@/components/site-header";
 export function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname === "/posts" || pathname === "/about") {
+  if (
+    pathname === "/" ||
+    pathname === "/about" ||
+    pathname === "/posts" ||
+    pathname.startsWith("/posts/")
+  ) {
     return <>{children}</>;
   }
 

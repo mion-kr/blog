@@ -1,7 +1,6 @@
-import Link from 'next/link';
-
 import styles from './posts-neon-grid.module.css';
 import { cn } from '@/lib/utils';
+import { NeonHeader } from '@/components/layout/neon-header';
 
 /**
  * posts 페이지에서 데이터가 준비되기 전 사용할 스켈레톤 UI.
@@ -12,28 +11,7 @@ export function PostsPageSkeleton() {
     <div className={cn(styles.root, 'neon-grid-posts')}>
       <div className="neon-grid-bg" aria-hidden="true" />
 
-      <header className="header" aria-label="페이지 헤더">
-        <div className="header-inner">
-          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
-            <div className="brand-icon" aria-hidden="true">
-              M
-            </div>
-            <span>Mion&apos;s Blog</span>
-          </Link>
-          <nav className="nav" aria-label="메인 네비게이션">
-            <Link href="/" className="nav-link">
-              Home
-            </Link>
-            <span className="nav-link active" aria-current="page">
-              Posts
-            </span>
-            <Link href="/about" className="nav-link">
-              About
-            </Link>
-          </nav>
-          <div className="header-actions" />
-        </div>
-      </header>
+      <NeonHeader activePath="/posts" />
 
       <div className="page-hero">
         <div className="page-hero-content">

@@ -4,6 +4,7 @@ import { cva } from "class-variance-authority";
 
 import styles from "./home-neon-grid.module.css";
 
+import { NeonHeader } from "@/components/layout/neon-header";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -101,30 +102,7 @@ export default async function HomePage() {
     <div className={cn(styles.root, "neon-grid-home")}>
       <div className="neon-grid-bg" aria-hidden="true" />
 
-      <header className="header">
-        <div className="header-inner">
-          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
-            <div className="brand-icon" aria-hidden="true">
-              M
-            </div>
-            <span>Mion&apos;s Blog</span>
-          </Link>
-
-          <nav className="nav" aria-label="메인 네비게이션">
-            <Link href="/" className="nav-link active" aria-current="page">
-              Home
-            </Link>
-            <Link href="/posts" className="nav-link">
-              Posts
-            </Link>
-            <Link href="/about" className="nav-link">
-              About
-            </Link>
-          </nav>
-
-          <div className="header-actions" />
-        </div>
-      </header>
+      <NeonHeader activePath="/" />
 
       <div className="container">
         <section className="hero" aria-label="홈 히어로">
@@ -499,4 +477,3 @@ function formatShortDate(date: Date): string {
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
-

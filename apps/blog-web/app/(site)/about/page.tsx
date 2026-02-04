@@ -5,6 +5,7 @@ import type { ApiResponse, PublicSiteSettings } from '@repo/shared';
 
 import styles from './about-neon-grid.module.css';
 
+import { NeonHeader } from '@/components/layout/neon-header';
 import { getSiteUrl } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
@@ -101,24 +102,7 @@ export default async function AboutPage() {
     <div className={cn(styles.root, 'neon-grid-about')}>
       <div className="neon-grid-bg" aria-hidden="true" />
 
-      <header className="header" aria-label="페이지 헤더">
-        <div className="header-inner">
-          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
-            MION BLOG
-          </Link>
-          <nav className="nav" aria-label="메인 네비게이션">
-            <Link href="/" className="nav-link">
-              Home
-            </Link>
-            <Link href="/posts" className="nav-link">
-              Posts
-            </Link>
-            <Link href="/about" className="nav-link active" aria-current="page">
-              About
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <NeonHeader activePath="/about" />
 
       <section className="hero" aria-label="소개 히어로">
         <div className="profile-glow" aria-hidden="true">
@@ -252,4 +236,3 @@ function buildJourneyTimeline() {
     },
   ] as const;
 }
-

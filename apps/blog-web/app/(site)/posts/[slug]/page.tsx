@@ -4,10 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MDXRenderer } from "@/components/mdx-renderer";
+import { NeonHeader } from "@/components/layout/neon-header";
 import { postsApi } from "@/lib/api-client";
 import {
-    calculateReadingTimeMinutesFromMdx,
-    formatReadingTimeMinutes,
+  calculateReadingTimeMinutesFromMdx,
+  formatReadingTimeMinutes,
 } from "@/lib/reading-time";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -113,12 +114,13 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className={cn(styles.root, "neon-grid-post-detail")}>
         <div className="neon-grid-bg" aria-hidden="true" />
 
+        <NeonHeader activePath="/posts" />
+
         <article className="article-container">
           {/* JSON-LD: BlogPosting */}
           <script
             type="application/ld+json"
             suppressHydrationWarning
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
 
