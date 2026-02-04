@@ -80,52 +80,92 @@
   mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 90%);
 }
 
-/* Header */
+.root :global(.header),
+.root :global(.container) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+ HEADER
+ ============================================ */
 .root :global(.header) {
   position: sticky;
   top: 0;
-  z-index: 10;
-  backdrop-filter: blur(20px);
-  background: rgba(2, 4, 10, 0.8);
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  background: rgba(2, 4, 10, 0.85);
   border-bottom: 1px solid var(--border-dim);
-  height: 64px;
-  display: flex;
-  align-items: center;
+  box-shadow: 0 1px 0 rgba(0, 229, 255, 0.08), 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .root :global(.header-inner) {
   max-width: 1280px;
-  width: 100%;
   margin: 0 auto;
   padding: 0 24px;
+  height: 64px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .root :global(.brand) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.root :global(.brand-icon) {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
   font-weight: 900;
-  font-size: 20px;
-  letter-spacing: -0.05em;
-  color: var(--neon-cyan);
-  text-shadow: 0 0 10px var(--neon-cyan-glow);
+  color: #000;
 }
 
 .root :global(.nav) {
   display: flex;
-  gap: 24px;
-  font-size: 14px;
-  font-weight: 600;
+  align-items: center;
+  gap: 8px;
 }
 
 .root :global(.nav-link) {
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
-.root :global(.nav-link:hover),
+.root :global(.nav-link:hover) {
+  color: var(--text-primary);
+  background: rgba(0, 229, 255, 0.08);
+  border-color: var(--border-dim);
+}
+
 .root :global(.nav-link.active) {
   color: var(--neon-cyan);
+  background: rgba(0, 229, 255, 0.12);
+  border-color: var(--border-active);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+}
+
+.root :global(.header-actions) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
 }
 
 /* Hero */

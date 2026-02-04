@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import Link from 'next/link';
 
 import { PostsContent } from './posts-content';
 import { PostsPageSkeleton } from './posts-skeleton';
@@ -9,6 +8,7 @@ import { parsePostsSearchParams } from './query-utils';
 import { PostsNeonSidebar } from './posts-neon-sidebar';
 import styles from './posts-neon-grid.module.css';
 import { cn } from '@/lib/utils';
+import { NeonHeader } from '@/components/layout/neon-header';
 import type {
   ApiPaginationMeta,
   PostResponseDto,
@@ -45,6 +45,9 @@ interface PostsPageProps {
   }>;
 }
 
+/**
+ * Posts 목록 페이지(네온 그리드 테마)입니다.
+ */
 export default async function PostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = await searchParams;
   const initialQuery = parsePostsSearchParams(resolvedSearchParams);
@@ -82,28 +85,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     <div className={cn(styles.root, 'neon-grid-posts')}>
       <div className="neon-grid-bg" aria-hidden="true" />
 
-      <header className="header" aria-label="페이지 헤더">
-        <div className="header-inner">
-          <Link href="/" className="brand" aria-label="Mion's Blog 홈">
-            <div className="brand-icon" aria-hidden="true">
-              M
-            </div>
-            <span>Mion&apos;s Blog</span>
-          </Link>
-          <nav className="nav" aria-label="메인 네비게이션">
-            <Link href="/" className="nav-link">
-              Home
-            </Link>
-            <Link href="/posts" className="nav-link active" aria-current="page">
-              Posts
-            </Link>
-            <Link href="/about" className="nav-link">
-              About
-            </Link>
-          </nav>
-          <div className="header-actions" />
-        </div>
-      </header>
+      <NeonHeader activePath="/posts" />
 
       <div className="page-hero">
         <div className="page-hero-content">
