@@ -348,82 +348,18 @@ export function PostForm({
       <input type="hidden" name="coverImageKey" value={coverImageKey} readOnly />
       <input type="hidden" name="draftUuid" value={draftUuidRef.current} readOnly />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-200" htmlFor="title">
-            제목
-          </label>
-          <input
-            id="title"
-            name="title"
-            required
-            defaultValue={defaultValues?.title}
-            placeholder="예) Next.js 15 관리자 대시보드 구축"
-            className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-200">
-            대표 이미지
-          </label>
-          <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 px-4 py-4">
-            {coverImageUrl ? (
-              <div className="relative overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={coverImageUrl}
-                  alt="업로드한 대표 이미지"
-                  className="h-40 w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 bg-slate-900 text-slate-500">
-                <ImageIcon className="h-6 w-6" aria-hidden />
-                <p className="text-xs">썸네일 이미지를 업로드하면 미리보기로 확인할 수 있어요.</p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                ref={coverFileInputRef}
-                type="file"
-                accept={ALLOWED_MIME_TYPES.join(",")}
-                className="hidden"
-                onChange={handleCoverFileChange}
-              />
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/60 px-3 py-2 text-xs font-medium text-emerald-300 transition hover:border-emerald-400 hover:text-emerald-200 disabled:opacity-60"
-                onClick={() => coverFileInputRef.current?.click()}
-                disabled={isCoverUploading}
-              >
-                {isCoverUploading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                ) : (
-                  <Upload className="h-3.5 w-3.5" aria-hidden />
-                )}
-                {isCoverUploading ? "업로드 중..." : "이미지 선택"}
-              </button>
-
-              {coverImageUrl ? (
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 transition hover:border-red-500/60 hover:text-red-200"
-                >
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  이미지 제거
-                </button>
-              ) : null}
-            </div>
-
-            <p className="text-xs text-slate-500">
-              지원 형식: JPG, PNG, WEBP • 최대 {formatFileSize(MAX_FILE_SIZE)}
-            </p>
-            {coverUploadError ? <p className="text-xs text-red-400">{coverUploadError}</p> : null}
-          </div>
-        </div>
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-slate-200" htmlFor="title">
+          제목
+        </label>
+        <input
+          id="title"
+          name="title"
+          required
+          defaultValue={defaultValues?.title}
+          placeholder="예) Next.js 15 관리자 대시보드 구축"
+          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
+        />
       </div>
 
       <div className="grid gap-2">
@@ -438,6 +374,68 @@ export function PostForm({
           placeholder="간단한 요약을 입력하면 목록에서 더 잘 보일 수 있어요."
           className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
         />
+      </div>
+
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-slate-200">
+          대표 이미지
+        </label>
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 px-4 py-4">
+          {coverImageUrl ? (
+            <div className="relative overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coverImageUrl}
+                alt="업로드한 대표 이미지"
+                className="h-40 w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 bg-slate-900 text-slate-500">
+              <ImageIcon className="h-6 w-6" aria-hidden />
+              <p className="text-xs">썸네일 이미지를 업로드하면 미리보기로 확인할 수 있어요.</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={coverFileInputRef}
+              type="file"
+              accept={ALLOWED_MIME_TYPES.join(",")}
+              className="hidden"
+              onChange={handleCoverFileChange}
+            />
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/60 px-3 py-2 text-xs font-medium text-emerald-300 transition hover:border-emerald-400 hover:text-emerald-200 disabled:opacity-60"
+              onClick={() => coverFileInputRef.current?.click()}
+              disabled={isCoverUploading}
+            >
+              {isCoverUploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {isCoverUploading ? "업로드 중..." : "이미지 선택"}
+            </button>
+
+            {coverImageUrl ? (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 transition hover:border-red-500/60 hover:text-red-200"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                이미지 제거
+              </button>
+            ) : null}
+          </div>
+
+          <p className="text-xs text-slate-500">
+            지원 형식: JPG, PNG, WEBP • 최대 {formatFileSize(MAX_FILE_SIZE)}
+          </p>
+          {coverUploadError ? <p className="text-xs text-red-400">{coverUploadError}</p> : null}
+        </div>
       </div>
 
       <div className="grid gap-2">
