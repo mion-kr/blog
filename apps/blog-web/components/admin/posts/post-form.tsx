@@ -51,6 +51,37 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
+/**
+ * 파일명에서 마크다운 이미지 대체 텍스트로 사용할 문자열을 생성합니다.
+ */
+function toAltTextFromFileName(fileName: string): string {
+  const normalized = fileName.replace(/\.[^/.]+$/, "").trim()
+  if (normalized.length === 0) {
+    return "image"
+  }
+
+  // 마크다운 이미지 alt 텍스트에서 구문 충돌이 나는 문자를 이스케이프한다.
+  return normalized
+    .replace(/\\/g, "\\\\")
+    .replace(/\[/g, "\\[")
+    .replace(/\]/g, "\\]")
+}
+
+/**
+ * 업로드할 이미지 파일의 형식과 크기를 검증합니다.
+ */
+function validateImageFile(file: File): string | null {
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return "지원하지 않는 파일 형식입니다. JPEG, PNG, WEBP만 업로드할 수 있어요."
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return `파일 용량이 너무 커요. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 가능합니다.`
+  }
+
+  return null
+}
+
 async function requestPreSignedUpload(
   payload: PreSignedUploadRequestDto,
 ): Promise<PreSignedUploadResponseDto> {
@@ -125,11 +156,15 @@ export function PostForm({
   const [tagError, setTagError] = useState<string>("")
   const [coverImageUrl, setCoverImageUrl] = useState<string>(defaultValues?.coverImage ?? "")
   const [coverImageKey, setCoverImageKey] = useState<string>("")
-  const [uploadError, setUploadError] = useState<string>("")
-  const [isUploading, setIsUploading] = useState(false)
+  const [coverUploadError, setCoverUploadError] = useState<string>("")
+  const [contentUploadError, setContentUploadError] = useState<string>("")
+  const [isCoverUploading, setIsCoverUploading] = useState(false)
+  const [isContentUploading, setIsContentUploading] = useState(false)
 
   const draftUuidRef = useRef<string>(defaultDraftUuid ?? uuidv7())
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const coverFileInputRef = useRef<HTMLInputElement>(null)
+  const contentFileInputRef = useRef<HTMLInputElement>(null)
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const categoryOptions = useMemo(
     () => categories.slice().sort((a, b) => a.name.localeCompare(b.name, "ko")),
@@ -140,7 +175,9 @@ export function PostForm({
     [tags],
   )
 
-  const handleFileChange = useCallback(
+  const isUploading = isCoverUploading || isContentUploading
+
+  const handleCoverFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
 
@@ -148,20 +185,15 @@ export function PostForm({
         return
       }
 
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        setUploadError("지원하지 않는 파일 형식입니다. JPEG, PNG, WEBP만 업로드할 수 있어요.")
+      const validationMessage = validateImageFile(file)
+      if (validationMessage) {
+        setCoverUploadError(validationMessage)
         event.target.value = ""
         return
       }
 
-      if (file.size > MAX_FILE_SIZE) {
-        setUploadError(`파일 용량이 너무 커요. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 가능합니다.`)
-        event.target.value = ""
-        return
-      }
-
-      setUploadError("")
-      setIsUploading(true)
+      setCoverUploadError("")
+      setIsCoverUploading(true)
 
       try {
         const payload: PreSignedUploadRequestDto = {
@@ -180,7 +212,7 @@ export function PostForm({
         setCoverImageKey(objectKey)
       } catch (error) {
         console.error(error)
-        setUploadError(
+        setCoverUploadError(
           error instanceof Error
             ? error.message
             : "이미지 업로드 중 문제가 발생했어요. 다시 시도해 주세요.",
@@ -188,25 +220,98 @@ export function PostForm({
         setCoverImageUrl("")
         setCoverImageKey("")
       } finally {
-        setIsUploading(false)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
+        setIsCoverUploading(false)
+        if (coverFileInputRef.current) {
+          coverFileInputRef.current.value = ""
         }
       }
     },
     [],
   )
 
+  /**
+   * 본문 textarea의 현재 커서 위치에 마크다운 이미지 문법을 자동 삽입합니다.
+   */
+  const insertMarkdownImageToContent = useCallback((publicUrl: string, fileName: string) => {
+    const textarea = contentTextareaRef.current
+    if (!textarea) {
+      return
+    }
+
+    const start = textarea.selectionStart ?? textarea.value.length
+    const end = textarea.selectionEnd ?? textarea.value.length
+    const altText = toAltTextFromFileName(fileName)
+
+    // 커서 위치 기준으로 이미지 마크다운을 본문에 삽입한다.
+    const markdown = `![${altText}](${publicUrl})`
+    const prefix = start > 0 && textarea.value[start - 1] !== "\n" ? "\n\n" : ""
+    const suffix = end < textarea.value.length && textarea.value[end] !== "\n" ? "\n\n" : ""
+    const inserted = `${prefix}${markdown}${suffix}`
+
+    // 비제어 textarea 값도 정확히 반영되도록 Range API를 사용한다.
+    textarea.setRangeText(inserted, start, end, "end")
+    textarea.dispatchEvent(new Event("input", { bubbles: true }))
+    textarea.focus()
+  }, [])
+
+  const handleContentImageFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+
+      if (!file) {
+        return
+      }
+
+      const validationMessage = validateImageFile(file)
+      if (validationMessage) {
+        setContentUploadError(validationMessage)
+        event.target.value = ""
+        return
+      }
+
+      setContentUploadError("")
+      setIsContentUploading(true)
+
+      try {
+        const payload: PreSignedUploadRequestDto = {
+          filename: file.name,
+          mimeType: file.type,
+          size: file.size,
+          draftUuid: draftUuidRef.current,
+          type: "content",
+        }
+
+        const { uploadUrl, publicUrl } = await requestPreSignedUpload(payload)
+
+        await uploadFileToSignedUrl(uploadUrl, file)
+        insertMarkdownImageToContent(publicUrl, file.name)
+      } catch (error) {
+        console.error(error)
+        setContentUploadError(
+          error instanceof Error
+            ? error.message
+            : "본문 이미지 업로드 중 문제가 발생했어요. 다시 시도해 주세요.",
+        )
+      } finally {
+        setIsContentUploading(false)
+        if (contentFileInputRef.current) {
+          contentFileInputRef.current.value = ""
+        }
+      }
+    },
+    [insertMarkdownImageToContent],
+  )
+
   const handleRemoveImage = useCallback(() => {
     setCoverImageUrl("")
     setCoverImageKey("")
-    setUploadError("")
+    setCoverUploadError("")
   }, [])
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
       if (isUploading) {
-        setUploadError("이미지를 업로드하는 중입니다. 완료될 때까지 잠시만 기다려 주세요.")
+        setCoverUploadError("이미지를 업로드하는 중입니다. 완료될 때까지 잠시만 기다려 주세요.")
         return
       }
 
@@ -216,7 +321,8 @@ export function PostForm({
       }
 
       setTagError("")
-      setUploadError("")
+      setCoverUploadError("")
+      setContentUploadError("")
 
       formData.set("coverImage", coverImageUrl ?? "")
       formData.set("coverImageKey", coverImageKey ?? "")
@@ -280,24 +386,24 @@ export function PostForm({
 
             <div className="flex flex-wrap items-center gap-2">
               <input
-                ref={fileInputRef}
+                ref={coverFileInputRef}
                 type="file"
                 accept={ALLOWED_MIME_TYPES.join(",")}
                 className="hidden"
-                onChange={handleFileChange}
+                onChange={handleCoverFileChange}
               />
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/60 px-3 py-2 text-xs font-medium text-emerald-300 transition hover:border-emerald-400 hover:text-emerald-200 disabled:opacity-60"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+                onClick={() => coverFileInputRef.current?.click()}
+                disabled={isCoverUploading}
               >
-                {isUploading ? (
+                {isCoverUploading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
                 ) : (
                   <Upload className="h-3.5 w-3.5" aria-hidden />
                 )}
-                {isUploading ? "업로드 중..." : "이미지 선택"}
+                {isCoverUploading ? "업로드 중..." : "이미지 선택"}
               </button>
 
               {coverImageUrl ? (
@@ -315,7 +421,7 @@ export function PostForm({
             <p className="text-xs text-slate-500">
               지원 형식: JPG, PNG, WEBP • 최대 {formatFileSize(MAX_FILE_SIZE)}
             </p>
-            {uploadError ? <p className="text-xs text-red-400">{uploadError}</p> : null}
+            {coverUploadError ? <p className="text-xs text-red-400">{coverUploadError}</p> : null}
           </div>
         </div>
       </div>
@@ -335,10 +441,35 @@ export function PostForm({
       </div>
 
       <div className="grid gap-2">
-        <label className="text-sm font-medium text-slate-200" htmlFor="content">
-          본문 (MDX)
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-sm font-medium text-slate-200" htmlFor="content">
+            본문 (MDX)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              ref={contentFileInputRef}
+              type="file"
+              accept={ALLOWED_MIME_TYPES.join(",")}
+              className="hidden"
+              onChange={handleContentImageFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => contentFileInputRef.current?.click()}
+              disabled={isContentUploading}
+              className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/60 px-3 py-1.5 text-xs font-medium text-cyan-300 transition hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-60"
+            >
+              {isContentUploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {isContentUploading ? "업로드 중..." : "본문 이미지 업로드"}
+            </button>
+          </div>
+        </div>
         <textarea
+          ref={contentTextareaRef}
           id="content"
           name="content"
           required
@@ -347,6 +478,10 @@ export function PostForm({
           placeholder={"# 제목\n\n여기에 MDX 콘텐츠를 입력해 주세요."}
           className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
         />
+        <p className="text-xs text-slate-500">
+          이미지 업로드 후 커서 위치에 <code>![이미지 설명](URL)</code> 형식으로 자동 삽입돼요.
+        </p>
+        {contentUploadError ? <p className="text-xs text-red-400">{contentUploadError}</p> : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:items-start">

@@ -4,6 +4,16 @@ const backendApiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 const backendUrl = new URL(backendApiUrl)
 const backendOrigin = backendUrl.origin
 const backendPathname = backendUrl.pathname.replace(/\/$/, '')
+const imageEndpointRaw =
+  process.env.NEXT_PUBLIC_IMAGE_ENDPOINT ?? 'https://bucket-production-d421.up.railway.app'
+let imageEndpoint
+
+try {
+  imageEndpoint = new URL(imageEndpointRaw)
+} catch {
+  imageEndpoint = new URL('https://bucket-production-d421.up.railway.app')
+}
+
 const apiPathPrefix =
   backendPathname === ''
     ? '/api'
@@ -26,8 +36,9 @@ const nextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
       {
-        protocol: 'https',
-        hostname: 'bucket-production-d421.up.railway.app',
+        protocol: imageEndpoint.protocol.replace(':', ''),
+        hostname: imageEndpoint.hostname,
+        port: imageEndpoint.port || undefined,
         pathname: '/**',
       },
     ],

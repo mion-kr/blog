@@ -34,6 +34,13 @@ interface FinalizeCoverImageOptions {
   currentCoverImage?: string | null;
 }
 
+interface FinalizePostContentImagesOptions {
+  postId: string;
+  draftUuid?: string;
+  nextContent?: string | null;
+  previousContent?: string | null;
+}
+
 @Injectable()
 export class UploadsService {
   private readonly logger = new Logger(UploadsService.name);
@@ -82,7 +89,7 @@ export class UploadsService {
 
     const extension = this.resolveExtension(dto.filename, dto.mimeType);
     const sanitizedBaseName = this.sanitizeBaseName(dto.filename);
-    const timestamp = Math.floor(Date.now() / 1000);
+    const timestamp = Date.now();
 
     const objectKey = this.buildObjectKey(dto, timestamp, sanitizedBaseName, extension);
 
@@ -152,6 +159,34 @@ export class UploadsService {
     return this.buildPublicUrl(destinationKey);
   }
 
+  /**
+   * 포스트 본문의 draft 콘텐츠 이미지를 posts 경로로 확정하고, 제거된 기존 이미지를 정리합니다.
+   */
+  async finalizePostContentImages(
+    options: FinalizePostContentImagesOptions,
+  ): Promise<string> {
+    const { postId, draftUuid, nextContent, previousContent } = options;
+    let finalizedContent = nextContent ?? '';
+
+    // 본문에서 참조하는 draft/content 이미지를 post/content 경로로 이동하고 URL을 치환한다.
+    if (draftUuid) {
+      finalizedContent = await this.moveDraftContentImages({
+        postId,
+        draftUuid,
+        content: finalizedContent,
+      });
+    }
+
+    // 수정 시 본문에서 제거된 기존 content 이미지를 자동 삭제한다.
+    await this.deleteRemovedPostContentImages({
+      postId,
+      previousContent: previousContent ?? '',
+      nextContent: finalizedContent,
+    });
+
+    return finalizedContent;
+  }
+
   async finalizeAboutImage(tempPublicUrl: string): Promise<string> {
     const objectKey = this.extractObjectKeyFromUrl(tempPublicUrl);
 
@@ -208,6 +243,90 @@ export class UploadsService {
     }
 
     await this.deleteObject(objectKey, 'about-remove');
+  }
+
+  /**
+   * 본문 문자열에서 draft/content 이미지 객체를 posts/content로 복사 후 URL을 교체합니다.
+   */
+  private async moveDraftContentImages(options: {
+    postId: string;
+    draftUuid: string;
+    content: string;
+  }): Promise<string> {
+    const { postId, draftUuid, content } = options;
+    const basePath = this.getObjectKeyBasePath();
+    const draftPrefix = `${basePath}draft/${draftUuid}/content/`;
+    const draftObjectKeys = this.extractObjectKeysByPrefix(content, draftPrefix);
+    let nextContent = content;
+
+    for (const sourceKey of draftObjectKeys) {
+      const fileName = sourceKey.split('/').pop();
+      if (!fileName) {
+        continue;
+      }
+
+      const destinationKey = `${basePath}posts/${postId}/content/${fileName}`;
+
+      await this.copyObject(sourceKey, destinationKey);
+      await this.deleteObject(sourceKey, 'content-draft');
+
+      const sourceUrl = this.buildPublicUrl(sourceKey);
+      const destinationUrl = this.buildPublicUrl(destinationKey);
+
+      if (sourceUrl !== destinationUrl) {
+        nextContent = nextContent.split(sourceUrl).join(destinationUrl);
+      }
+    }
+
+    return nextContent;
+  }
+
+  /**
+   * 수정 전/후 본문을 비교해 posts/content 경로에서 더 이상 참조되지 않는 이미지를 삭제합니다.
+   */
+  private async deleteRemovedPostContentImages(options: {
+    postId: string;
+    previousContent: string;
+    nextContent: string;
+  }): Promise<void> {
+    const { postId, previousContent, nextContent } = options;
+    const basePath = this.getObjectKeyBasePath();
+    const postContentPrefix = `${basePath}posts/${postId}/content/`;
+    const previousKeys = this.extractObjectKeysByPrefix(
+      previousContent,
+      postContentPrefix,
+    );
+    const nextKeys = this.extractObjectKeysByPrefix(nextContent, postContentPrefix);
+
+    for (const previousKey of previousKeys) {
+      if (!nextKeys.has(previousKey)) {
+        await this.deleteObject(previousKey, 'content-orphan');
+      }
+    }
+  }
+
+  /**
+   * 본문 문자열에서 public endpoint 기준 URL을 추출하고, prefix 조건에 맞는 object key 집합을 반환합니다.
+   */
+  private extractObjectKeysByPrefix(content: string, prefix: string): Set<string> {
+    if (!content) {
+      return new Set();
+    }
+
+    const publicBasePath = this.getPublicUrlBasePath();
+    const escapedPublicBasePath = this.escapeRegExp(publicBasePath);
+    const urlPattern = new RegExp(`${escapedPublicBasePath}[^\\s)"'<>]+`, 'g');
+    const matches = content.match(urlPattern) ?? [];
+    const objectKeys = new Set<string>();
+
+    for (const url of matches) {
+      const objectKey = this.extractObjectKeyFromUrl(url);
+      if (objectKey && objectKey.startsWith(prefix)) {
+        objectKeys.add(objectKey);
+      }
+    }
+
+    return objectKeys;
   }
 
   private validateFile(mimeType: string, size: number): void {
@@ -268,12 +387,14 @@ export class UploadsService {
       return null;
     }
 
+    // URL query/hash가 포함되어도 객체 키 비교가 가능하도록 본문 URL을 정규화한다.
+    const normalizedUrl = publicUrl.split(/[?#]/)[0] ?? publicUrl;
     const publicBasePath = this.getPublicUrlBasePath();
-    if (!publicUrl.startsWith(publicBasePath)) {
+    if (!normalizedUrl.startsWith(publicBasePath)) {
       return null;
     }
 
-    return publicUrl.substring(publicBasePath.length);
+    return normalizedUrl.substring(publicBasePath.length);
   }
 
   private async copyObject(
@@ -363,6 +484,13 @@ export class UploadsService {
 
   private getPublicUrlBasePath(): string {
     return `${this.publicEndpoint}/${this.bucket}/`;
+  }
+
+  /**
+   * 정규식 문자열 안전화를 위해 특수문자를 이스케이프합니다.
+   */
+  private escapeRegExp(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private buildObjectKey(

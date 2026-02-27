@@ -56,7 +56,7 @@ describe('UploadsService', () => {
 
       const result = await service.createPreSignedUrl(dto)
 
-      const expectedKey = 'draft/draft-uuid/about/1700000000-profile-image.png'
+      const expectedKey = 'draft/draft-uuid/about/1700000000000-profile-image.png'
 
       expect(result).toEqual({
         uploadUrl: 'https://signed-url',
@@ -138,6 +138,66 @@ describe('UploadsService', () => {
       await expect(
         service.finalizeAboutImage('https://cdn.example.com/development/about/avatar.png'),
       ).rejects.toThrow(BadRequestException)
+    })
+  })
+
+  describe('finalizePostContentImages', () => {
+    it('should move draft content images and replace markdown urls', async () => {
+      const service = createService()
+      sendMock.mockResolvedValue(undefined)
+
+      const draftUrl =
+        'https://cdn.example.com/development/draft/draft-uuid/content/1700000000-flow.png?v=1#section'
+      const nextContent = `# 제목\n\n![flow](${draftUrl})\n\n![flow-dup](${draftUrl})`
+
+      const result = await service.finalizePostContentImages({
+        postId: 'post-1',
+        draftUuid: 'draft-uuid',
+        nextContent,
+      })
+
+      expect(result).toContain(
+        'https://cdn.example.com/development/posts/post-1/content/1700000000-flow.png',
+      )
+      expect(result).not.toContain(draftUrl)
+      expect(sendMock).toHaveBeenCalledTimes(2)
+
+      const copyCommand = sendMock.mock.calls[0][0] as CopyObjectCommand
+      expect(copyCommand.input).toMatchObject({
+        Bucket: 'development',
+        Key: 'posts/post-1/content/1700000000-flow.png',
+      })
+
+      const deleteDraft = sendMock.mock.calls[1][0] as DeleteObjectCommand
+      expect(deleteDraft.input).toMatchObject({
+        Bucket: 'development',
+        Key: 'draft/draft-uuid/content/1700000000-flow.png',
+      })
+    })
+
+    it('should delete removed post content images', async () => {
+      const service = createService()
+      sendMock.mockResolvedValue(undefined)
+
+      const previousContent = [
+        '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)',
+        '![old](https://cdn.example.com/development/posts/post-1/content/old.png)',
+      ].join('\n')
+      const nextContent =
+        '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)'
+
+      await service.finalizePostContentImages({
+        postId: 'post-1',
+        nextContent,
+        previousContent,
+      })
+
+      expect(sendMock).toHaveBeenCalledTimes(1)
+      const deleteOrphan = sendMock.mock.calls[0][0] as DeleteObjectCommand
+      expect(deleteOrphan.input).toMatchObject({
+        Bucket: 'development',
+        Key: 'posts/post-1/content/old.png',
+      })
     })
   })
 
