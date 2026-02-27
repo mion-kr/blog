@@ -33,6 +33,11 @@ const DEFAULT_LIMIT = 10;
 const DEFAULT_SORT: PostQueryDto['sort'] = 'createdAt';
 const DEFAULT_ORDER: SortDirection = 'desc';
 
+interface FinalizedContentReport {
+  content: string;
+  movedObjects: Array<{ sourceKey: string; destinationKey: string }>;
+}
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -157,7 +162,7 @@ export class PostsService {
 
     let shouldCleanupFinalizedCover = false;
     let finalizedCoverImage: string | null = null;
-    let finalizedContentReport: { content: string; movedObjects: Array<{ destinationKey: string; sourceKey: string }> } = {
+    let finalizedContentReport: FinalizedContentReport = {
       content,
       movedObjects: [],
     };
@@ -174,11 +179,11 @@ export class PostsService {
       shouldCleanupFinalizedCover = Boolean(draftUuid && coverImageKey && finalizedCoverImage);
       finalizedContentReport =
         await this.uploadsService.finalizePostContentImagesWithReport({
-        postId: createdPost.id,
-        draftUuid,
-        nextContent: content,
-        deleteDraftSource: false,
-      });
+          postId: createdPost.id,
+          draftUuid,
+          nextContent: content,
+          deleteDraftSource: false,
+        });
       const finalizedContent = finalizedContentReport.content;
       const finalizeUpdatePayload: { coverImage?: string | null; content?: string } = {};
 
@@ -319,13 +324,13 @@ export class PostsService {
         : existingPost.content;
     const finalizedContentReport =
       await this.uploadsService.finalizePostContentImagesWithReport({
-      postId: existingPost.id,
-      draftUuid,
-      previousContent: existingPost.content,
-      nextContent,
-      deleteDraftSource: false,
-      removeOrphanedPrevious: false,
-    });
+        postId: existingPost.id,
+        draftUuid,
+        previousContent: existingPost.content,
+        nextContent,
+        deleteDraftSource: false,
+        removeOrphanedPrevious: false,
+      });
     const finalizedContent = finalizedContentReport.content;
     const finalUpdatePayload = { ...updatePayload };
 
