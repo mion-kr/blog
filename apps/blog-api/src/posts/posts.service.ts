@@ -175,6 +175,7 @@ export class PostsService {
         type: 'thumbnail',
         currentCoverImage: coverImage ?? createdPost.coverImage ?? null,
         deleteDraftSource: false,
+        removePrevious: false,
       });
       shouldCleanupFinalizedCover = Boolean(draftUuid && coverImageKey && finalizedCoverImage);
       finalizedContentReport =

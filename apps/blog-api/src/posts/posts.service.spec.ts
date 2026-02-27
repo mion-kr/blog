@@ -232,6 +232,7 @@ describe('PostsService', () => {
         type: 'thumbnail',
         currentCoverImage: null,
         deleteDraftSource: false,
+        removePrevious: false,
       })
       expect(uploadsService.finalizePostContentImagesWithReport).toHaveBeenCalledWith({
         postId: 'post-new',
