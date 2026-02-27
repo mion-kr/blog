@@ -4,8 +4,9 @@ name = "blog"
 
 [setup]
 script = '''
-pnpm run build
-pnpm run doppler-setup
+pnpm install &&
+pnpm run build &&
+pnpm doppler-setup
 '''
 
 [[actions]]
@@ -30,3 +31,8 @@ pnpm run doppler-setup
 name = "install"
 icon = "tool"
 command = "pnpm install"
+
+[[actions]]
+name = "doppler-setup"
+icon = "tool"
+command = "pnpm doppler-setup"
