@@ -32,6 +32,7 @@ interface FinalizeCoverImageOptions {
   objectKey?: string;
   type: UploadType;
   currentCoverImage?: string | null;
+  deleteDraftSource?: boolean;
   removePrevious?: boolean;
 }
 
@@ -40,7 +41,18 @@ interface FinalizePostContentImagesOptions {
   draftUuid?: string;
   nextContent?: string | null;
   previousContent?: string | null;
+  deleteDraftSource?: boolean;
   removeOrphanedPrevious?: boolean;
+}
+
+interface MovedObjectRecord {
+  sourceKey: string;
+  destinationKey: string;
+}
+
+interface FinalizePostContentImagesReport {
+  content: string;
+  movedObjects: MovedObjectRecord[];
 }
 
 @Injectable()
@@ -136,6 +148,7 @@ export class UploadsService {
       postId,
       type,
       currentCoverImage,
+      deleteDraftSource = true,
       removePrevious = true,
     } = options;
 
@@ -160,8 +173,11 @@ export class UploadsService {
 
     const destinationKey = `${basePath}posts/${postId}/${type}/${fileName}`;
 
+    // 확정 경로로 복사한 뒤, 옵션에 따라 draft 원본 삭제를 제어한다.
     await this.copyObject(objectKey, destinationKey);
-    await this.deleteObject(objectKey, 'draft');
+    if (deleteDraftSource) {
+      await this.deleteObject(objectKey, 'draft');
+    }
 
     const previousObjectKey = this.extractObjectKeyFromUrl(currentCoverImage);
     if (removePrevious && previousObjectKey && previousObjectKey !== destinationKey) {
@@ -177,22 +193,37 @@ export class UploadsService {
   async finalizePostContentImages(
     options: FinalizePostContentImagesOptions,
   ): Promise<string> {
+    const report = await this.finalizePostContentImagesWithReport(options);
+    return report.content;
+  }
+
+  /**
+   * 포스트 본문 이미지를 확정하고, 치환된 본문 문자열과 이동된 객체 목록을 함께 반환합니다.
+   */
+  async finalizePostContentImagesWithReport(
+    options: FinalizePostContentImagesOptions,
+  ): Promise<FinalizePostContentImagesReport> {
     const {
       postId,
       draftUuid,
       nextContent,
       previousContent,
+      deleteDraftSource = true,
       removeOrphanedPrevious = true,
     } = options;
     let finalizedContent = nextContent ?? '';
+    let movedObjects: MovedObjectRecord[] = [];
 
     // 본문에서 참조하는 draft/content 이미지를 post/content 경로로 이동하고 URL을 치환한다.
     if (draftUuid) {
-      finalizedContent = await this.moveDraftContentImages({
+      const moveResult = await this.moveDraftContentImages({
         postId,
         draftUuid,
         content: finalizedContent,
+        deleteDraftSource,
       });
+      finalizedContent = moveResult.content;
+      movedObjects = moveResult.movedObjects;
     }
 
     // 수정 시 본문에서 제거된 기존 content 이미지는 옵션에 따라 정리한다.
@@ -204,7 +235,10 @@ export class UploadsService {
       });
     }
 
-    return finalizedContent;
+    return {
+      content: finalizedContent,
+      movedObjects,
+    };
   }
 
   /**
@@ -223,6 +257,18 @@ export class UploadsService {
       previousContent: previousContent ?? '',
       nextContent: nextContent ?? '',
     });
+  }
+
+  /**
+   * 객체 키 목록을 best-effort로 삭제합니다. 개별 삭제 실패는 경고 로그만 남기고 계속 진행합니다.
+   */
+  async deleteObjectsByKeys(objectKeys: string[]): Promise<void> {
+    const uniqueKeys = Array.from(new Set(objectKeys.filter((key) => key.length > 0)));
+
+    // 중복 키를 제거한 뒤 순차 삭제해 로그 맥락을 단순하게 유지한다.
+    for (const key of uniqueKeys) {
+      await this.deleteObject(key, 'bulk-cleanup');
+    }
   }
 
   async finalizeAboutImage(tempPublicUrl: string): Promise<string> {
@@ -290,12 +336,14 @@ export class UploadsService {
     postId: string;
     draftUuid: string;
     content: string;
-  }): Promise<string> {
-    const { postId, draftUuid, content } = options;
+    deleteDraftSource: boolean;
+  }): Promise<FinalizePostContentImagesReport> {
+    const { postId, draftUuid, content, deleteDraftSource } = options;
     const basePath = this.getObjectKeyBasePath();
     const draftPrefix = `${basePath}draft/${draftUuid}/content/`;
     const draftObjectKeys = this.extractObjectKeysByPrefix(content, draftPrefix);
     let nextContent = content;
+    const movedObjects: MovedObjectRecord[] = [];
 
     for (const sourceKey of draftObjectKeys) {
       const fileName = sourceKey.split('/').pop();
@@ -306,7 +354,12 @@ export class UploadsService {
       const destinationKey = `${basePath}posts/${postId}/content/${fileName}`;
 
       await this.copyObject(sourceKey, destinationKey);
-      await this.deleteObject(sourceKey, 'content-draft');
+      movedObjects.push({ sourceKey, destinationKey });
+
+      // 성공 후 cleanup 시점까지 draft 원본을 보존해야 하면 삭제를 지연한다.
+      if (deleteDraftSource) {
+        await this.deleteObject(sourceKey, 'content-draft');
+      }
 
       const sourceUrl = this.buildPublicUrl(sourceKey);
       const destinationUrl = this.buildPublicUrl(destinationKey);
@@ -316,7 +369,10 @@ export class UploadsService {
       }
     }
 
-    return nextContent;
+    return {
+      content: nextContent,
+      movedObjects,
+    };
   }
 
   /**

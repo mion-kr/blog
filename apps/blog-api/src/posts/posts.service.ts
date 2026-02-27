@@ -155,19 +155,31 @@ export class PostsService {
       tagIds,
     });
 
+    let shouldCleanupFinalizedCover = false;
+    let finalizedCoverImage: string | null = null;
+    let finalizedContentReport: { content: string; movedObjects: Array<{ destinationKey: string; sourceKey: string }> } = {
+      content,
+      movedObjects: [],
+    };
+
     try {
-      const finalizedCoverImage = await this.uploadsService.finalizeCoverImage({
+      finalizedCoverImage = await this.uploadsService.finalizeCoverImage({
         postId: createdPost.id,
         draftUuid,
         objectKey: coverImageKey,
         type: 'thumbnail',
         currentCoverImage: coverImage ?? createdPost.coverImage ?? null,
+        deleteDraftSource: false,
       });
-      const finalizedContent = await this.uploadsService.finalizePostContentImages({
+      shouldCleanupFinalizedCover = Boolean(draftUuid && coverImageKey && finalizedCoverImage);
+      finalizedContentReport =
+        await this.uploadsService.finalizePostContentImagesWithReport({
         postId: createdPost.id,
         draftUuid,
         nextContent: content,
+        deleteDraftSource: false,
       });
+      const finalizedContent = finalizedContentReport.content;
       const finalizeUpdatePayload: { coverImage?: string | null; content?: string } = {};
 
       // 저장 직후 확정된 커버 이미지를 반영한다.
@@ -188,7 +200,25 @@ export class PostsService {
 
       await this.categoriesService.updatePostCount(categoryId);
       await this.tagsService.updateMultiplePostCounts(tagIds);
+
+      // DB 반영과 집계가 끝난 뒤에만 draft 원본 객체를 정리한다.
+      const draftSourceKeys = finalizedContentReport.movedObjects.map(
+        ({ sourceKey }) => sourceKey,
+      );
+      if (draftUuid && coverImageKey) {
+        draftSourceKeys.push(coverImageKey);
+      }
+      await this.uploadsService.deleteObjectsByKeys(draftSourceKeys);
     } catch (error) {
+      // 실패 시 이번 시도에서 생성한 목적지 객체만 보상 삭제해 orphan를 줄인다.
+      const movedDestinationKeys = finalizedContentReport.movedObjects.map(
+        ({ destinationKey }) => destinationKey,
+      );
+      await this.uploadsService.deleteObjectsByKeys(movedDestinationKeys);
+      if (shouldCleanupFinalizedCover && finalizedCoverImage) {
+        await this.uploadsService.deleteObjectByUrl(finalizedCoverImage);
+      }
+
       // 생성 직후 후속 처리가 실패하면 생성된 포스트를 롤백해 실패 응답과 실제 상태를 맞춘다.
       try {
         await this.postsRepository.delete(createdPost.id);
@@ -280,19 +310,23 @@ export class PostsService {
       objectKey: coverImageKey,
       type: 'thumbnail',
       currentCoverImage: nextCoverImage ?? null,
+      deleteDraftSource: false,
       removePrevious: false,
     });
     const nextContent =
       updatePayload.content !== undefined
         ? updatePayload.content
         : existingPost.content;
-    const finalizedContent = await this.uploadsService.finalizePostContentImages({
+    const finalizedContentReport =
+      await this.uploadsService.finalizePostContentImagesWithReport({
       postId: existingPost.id,
       draftUuid,
       previousContent: existingPost.content,
       nextContent,
+      deleteDraftSource: false,
       removeOrphanedPrevious: false,
     });
+    const finalizedContent = finalizedContentReport.content;
     const finalUpdatePayload = { ...updatePayload };
 
     // 수정 시 확정된 커버 이미지를 반영한다.
@@ -305,7 +339,32 @@ export class PostsService {
       finalUpdatePayload.content = finalizedContent;
     }
 
-    await this.postsRepository.update(existingPost.id, finalUpdatePayload);
+    const shouldCleanupFinalizedCover = Boolean(
+      draftUuid && coverImageKey && finalizedCoverImage,
+    );
+
+    try {
+      await this.postsRepository.update(existingPost.id, finalUpdatePayload);
+    } catch (error) {
+      // DB 반영 실패 시 이번 요청에서 생성한 목적지 객체만 보상 삭제한다.
+      const movedDestinationKeys = finalizedContentReport.movedObjects.map(
+        ({ destinationKey }) => destinationKey,
+      );
+      await this.uploadsService.deleteObjectsByKeys(movedDestinationKeys);
+      if (shouldCleanupFinalizedCover) {
+        await this.uploadsService.deleteObjectByUrl(finalizedCoverImage);
+      }
+      throw error;
+    }
+
+    // DB 반영 이후에만 draft 원본을 정리해 재시도 가능성을 보장한다.
+    const draftSourceKeys = finalizedContentReport.movedObjects.map(
+      ({ sourceKey }) => sourceKey,
+    );
+    if (draftUuid && coverImageKey) {
+      draftSourceKeys.push(coverImageKey);
+    }
+    await this.uploadsService.deleteObjectsByKeys(draftSourceKeys);
 
     // DB 반영이 끝난 뒤에만 기존 커버 이미지를 정리해 정합성을 보장한다.
     if (
