@@ -32,6 +32,7 @@ interface FinalizeCoverImageOptions {
   objectKey?: string;
   type: UploadType;
   currentCoverImage?: string | null;
+  removePrevious?: boolean;
 }
 
 interface FinalizePostContentImagesOptions {
@@ -39,6 +40,7 @@ interface FinalizePostContentImagesOptions {
   draftUuid?: string;
   nextContent?: string | null;
   previousContent?: string | null;
+  removeOrphanedPrevious?: boolean;
 }
 
 @Injectable()
@@ -122,10 +124,20 @@ export class UploadsService {
     }
   }
 
+  /**
+   * 커버 이미지를 draft 경로에서 posts 경로로 확정하고, 필요 시 기존 커버 이미지를 정리합니다.
+   */
   async finalizeCoverImage(
     options: FinalizeCoverImageOptions,
   ): Promise<string | null> {
-    const { draftUuid, objectKey, postId, type, currentCoverImage } = options;
+    const {
+      draftUuid,
+      objectKey,
+      postId,
+      type,
+      currentCoverImage,
+      removePrevious = true,
+    } = options;
 
     if (!draftUuid || !objectKey) {
       return currentCoverImage ?? null;
@@ -152,7 +164,7 @@ export class UploadsService {
     await this.deleteObject(objectKey, 'draft');
 
     const previousObjectKey = this.extractObjectKeyFromUrl(currentCoverImage);
-    if (previousObjectKey && previousObjectKey !== destinationKey) {
+    if (removePrevious && previousObjectKey && previousObjectKey !== destinationKey) {
       await this.deleteObject(previousObjectKey, 'previous');
     }
 
@@ -165,7 +177,13 @@ export class UploadsService {
   async finalizePostContentImages(
     options: FinalizePostContentImagesOptions,
   ): Promise<string> {
-    const { postId, draftUuid, nextContent, previousContent } = options;
+    const {
+      postId,
+      draftUuid,
+      nextContent,
+      previousContent,
+      removeOrphanedPrevious = true,
+    } = options;
     let finalizedContent = nextContent ?? '';
 
     // 본문에서 참조하는 draft/content 이미지를 post/content 경로로 이동하고 URL을 치환한다.
@@ -177,14 +195,34 @@ export class UploadsService {
       });
     }
 
-    // 수정 시 본문에서 제거된 기존 content 이미지를 자동 삭제한다.
+    // 수정 시 본문에서 제거된 기존 content 이미지는 옵션에 따라 정리한다.
+    if (removeOrphanedPrevious) {
+      await this.deleteRemovedPostContentImages({
+        postId,
+        previousContent: previousContent ?? '',
+        nextContent: finalizedContent,
+      });
+    }
+
+    return finalizedContent;
+  }
+
+  /**
+   * 포스트 수정 DB 반영 이후, 본문에서 제거된 기존 content 이미지를 정리합니다.
+   */
+  async cleanupRemovedPostContentImages(options: {
+    postId: string;
+    previousContent?: string | null;
+    nextContent?: string | null;
+  }): Promise<void> {
+    const { postId, previousContent, nextContent } = options;
+
+    // DB 반영 완료 이후 호출되는 후처리이므로 삭제 실패는 경고만 남기고 진행한다.
     await this.deleteRemovedPostContentImages({
       postId,
       previousContent: previousContent ?? '',
-      nextContent: finalizedContent,
+      nextContent: nextContent ?? '',
     });
-
-    return finalizedContent;
   }
 
   async finalizeAboutImage(tempPublicUrl: string): Promise<string> {

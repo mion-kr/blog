@@ -272,6 +272,7 @@ export class PostsService {
       updatePayload.coverImage !== undefined
         ? updatePayload.coverImage
         : existingPost.coverImage;
+    const previousPersistedCoverImage = existingPost.coverImage ?? null;
 
     const finalizedCoverImage = await this.uploadsService.finalizeCoverImage({
       postId: existingPost.id,
@@ -279,6 +280,7 @@ export class PostsService {
       objectKey: coverImageKey,
       type: 'thumbnail',
       currentCoverImage: nextCoverImage ?? null,
+      removePrevious: false,
     });
     const nextContent =
       updatePayload.content !== undefined
@@ -289,6 +291,7 @@ export class PostsService {
       draftUuid,
       previousContent: existingPost.content,
       nextContent,
+      removeOrphanedPrevious: false,
     });
     const finalUpdatePayload = { ...updatePayload };
 
@@ -303,6 +306,21 @@ export class PostsService {
     }
 
     await this.postsRepository.update(existingPost.id, finalUpdatePayload);
+
+    // DB 반영이 끝난 뒤에만 기존 커버 이미지를 정리해 정합성을 보장한다.
+    if (
+      previousPersistedCoverImage &&
+      finalizedCoverImage !== previousPersistedCoverImage
+    ) {
+      await this.uploadsService.deleteObjectByUrl(previousPersistedCoverImage);
+    }
+
+    // DB 반영이 끝난 뒤에만 본문에서 제거된 기존 content 이미지를 정리한다.
+    await this.uploadsService.cleanupRemovedPostContentImages({
+      postId: existingPost.id,
+      previousContent: existingPost.content,
+      nextContent: finalizedContent,
+    });
 
     const categoriesToUpdate = new Set<string>();
     categoriesToUpdate.add(existingPost.categoryId);

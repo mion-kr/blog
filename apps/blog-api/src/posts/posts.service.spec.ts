@@ -84,6 +84,8 @@ describe('PostsService', () => {
     uploadsService = {
       finalizeCoverImage: jest.fn(),
       finalizePostContentImages: jest.fn(),
+      cleanupRemovedPostContentImages: jest.fn(),
+      deleteObjectByUrl: jest.fn(),
       createPreSignedUrl: jest.fn(),
     } as unknown as jest.Mocked<UploadsService>
 
@@ -92,6 +94,8 @@ describe('PostsService', () => {
       async ({ nextContent }: { nextContent?: string | null }) =>
         nextContent ?? '',
     )
+    uploadsService.cleanupRemovedPostContentImages.mockResolvedValue(undefined)
+    uploadsService.deleteObjectByUrl.mockResolvedValue(undefined)
     postsRepository.update.mockResolvedValue(undefined)
     postsRepository.delete.mockResolvedValue(undefined)
 
@@ -372,13 +376,21 @@ describe('PostsService', () => {
         objectKey: dto.coverImageKey,
         type: 'thumbnail',
         currentCoverImage: null,
+        removePrevious: false,
       })
       expect(uploadsService.finalizePostContentImages).toHaveBeenCalledWith({
         postId: 'post-1',
         draftUuid: dto.draftUuid,
         previousContent: 'old',
         nextContent: 'old',
+        removeOrphanedPrevious: false,
       })
+      expect(uploadsService.cleanupRemovedPostContentImages).toHaveBeenCalledWith({
+        postId: 'post-1',
+        previousContent: 'old',
+        nextContent: 'old',
+      })
+      expect(uploadsService.deleteObjectByUrl).not.toHaveBeenCalled()
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-old')
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-new')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(
@@ -395,6 +407,52 @@ describe('PostsService', () => {
 
       await expect(service.update('missing', {}, 'user-1')).rejects.toThrow(
         new NotFoundException(`슬러그 'missing'에 해당하는 포스트를 찾을 수 없습니다.`),
+      )
+    })
+
+    it('수정 성공 이후에 이전 커버 이미지를 정리해야 함', async () => {
+      const existing: PostEntity = {
+        id: 'post-1',
+        title: 'Old title',
+        slug: 'old-title',
+        content: 'old',
+        excerpt: null,
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
+        published: false,
+        viewCount: 0,
+        categoryId: 'cat-old',
+        authorId: 'user-1',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+        publishedAt: null,
+      }
+      const updatedAggregate = createPostAggregate({
+        id: 'post-1',
+        slug: 'old-title',
+        title: 'Old title',
+        categoryId: 'cat-old',
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      })
+
+      postsRepository.findBasicBySlug.mockResolvedValue(existing)
+      postsRepository.findTagIdsByPostId.mockResolvedValue([])
+      postsRepository.update.mockResolvedValue(undefined)
+      postsRepository.findBySlug.mockResolvedValue(updatedAggregate)
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
+
+      await service.update(
+        'old-title',
+        {
+          coverImageKey: 'development/draft/test/thumbnail/new.png',
+          draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
+        },
+        'user-1',
+      )
+
+      expect(uploadsService.deleteObjectByUrl).toHaveBeenCalledWith(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
       )
     })
   })
