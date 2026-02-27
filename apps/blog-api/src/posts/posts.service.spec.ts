@@ -83,10 +83,28 @@ describe('PostsService', () => {
 
     uploadsService = {
       finalizeCoverImage: jest.fn(),
+      finalizePostContentImages: jest.fn(),
+      finalizePostContentImagesWithReport: jest.fn(),
+      cleanupRemovedPostContentImages: jest.fn(),
+      deleteObjectsByKeys: jest.fn(),
+      deleteObjectByUrl: jest.fn(),
       createPreSignedUrl: jest.fn(),
     } as unknown as jest.Mocked<UploadsService>
 
     uploadsService.finalizeCoverImage.mockResolvedValue(null)
+    uploadsService.finalizePostContentImages.mockImplementation(
+      async ({ nextContent }: { nextContent?: string | null }) =>
+        nextContent ?? '',
+    )
+    uploadsService.finalizePostContentImagesWithReport.mockImplementation(
+      async ({ nextContent }: { nextContent?: string | null }) => ({
+        content: nextContent ?? '',
+        movedObjects: [],
+      }),
+    )
+    uploadsService.cleanupRemovedPostContentImages.mockResolvedValue(undefined)
+    uploadsService.deleteObjectsByKeys.mockResolvedValue(undefined)
+    uploadsService.deleteObjectByUrl.mockResolvedValue(undefined)
     postsRepository.update.mockResolvedValue(undefined)
     postsRepository.delete.mockResolvedValue(undefined)
 
@@ -213,6 +231,14 @@ describe('PostsService', () => {
         objectKey: dto.coverImageKey,
         type: 'thumbnail',
         currentCoverImage: null,
+        deleteDraftSource: false,
+        removePrevious: false,
+      })
+      expect(uploadsService.finalizePostContentImagesWithReport).toHaveBeenCalledWith({
+        postId: 'post-new',
+        draftUuid: dto.draftUuid,
+        nextContent: '# Hello',
+        deleteDraftSource: false,
       })
       expect(postsRepository.update).toHaveBeenCalledWith(
         'post-new',
@@ -220,6 +246,9 @@ describe('PostsService', () => {
           coverImage: 'https://cdn.example.com/development/posts/post-new/thumbnail/file.png',
         }),
       )
+      expect(uploadsService.deleteObjectsByKeys).toHaveBeenCalledWith([
+        'development/draft/test-draft/thumbnail/file.png',
+      ])
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(['tag-1', 'tag-2'])
       expect(result.slug).toBe('new-post')
@@ -265,6 +294,82 @@ describe('PostsService', () => {
       ).rejects.toThrow(
         new BadRequestException('다음 태그 ID를 찾을 수 없습니다: tag-2'),
       )
+    })
+
+    it('이미지 확정 단계가 실패하면 생성 포스트를 롤백해야 함', async () => {
+      const dto: CreatePostDto = {
+        title: 'Rollback Post',
+        content: '# Rollback',
+        published: true,
+        categoryId: 'cat-1',
+        tagIds: ['tag-1'],
+        draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
+        coverImageKey: 'development/draft/test-draft/thumbnail/file.png',
+      }
+      const aggregate = createPostAggregate({
+        id: 'post-rollback',
+        slug: 'rollback-post',
+        coverImage: null,
+      })
+
+      postsRepository.categoryExists.mockResolvedValue(true)
+      postsRepository.findExistingTagIds.mockResolvedValue(['tag-1'])
+      postsRepository.fetchSlugsByPrefix.mockResolvedValue([])
+      postsRepository.create.mockResolvedValue(aggregate)
+      uploadsService.finalizeCoverImage.mockRejectedValue(
+        new Error('finalize failed'),
+      )
+
+      await expect(service.create(dto, 'user-1')).rejects.toThrow('finalize failed')
+
+      expect(postsRepository.delete).toHaveBeenCalledWith('post-rollback')
+      expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1')
+      expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(['tag-1'])
+    })
+
+    it('생성 후 후속 단계 실패 시 확정된 목적지 객체를 보상 삭제해야 함', async () => {
+      const dto: CreatePostDto = {
+        title: 'Rollback Post',
+        content: '# Rollback',
+        published: true,
+        categoryId: 'cat-1',
+        tagIds: ['tag-1'],
+        draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
+        coverImageKey: 'development/draft/test-draft/thumbnail/file.png',
+      }
+      const aggregate = createPostAggregate({
+        id: 'post-rollback',
+        slug: 'rollback-post',
+        coverImage: null,
+      })
+
+      postsRepository.categoryExists.mockResolvedValue(true)
+      postsRepository.findExistingTagIds.mockResolvedValue(['tag-1'])
+      postsRepository.fetchSlugsByPrefix.mockResolvedValue([])
+      postsRepository.create.mockResolvedValue(aggregate)
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-rollback/thumbnail/file.png',
+      )
+      uploadsService.finalizePostContentImagesWithReport.mockResolvedValue({
+        content: '# Rollback',
+        movedObjects: [
+          {
+            sourceKey: 'development/draft/test-draft/content/new.png',
+            destinationKey: 'development/posts/post-rollback/content/new.png',
+          },
+        ],
+      })
+      categoriesService.updatePostCount.mockRejectedValueOnce(new Error('count failed'))
+
+      await expect(service.create(dto, 'user-1')).rejects.toThrow('count failed')
+
+      expect(uploadsService.deleteObjectsByKeys).toHaveBeenCalledWith([
+        'development/posts/post-rollback/content/new.png',
+      ])
+      expect(uploadsService.deleteObjectByUrl).toHaveBeenCalledWith(
+        'https://cdn.example.com/development/posts/post-rollback/thumbnail/file.png',
+      )
+      expect(postsRepository.delete).toHaveBeenCalledWith('post-rollback')
     })
   })
 
@@ -316,19 +421,12 @@ describe('PostsService', () => {
 
       const result = await service.update('old-title', dto, 'user-1')
 
-      expect(postsRepository.update).toHaveBeenCalledTimes(2)
-      expect(postsRepository.update).toHaveBeenNthCalledWith(
-        1,
+      expect(postsRepository.update).toHaveBeenCalledTimes(1)
+      expect(postsRepository.update).toHaveBeenCalledWith(
         'post-1',
         expect.objectContaining({
           title: 'New title',
           categoryId: 'cat-new',
-        }),
-      )
-      expect(postsRepository.update).toHaveBeenNthCalledWith(
-        2,
-        'post-1',
-        expect.objectContaining({
           coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
         }),
       )
@@ -338,7 +436,26 @@ describe('PostsService', () => {
         objectKey: dto.coverImageKey,
         type: 'thumbnail',
         currentCoverImage: null,
+        deleteDraftSource: false,
+        removePrevious: false,
       })
+      expect(uploadsService.finalizePostContentImagesWithReport).toHaveBeenCalledWith({
+        postId: 'post-1',
+        draftUuid: dto.draftUuid,
+        previousContent: 'old',
+        nextContent: 'old',
+        deleteDraftSource: false,
+        removeOrphanedPrevious: false,
+      })
+      expect(uploadsService.deleteObjectsByKeys).toHaveBeenCalledWith([
+        'development/draft/test/thumbnail/new.png',
+      ])
+      expect(uploadsService.cleanupRemovedPostContentImages).toHaveBeenCalledWith({
+        postId: 'post-1',
+        previousContent: 'old',
+        nextContent: 'old',
+      })
+      expect(uploadsService.deleteObjectByUrl).not.toHaveBeenCalled()
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-old')
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-new')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(
@@ -356,6 +473,106 @@ describe('PostsService', () => {
       await expect(service.update('missing', {}, 'user-1')).rejects.toThrow(
         new NotFoundException(`슬러그 'missing'에 해당하는 포스트를 찾을 수 없습니다.`),
       )
+    })
+
+    it('수정 성공 이후에 이전 커버 이미지를 정리해야 함', async () => {
+      const existing: PostEntity = {
+        id: 'post-1',
+        title: 'Old title',
+        slug: 'old-title',
+        content: 'old',
+        excerpt: null,
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
+        published: false,
+        viewCount: 0,
+        categoryId: 'cat-old',
+        authorId: 'user-1',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+        publishedAt: null,
+      }
+      const updatedAggregate = createPostAggregate({
+        id: 'post-1',
+        slug: 'old-title',
+        title: 'Old title',
+        categoryId: 'cat-old',
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      })
+
+      postsRepository.findBasicBySlug.mockResolvedValue(existing)
+      postsRepository.findTagIdsByPostId.mockResolvedValue([])
+      postsRepository.update.mockResolvedValue(undefined)
+      postsRepository.findBySlug.mockResolvedValue(updatedAggregate)
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
+
+      await service.update(
+        'old-title',
+        {
+          coverImageKey: 'development/draft/test/thumbnail/new.png',
+          draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
+        },
+        'user-1',
+      )
+
+      expect(uploadsService.deleteObjectByUrl).toHaveBeenCalledWith(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
+      )
+    })
+
+    it('DB 반영 실패 시 이번 요청의 목적지 객체만 보상 삭제해야 함', async () => {
+      const existing: PostEntity = {
+        id: 'post-1',
+        title: 'Old title',
+        slug: 'old-title',
+        content: 'old',
+        excerpt: null,
+        coverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
+        published: false,
+        viewCount: 0,
+        categoryId: 'cat-old',
+        authorId: 'user-1',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+        publishedAt: null,
+      }
+
+      postsRepository.findBasicBySlug.mockResolvedValue(existing)
+      postsRepository.findTagIdsByPostId.mockResolvedValue([])
+      postsRepository.update.mockRejectedValue(new Error('db failed'))
+      uploadsService.finalizeCoverImage.mockResolvedValue(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
+      uploadsService.finalizePostContentImagesWithReport.mockResolvedValue({
+        content: 'new',
+        movedObjects: [
+          {
+            sourceKey: 'development/draft/test/content/new.png',
+            destinationKey: 'development/posts/post-1/content/new.png',
+          },
+        ],
+      })
+
+      await expect(
+        service.update(
+          'old-title',
+          {
+            content: 'new',
+            draftUuid: 'draft-uuid',
+            coverImageKey: 'development/draft/test/thumbnail/new.png',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow('db failed')
+
+      expect(uploadsService.deleteObjectsByKeys).toHaveBeenCalledWith([
+        'development/posts/post-1/content/new.png',
+      ])
+      expect(uploadsService.deleteObjectByUrl).toHaveBeenCalledWith(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/new.png',
+      )
+      expect(uploadsService.cleanupRemovedPostContentImages).not.toHaveBeenCalled()
     })
   })
 

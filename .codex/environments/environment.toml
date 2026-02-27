@@ -6,7 +6,7 @@ name = "blog"
 script = '''
 pnpm install &&
 pnpm run build &&
-pnpm run doppler-setup
+pnpm doppler-setup
 '''
 
 [[actions]]

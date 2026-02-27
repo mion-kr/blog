@@ -136,14 +136,14 @@ function MDXSkeleton() {
 function CustomImage({ src, alt, ...props }: { src?: string; alt?: string; [key: string]: unknown }) {
   if (!src) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg bg-gray-100">
-        <p className="text-gray-500">이미지를 로드할 수 없습니다</p>
-      </div>
+      <span className="my-8 flex h-64 items-center justify-center rounded-lg bg-gray-100">
+        <span className="text-gray-500">이미지를 로드할 수 없습니다</span>
+      </span>
     );
   }
 
   return (
-    <div className="relative my-8 overflow-hidden rounded-lg">
+    <span className="relative my-8 block overflow-hidden rounded-lg">
       <Image
         src={src}
         alt={alt ?? ''}
@@ -154,11 +154,11 @@ function CustomImage({ src, alt, ...props }: { src?: string; alt?: string; [key:
         {...props}
       />
       {alt && (
-        <p className="mt-2 text-center text-sm text-gray-600 italic">
+        <span className="mt-2 block text-center text-sm text-gray-600 italic">
           {alt}
-        </p>
+        </span>
       )}
-    </div>
+    </span>
   );
 }
 
