@@ -8,6 +8,13 @@
       "when": 1759729217342,
       "tag": "0000_peaceful_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772640300000,
+      "tag": "0001_smooth_posts_indexes",
+      "breakpoints": true
     }
   ]
 }

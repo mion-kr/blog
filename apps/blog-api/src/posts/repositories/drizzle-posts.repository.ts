@@ -3,7 +3,6 @@ import {
   and,
   asc,
   categories,
-  count,
   db,
   desc,
   eq,
@@ -54,6 +53,10 @@ interface PostRow {
   authorImage: string | null;
 }
 
+interface PostListRow extends PostRow {
+  totalCount: number;
+}
+
 interface PostTagRow {
   postId: string;
   tagId: string | null;
@@ -66,6 +69,10 @@ interface PostTagRow {
 
 @Injectable()
 export class DrizzlePostsRepository implements PostsRepository {
+  /**
+   * 포스트 목록과 페이지네이션 total을 조회합니다.
+   * - 목록 쿼리에서 window function을 사용해 별도 count 쿼리를 제거합니다.
+   */
   async findMany(options: FindPostsOptions): Promise<PaginatedPostResult> {
     const {
       page,
@@ -149,14 +156,25 @@ export class DrizzlePostsRepository implements PostsRepository {
       authorName: users.name,
       authorEmail: users.email,
       authorImage: users.image,
+      totalCount: sql<number>`count(*) over()`,
     } satisfies Record<string, unknown>;
 
-    const conditions = [...whereConditions];
+    // 태그 필터는 조인 대신 서브쿼리로 적용해 row 중복 가능성을 방지합니다.
     if (tagId) {
-      conditions.push(eq(postTags.tagId, tagId));
+      whereConditions.push(
+        inArray(
+          posts.id,
+          db
+            .select({ postId: postTags.postId })
+            .from(postTags)
+            .where(eq(postTags.tagId, tagId)),
+        ),
+      );
     }
 
-    const whereClause = conditions.length ? and(...conditions) : undefined;
+    const whereClause = whereConditions.length
+      ? and(...whereConditions)
+      : undefined;
 
     const basePostsQuery = db
       .select(selection)
@@ -164,31 +182,16 @@ export class DrizzlePostsRepository implements PostsRepository {
       .leftJoin(categories, eq(posts.categoryId, categories.id))
       .leftJoin(users, eq(posts.authorId, users.id));
 
-    const postsQueryWithJoin = tagId
-      ? basePostsQuery.innerJoin(postTags, eq(posts.id, postTags.postId))
+    const postsQueryWithFilters = whereClause
+      ? basePostsQuery.where(whereClause)
       : basePostsQuery;
 
-    const postsQueryWithFilters = whereClause
-      ? postsQueryWithJoin.where(whereClause)
-      : postsQueryWithJoin;
-
+    // 목록 쿼리에서 total_count를 함께 받아 DB 왕복을 1회 줄입니다.
     const rows = (await postsQueryWithFilters
       .orderBy(orderByExpression)
       .limit(limit)
-      .offset(offset)) as PostRow[];
-
-    const baseTotalQuery = db.select({ count: count() }).from(posts);
-
-    const totalQueryWithJoin = tagId
-      ? baseTotalQuery.innerJoin(postTags, eq(posts.id, postTags.postId))
-      : baseTotalQuery;
-
-    const totalQueryWithFilters = whereClause
-      ? totalQueryWithJoin.where(whereClause)
-      : totalQueryWithJoin;
-
-    const totalResult = await totalQueryWithFilters;
-    const total = Number(totalResult[0]?.count ?? 0);
+      .offset(offset)) as PostListRow[];
+    const total = Number(rows[0]?.totalCount ?? 0);
 
     const postIds = rows.map((row) => row.id);
     const tagsMap = await this.collectTagsByPostIds(postIds);
