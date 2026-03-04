@@ -363,7 +363,7 @@ function PostsNeonPostCard({
           </time>
         </div>
 
-        <Link href={`/posts/${post.slug}`} className="post-title-link">
+        <Link href={`/posts/${post.slug}`} prefetch={false} className="post-title-link">
           {post.title}
         </Link>
 

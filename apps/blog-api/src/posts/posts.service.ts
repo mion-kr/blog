@@ -38,6 +38,10 @@ interface FinalizedContentReport {
   movedObjects: Array<{ sourceKey: string; destinationKey: string }>;
 }
 
+interface FindPostBySlugOptions {
+  trackView?: boolean;
+}
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -100,7 +104,13 @@ export class PostsService {
     return { items, meta };
   }
 
-  async findOneBySlug(slug: string): Promise<PostResponseDto> {
+  /**
+   * 슬러그로 단일 포스트를 조회합니다.
+   */
+  async findOneBySlug(
+    slug: string,
+    options: FindPostBySlugOptions = {},
+  ): Promise<PostResponseDto> {
     const post = await this.postsRepository.findBySlug(slug);
 
     if (!post) {
@@ -109,16 +119,19 @@ export class PostsService {
       );
     }
 
+    const trackView = options.trackView ?? true;
     let updatedViewCount = post.viewCount;
 
-    try {
-      updatedViewCount = await this.postsRepository.incrementViewCount(post.id);
-      post.viewCount = updatedViewCount;
-      post.updatedAt = new Date();
-    } catch (error) {
-      // 조회수 갱신 실패는 사용자 흐름을 막지 않음
-
-      console.warn('조회수 증가 실패:', error);
+    if (trackView) {
+      try {
+        // 조회수 추적이 활성화된 요청에서만 viewCount를 증가시킵니다.
+        updatedViewCount = await this.postsRepository.incrementViewCount(post.id);
+        post.viewCount = updatedViewCount;
+        post.updatedAt = new Date();
+      } catch (error) {
+        // 조회수 갱신 실패는 사용자 흐름을 막지 않음
+        console.warn('조회수 증가 실패:', error);
+      }
     }
 
     return mapToPostResponse(post);

@@ -149,11 +149,13 @@ describe('PostsController', () => {
       postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.findOne(slug);
+      const result = await controller.findOne(slug, undefined);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+        trackView: true,
+      });
       expect(postsService.findOneBySlug).toHaveBeenCalledTimes(1);
     });
 
@@ -163,11 +165,13 @@ describe('PostsController', () => {
       postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.findOne(slug);
+      const result = await controller.findOne(slug, undefined);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+        trackView: true,
+      });
     });
 
     it('특수문자가 포함된 슬러그도 처리해야 함', async () => {
@@ -176,11 +180,13 @@ describe('PostsController', () => {
       postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
 
       // Act
-      const result = await controller.findOne(slug);
+      const result = await controller.findOne(slug, undefined);
 
       // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug);
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+        trackView: true,
+      });
     });
 
     it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
@@ -192,8 +198,25 @@ describe('PostsController', () => {
       postsService.findOneBySlug.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.findOne(slug)).rejects.toThrow(error);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug);
+      await expect(controller.findOne(slug, undefined)).rejects.toThrow(error);
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+        trackView: true,
+      });
+    });
+
+    it('trackView=false 쿼리를 전달하면 조회수 증가를 비활성화해야 함', async () => {
+      // Arrange
+      const slug = 'test-post';
+      postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
+
+      // Act
+      const result = await controller.findOne(slug, 'false');
+
+      // Assert
+      expect(result).toEqual(mockPostResponse);
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+        trackView: false,
+      });
     });
   });
 

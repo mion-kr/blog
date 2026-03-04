@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 
 import { MDXRenderer } from "@/components/mdx-renderer";
 import { NeonHeader } from "@/components/layout/neon-header";
-import { postsApi } from "@/lib/api-client";
 import {
   calculateReadingTimeMinutesFromMdx,
   formatReadingTimeMinutes,
@@ -13,6 +12,7 @@ import {
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
+import { getPostForRender, getPostForSeo } from "./post-server-data";
 import styles from "./post-detail-neon-grid.module.css";
 
 import type { PostResponseDto } from "@repo/shared";
@@ -31,15 +31,12 @@ export async function generateMetadata({
 }: PostPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const response = await postsApi.getPostBySlug(slug);
-
-    if (!response.success || !response.data) {
+    const post = await getPostForSeo(slug);
+    if (!post) {
       return {
         title: "포스트를 찾을 수 없습니다 | Mion Blog",
       };
     }
-
-    const post = response.data;
     const baseUrl = getSiteUrl();
 
     return {
@@ -96,14 +93,11 @@ export default async function PostPage({ params }: PostPageProps) {
   try {
     const { slug } = await params;
 
-    // 포스트 데이터 조회
-    const response = await postsApi.getPostBySlug(slug);
-
-    if (!response.success || !response.data) {
+    // SSR 본문 렌더링은 경로별 서버 캐시 유틸을 사용해 호출 의도를 분리합니다.
+    const post = await getPostForRender(slug);
+    if (!post) {
       notFound();
     }
-
-    const post = response.data;
     const baseUrl = getSiteUrl();
 
     const jsonLd = buildPostJsonLd(post, `${baseUrl}/posts/${slug}`);

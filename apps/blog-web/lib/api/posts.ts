@@ -8,6 +8,10 @@ import type {
 import { buildQueryParams, ensureAuthToken, request } from './base-client';
 import type { ApiRequestOptions } from './base-client';
 
+export interface GetPostBySlugOptions extends ApiRequestOptions {
+  trackView?: boolean;
+}
+
 export const postsApi = {
   async getPosts(
     query: PostsQuery = {},
@@ -22,11 +26,20 @@ export const postsApi = {
     return response as PaginatedResponse<PostResponseDto>;
   },
 
+  /**
+   * 슬러그로 단일 포스트를 조회합니다.
+   * `trackView`를 false로 전달하면 조회수 증가 없이 데이터를 조회합니다.
+   */
   async getPostBySlug(
     slug: string,
-    options: ApiRequestOptions = {},
+    options: GetPostBySlugOptions = {},
   ): Promise<ApiResponse<PostResponseDto>> {
-    return request<PostResponseDto>(`/api/posts/${slug}`, options);
+    const { trackView, ...requestOptions } = options;
+    const queryString = typeof trackView === 'boolean'
+      ? buildQueryParams({ trackView })
+      : '';
+
+    return request<PostResponseDto>(`/api/posts/${slug}${queryString}`, requestOptions);
   },
 
   async getPostById(

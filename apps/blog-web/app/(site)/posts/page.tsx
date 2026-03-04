@@ -1,8 +1,6 @@
-import { Suspense } from 'react';
 import { Metadata } from 'next';
 
 import { PostsContent } from './posts-content';
-import { PostsPageSkeleton } from './posts-skeleton';
 import { postsApi } from '@/lib/api-client';
 import { parsePostsSearchParams } from './query-utils';
 import { PostsNeonSidebar } from './posts-neon-sidebar';
@@ -97,14 +95,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       <main id="main" className="container">
         <div className="main-layout">
           <div className="content-area">
-            <Suspense fallback={<PostsPageSkeleton />}>
-              <PostsContent
-                initialPosts={initialPosts}
-                initialMeta={initialMeta}
-                initialQuery={initialQuery}
-                initialError={initialError}
-              />
-            </Suspense>
+            <PostsContent
+              initialPosts={initialPosts}
+              initialMeta={initialMeta}
+              initialQuery={initialQuery}
+              initialError={initialError}
+            />
           </div>
           <PostsNeonSidebar />
         </div>
