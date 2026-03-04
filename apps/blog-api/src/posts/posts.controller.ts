@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
+import { ApiTags, ApiExtraModels, ApiQuery } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -44,7 +44,7 @@ import {
  *
  * 엔드포인트:
  * - GET /api/posts - 포스트 목록 조회 (공개)
- * - GET /api/posts/:slug - 포스트 상세 조회 (공개, 조회수 증가)
+ * - GET /api/posts/:slug - 포스트 상세 조회 (공개, 기본 조회수 증가 / 옵션 비활성화 지원)
  * - POST /api/posts - 포스트 생성 (ADMIN + CSRF)
  * - PUT /api/posts/:slug - 포스트 수정 (ADMIN + CSRF)
  * - DELETE /api/posts/:slug - 포스트 삭제 (ADMIN + CSRF)
@@ -78,17 +78,29 @@ export class PostsController {
   }
 
   /**
-   * 포스트 상세 조회 (공개 API, 조회수 증가)
+   * 포스트 상세 조회 (공개 API, 기본 조회수 증가)
    */
   @Get(':slug')
   @ApiPublicDetail(
     PostResponseDto,
     '포스트 상세 조회',
     '포스트',
-    '슬러그로 특정 포스트를 조회합니다. 조회할 때마다 조회수가 1 증가합니다.',
+    '슬러그로 특정 포스트를 조회합니다. trackView=false면 조회수 증가 없이 조회합니다.',
   )
-  async findOne(@Param('slug') slug: string): Promise<PostResponseDto> {
-    return this.postsService.findOneBySlug(slug);
+  @ApiQuery({
+    name: 'trackView',
+    required: false,
+    description: '조회수 증가 여부 (기본값: true)',
+    schema: { type: 'boolean', default: true },
+  })
+  async findOne(
+    @Param('slug') slug: string,
+    @Query('trackView') trackViewRaw?: string,
+  ): Promise<PostResponseDto> {
+    const trackView = this.parseTrackView(trackViewRaw);
+
+    // 메타데이터/봇 경로에서 조회수 증가를 제어할 수 있도록 trackView 값을 전달합니다.
+    return this.postsService.findOneBySlug(slug, { trackView });
   }
 
   /**
@@ -130,5 +142,17 @@ export class PostsController {
     @User() user: CurrentUser,
   ): Promise<void> {
     return this.postsService.remove(slug, user.id);
+  }
+
+  /**
+   * `trackView` 쿼리 문자열을 boolean으로 변환합니다.
+   */
+  private parseTrackView(trackViewRaw?: string): boolean {
+    // 쿼리가 없거나 알 수 없는 값이면 기존 동작(조회수 증가)을 유지합니다.
+    if (trackViewRaw === 'false') {
+      return false;
+    }
+
+    return true;
   }
 }

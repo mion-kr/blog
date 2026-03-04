@@ -176,6 +176,17 @@ describe('PostsService', () => {
       expect(result.viewCount).toBe(11)
     })
 
+    it('trackView=false면 조회수를 증가시키지 않아야 함', async () => {
+      const aggregate = createPostAggregate({ viewCount: 10 })
+      postsRepository.findBySlug.mockResolvedValue(aggregate)
+
+      const result = await service.findOneBySlug('sample-post', { trackView: false })
+
+      expect(postsRepository.findBySlug).toHaveBeenCalledWith('sample-post')
+      expect(postsRepository.incrementViewCount).not.toHaveBeenCalled()
+      expect(result.viewCount).toBe(10)
+    })
+
     it('게시글이 없으면 NotFoundException', async () => {
       postsRepository.findBySlug.mockResolvedValue(null)
 
