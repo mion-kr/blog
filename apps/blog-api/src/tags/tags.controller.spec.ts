@@ -1,5 +1,5 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import { TestBed, Mocked } from '@suites/unit';
+import { TestBed } from '@suites/unit';
 import { PaginationMeta } from '@repo/shared';
 import { TagsController } from './tags.controller';
 import { TagsService } from './tags.service';
@@ -10,7 +10,7 @@ import { TagResponseDto } from './dto/tag-response.dto';
 
 describe('TagsController', () => {
   let controller: TagsController;
-  let tagsService: Mocked<TagsService>;
+  let tagsService;
 
   beforeAll(async () => {
     const { unit, unitRef } = await TestBed.solitary(TagsController).compile();

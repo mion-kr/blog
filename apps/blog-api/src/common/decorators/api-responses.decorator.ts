@@ -10,6 +10,51 @@ import {
 import { ApiResponseDto, PaginatedApiResponseDto } from '../dto';
 
 /**
+ * 단건 응답 envelope 스키마를 생성합니다.
+ */
+function createWrappedResponseSchema<TModel extends Type<any>>(
+  responseType: TModel,
+  messageExample: string,
+) {
+  return {
+    allOf: [
+      { $ref: getSchemaPath(ApiResponseDto) },
+      {
+        properties: {
+          data: { $ref: getSchemaPath(responseType) },
+          message: { example: messageExample },
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * 페이징 응답 envelope 스키마를 생성합니다.
+ */
+function createPaginatedResponseSchema<TModel extends Type<any>>(
+  responseType: TModel,
+) {
+  return {
+    allOf: [
+      { $ref: getSchemaPath(PaginatedApiResponseDto) },
+      {
+        properties: {
+          data: {
+            type: 'array',
+            items: { $ref: getSchemaPath(responseType) },
+          },
+          message: {
+            example: '0개의 항목을 조회했습니다.',
+            description: '조회된 항목 수에 따라 동적으로 변경됩니다.',
+          },
+        },
+      },
+    ],
+  };
+}
+
+/**
  * 공통 에러 응답 데코레이터
  * 자주 사용되는 HTTP 에러 응답들을 묶어서 정의
  */
@@ -106,17 +151,37 @@ export function ApiAdminCreate<TModel extends Type<any>>(
     ApiResponse({
       status: 201,
       description: '생성 성공',
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(ApiResponseDto) },
-          {
-            properties: {
-              data: { $ref: getSchemaPath(responseType) },
-              message: { example: '생성이 완료되었습니다.' },
-            },
-          },
-        ],
-      },
+      schema: createWrappedResponseSchema(
+        responseType,
+        '생성이 완료되었습니다.',
+      ),
+    }),
+    ApiAdminErrors(),
+  );
+}
+
+/**
+ * ADMIN 전용 액션 엔드포인트 데코레이터 (경로 파라미터 없음)
+ */
+export function ApiAdminAction<TModel extends Type<any>>(
+  responseType: TModel,
+  summary: string,
+  description?: string,
+  successMessage = '처리가 완료되었습니다.',
+  successStatus = 200,
+) {
+  return applyDecorators(
+    ApiBearerAuth(),
+    ApiOperation({
+      summary,
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+    }),
+    ApiResponse({
+      status: successStatus,
+      description: '요청 처리 성공',
+      schema: createWrappedResponseSchema(responseType, successMessage),
     }),
     ApiAdminErrors(),
   );
@@ -148,17 +213,10 @@ export function ApiAdminUpdate<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: `${resourceName} 수정 성공`,
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(ApiResponseDto) },
-          {
-            properties: {
-              data: { $ref: getSchemaPath(responseType) },
-              message: { example: '수정이 완료되었습니다.' },
-            },
-          },
-        ],
-      },
+      schema: createWrappedResponseSchema(
+        responseType,
+        '수정이 완료되었습니다.',
+      ),
     }),
     ApiAdminErrors(),
     ApiNotFoundError(resourceName),
@@ -216,17 +274,33 @@ export function ApiAdminPatch<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: '수정 성공',
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(ApiResponseDto) },
-          {
-            properties: {
-              data: { $ref: getSchemaPath(responseType) },
-              message: { example: successMessage },
-            },
-          },
-        ],
-      },
+      schema: createWrappedResponseSchema(responseType, successMessage),
+    }),
+    ApiAdminErrors(),
+  );
+}
+
+/**
+ * ADMIN 전용 단건 조회 엔드포인트 데코레이터 (경로 파라미터 없음)
+ */
+export function ApiAdminDetail<TModel extends Type<any>>(
+  responseType: TModel,
+  summary: string,
+  description?: string,
+  successMessage = '조회가 완료되었습니다.',
+) {
+  return applyDecorators(
+    ApiBearerAuth(),
+    ApiOperation({
+      summary,
+      description:
+        description ||
+        'ADMIN 권한이 필요합니다. CSRF 토큰도 함께 전송해야 합니다.',
+    }),
+    ApiResponse({
+      status: 200,
+      description: '조회 성공',
+      schema: createWrappedResponseSchema(responseType, successMessage),
     }),
     ApiAdminErrors(),
   );
@@ -248,23 +322,7 @@ export function ApiPublicList<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: '목록 조회 성공',
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(PaginatedApiResponseDto) },
-          {
-            properties: {
-              data: {
-                type: 'array',
-                items: { $ref: getSchemaPath(responseType) },
-              },
-              message: {
-                example: '0개의 항목을 조회했습니다.',
-                description: '조회된 항목 수에 따라 동적으로 변경됩니다.',
-              },
-            },
-          },
-        ],
-      },
+      schema: createPaginatedResponseSchema(responseType),
     }),
     ApiCommonErrors(),
   );
@@ -292,17 +350,10 @@ export function ApiPublicDetail<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: `${resourceName} 조회 성공`,
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(ApiResponseDto) },
-          {
-            properties: {
-              data: { $ref: getSchemaPath(responseType) },
-              message: { example: '조회가 완료되었습니다.' },
-            },
-          },
-        ],
-      },
+      schema: createWrappedResponseSchema(
+        responseType,
+        '조회가 완료되었습니다.',
+      ),
     }),
     ApiNotFoundError(resourceName),
     ApiCommonErrors(),
@@ -325,17 +376,10 @@ export function ApiPublicSingle<TModel extends Type<any>>(
     ApiResponse({
       status: 200,
       description: '조회 성공',
-      schema: {
-        allOf: [
-          { $ref: getSchemaPath(ApiResponseDto) },
-          {
-            properties: {
-              data: { $ref: getSchemaPath(responseType) },
-              message: { example: '조회가 완료되었습니다.' },
-            },
-          },
-        ],
-      },
+      schema: createWrappedResponseSchema(
+        responseType,
+        '조회가 완료되었습니다.',
+      ),
     }),
     ApiCommonErrors(),
   );

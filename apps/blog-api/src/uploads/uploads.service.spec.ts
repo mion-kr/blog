@@ -1,343 +1,109 @@
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { CopyObjectCommand, DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { BadRequestException } from '@nestjs/common'
 
 import { UploadsService } from './uploads.service'
-
-jest.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: jest.fn(),
-}))
-
-const getSignedUrlMock = getSignedUrl as jest.Mock
+import type { ContentImageFinalizer } from './application/content-image-finalizer'
+import type { UploadPolicyService } from './application/upload-policy.service'
+import type { ObjectStorageService } from './storage/object-storage.service'
 
 describe('UploadsService', () => {
-  const sendMock = jest.fn()
-  const s3Client = { send: sendMock } as unknown as S3Client
-
-  const configValues: Record<string, string> = {
-    MINIO_BUCKET: 'development',
-    MINIO_PUBLIC_ENDPOINT: 'https://cdn.example.com',
-    UPLOAD_ALLOWED_MIME: 'image/png,image/jpeg',
-    UPLOAD_MAX_SIZE: '10485760',
-    NODE_ENV: 'development',
-  }
-
-  const configGetMock = jest.fn((key: string) => configValues[key])
-  const configService = { get: configGetMock } as unknown as ConfigService
-
-  const createService = () => new UploadsService(s3Client, configService)
+  let objectStorageService: jest.Mocked<ObjectStorageService>
+  let uploadPolicyService: jest.Mocked<UploadPolicyService>
+  let contentImageFinalizer: jest.Mocked<ContentImageFinalizer>
+  let service: UploadsService
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    Object.assign(configValues, {
-      MINIO_BUCKET: 'development',
-      MINIO_PUBLIC_ENDPOINT: 'https://cdn.example.com',
-      UPLOAD_ALLOWED_MIME: 'image/png,image/jpeg',
-      UPLOAD_MAX_SIZE: '10485760',
-      NODE_ENV: 'development',
+    objectStorageService = {
+      createSignedUploadUrl: jest.fn(),
+      copyObject: jest.fn(),
+      deleteObject: jest.fn(),
+      deleteObjects: jest.fn(),
+      buildPublicUrl: jest.fn((key: string) => `https://cdn.example.com/development/${key}`),
+      extractObjectKeyFromUrl: jest.fn(),
+      getObjectKeyBasePath: jest.fn(() => ''),
+      getPublicUrlBasePath: jest.fn(() => 'https://cdn.example.com/development/'),
+    } as unknown as jest.Mocked<ObjectStorageService>
+
+    uploadPolicyService = {
+      validateFile: jest.fn(),
+      buildObjectKey: jest.fn(),
+      getExpiresIn: jest.fn(() => 300),
+    } as unknown as jest.Mocked<UploadPolicyService>
+
+    contentImageFinalizer = {
+      finalizePostContentImagesWithReport: jest.fn(),
+      cleanupRemovedPostContentImages: jest.fn(),
+    } as unknown as jest.Mocked<ContentImageFinalizer>
+
+    service = new UploadsService(
+      objectStorageService,
+      uploadPolicyService,
+      contentImageFinalizer,
+    )
+  })
+
+  it('should orchestrate pre-signed upload creation', async () => {
+    uploadPolicyService.buildObjectKey.mockReturnValue(
+      'draft/uuid/about/1700000000-avatar.png',
+    )
+    objectStorageService.createSignedUploadUrl.mockResolvedValue('https://signed-url')
+
+    const result = await service.createPreSignedUrl({
+      filename: 'avatar.png',
+      mimeType: 'image/png',
+      size: 1024,
+      draftUuid: 'uuid',
+      type: 'about',
+    })
+
+    expect(uploadPolicyService.validateFile).toHaveBeenCalledWith('image/png', 1024)
+    expect(objectStorageService.createSignedUploadUrl).toHaveBeenCalled()
+    expect(result).toEqual({
+      uploadUrl: 'https://signed-url',
+      objectKey: 'draft/uuid/about/1700000000-avatar.png',
+      publicUrl: 'https://cdn.example.com/development/draft/uuid/about/1700000000-avatar.png',
+      expiresIn: 300,
     })
   })
 
-  describe('createPreSignedUrl', () => {
-    it('should return upload metadata for valid request', async () => {
-      const service = createService()
-      const fixedTimestamp = 1_700_000_000_000
-      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(fixedTimestamp)
-      getSignedUrlMock.mockResolvedValue('https://signed-url')
-
-      const dto = {
-        filename: 'Profile Image.PNG',
-        mimeType: 'image/png',
-        size: 1024,
-        draftUuid: 'draft-uuid',
-        type: 'about' as const,
-      }
-
-      const result = await service.createPreSignedUrl(dto)
-
-      const expectedKey = 'draft/draft-uuid/about/1700000000000-profile-image.png'
-
-      expect(result).toEqual({
-        uploadUrl: 'https://signed-url',
-        objectKey: expectedKey,
-        publicUrl: `https://cdn.example.com/development/${expectedKey}`,
-        expiresIn: 300,
-      })
-
-      const putCommand = getSignedUrlMock.mock.calls[0][1] as PutObjectCommand
-      expect(putCommand.input).toMatchObject({
-        Bucket: 'development',
-        Key: expectedKey,
-        ContentType: 'image/png',
-        ContentLength: 1024,
-      })
-      expect(sendMock).not.toHaveBeenCalled()
-
-      dateSpy.mockRestore()
+  it('should delegate content finalization report', async () => {
+    contentImageFinalizer.finalizePostContentImagesWithReport.mockResolvedValue({
+      content: 'updated',
+      movedObjects: [],
     })
 
-    it('should reject unsupported mime types', async () => {
-      configValues.UPLOAD_ALLOWED_MIME = 'image/jpeg'
-      const service = createService()
-
-      await expect(
-        service.createPreSignedUrl({
-          filename: 'image.png',
-          mimeType: 'image/png',
-          size: 10,
-          draftUuid: 'uuid',
-          type: 'about',
-        }),
-      ).rejects.toThrow(BadRequestException)
+    const result = await service.finalizePostContentImagesWithReport({
+      postId: 'post-1',
+      draftUuid: 'draft-uuid',
+      nextContent: 'draft',
     })
 
-    it('should wrap errors from presigner', async () => {
-      const service = createService()
-      getSignedUrlMock.mockRejectedValue(new Error('boom'))
-
-      await expect(
-        service.createPreSignedUrl({
-          filename: 'image.png',
-          mimeType: 'image/png',
-          size: 10,
-          draftUuid: 'uuid',
-          type: 'about',
-        }),
-      ).rejects.toThrow(InternalServerErrorException)
-    })
+    expect(contentImageFinalizer.finalizePostContentImagesWithReport).toHaveBeenCalled()
+    expect(result.content).toBe('updated')
   })
 
-  describe('finalizeAboutImage', () => {
-    it('should copy draft object to about location and delete draft', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
+  it('should finalize about image through storage adapter', async () => {
+    objectStorageService.extractObjectKeyFromUrl.mockReturnValue(
+      'draft/uuid/about/1700000000-avatar.png',
+    )
+    objectStorageService.copyObject.mockResolvedValue(undefined)
+    objectStorageService.deleteObject.mockResolvedValue(undefined)
 
-      const tempUrl = 'https://cdn.example.com/development/draft/uuid/about/1700000000-avatar.png'
-      const result = await service.finalizeAboutImage(tempUrl)
+    const result = await service.finalizeAboutImage(
+      'https://cdn.example.com/development/draft/uuid/about/1700000000-avatar.png',
+    )
 
-      expect(result).toBe('https://cdn.example.com/development/about/1700000000-avatar.png')
-      expect(sendMock).toHaveBeenCalledTimes(2)
-
-      const copyCommand = sendMock.mock.calls[0][0] as CopyObjectCommand
-      expect(copyCommand.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'about/1700000000-avatar.png',
-      })
-
-      const deleteDraft = sendMock.mock.calls[1][0] as DeleteObjectCommand
-      expect(deleteDraft.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'draft/uuid/about/1700000000-avatar.png',
-      })
-    })
-
-    it('should throw when url is not from draft bucket', async () => {
-      const service = createService()
-
-      await expect(
-        service.finalizeAboutImage('https://cdn.example.com/development/about/avatar.png'),
-      ).rejects.toThrow(BadRequestException)
-    })
+    expect(objectStorageService.copyObject).toHaveBeenCalledWith(
+      'draft/uuid/about/1700000000-avatar.png',
+      'about/1700000000-avatar.png',
+    )
+    expect(result).toBe('https://cdn.example.com/development/about/1700000000-avatar.png')
   })
 
-  describe('finalizeCoverImage', () => {
-    it('should not delete draft/previous cover when delete options are false', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
+  it('should reject invalid about draft url', async () => {
+    objectStorageService.extractObjectKeyFromUrl.mockReturnValue(null)
 
-      const result = await service.finalizeCoverImage({
-        postId: 'post-1',
-        draftUuid: 'draft-uuid',
-        objectKey: 'draft/draft-uuid/thumbnail/new.png',
-        type: 'thumbnail',
-        currentCoverImage: 'https://cdn.example.com/development/posts/post-1/thumbnail/old.png',
-        deleteDraftSource: false,
-        removePrevious: false,
-      })
-
-      expect(result).toBe('https://cdn.example.com/development/posts/post-1/thumbnail/new.png')
-      expect(sendMock).toHaveBeenCalledTimes(1)
-
-      const copyCommand = sendMock.mock.calls[0][0] as CopyObjectCommand
-      expect(copyCommand.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/thumbnail/new.png',
-      })
-    })
-  })
-
-  describe('finalizePostContentImages', () => {
-    it('should move draft content images and replace markdown urls', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      const draftUrl =
-        'https://cdn.example.com/development/draft/draft-uuid/content/1700000000-flow.png?v=1#section'
-      const nextContent = `# 제목\n\n![flow](${draftUrl})\n\n![flow-dup](${draftUrl})`
-
-      const result = await service.finalizePostContentImages({
-        postId: 'post-1',
-        draftUuid: 'draft-uuid',
-        nextContent,
-      })
-
-      expect(result).toContain(
-        'https://cdn.example.com/development/posts/post-1/content/1700000000-flow.png',
-      )
-      expect(result).not.toContain(draftUrl)
-      expect(sendMock).toHaveBeenCalledTimes(2)
-
-      const copyCommand = sendMock.mock.calls[0][0] as CopyObjectCommand
-      expect(copyCommand.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/1700000000-flow.png',
-      })
-
-      const deleteDraft = sendMock.mock.calls[1][0] as DeleteObjectCommand
-      expect(deleteDraft.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'draft/draft-uuid/content/1700000000-flow.png',
-      })
-    })
-
-    it('should return moved objects report for compensation cleanup', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      const report = await service.finalizePostContentImagesWithReport({
-        postId: 'post-1',
-        draftUuid: 'draft-uuid',
-        nextContent:
-          '![flow](https://cdn.example.com/development/draft/draft-uuid/content/1700000000-flow.png)',
-      })
-
-      expect(report.content).toContain(
-        'https://cdn.example.com/development/posts/post-1/content/1700000000-flow.png',
-      )
-      expect(report.movedObjects).toEqual([
-        {
-          sourceKey: 'draft/draft-uuid/content/1700000000-flow.png',
-          destinationKey: 'posts/post-1/content/1700000000-flow.png',
-        },
-      ])
-    })
-
-    it('should delete removed post content images', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      const previousContent = [
-        '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)',
-        '![old](https://cdn.example.com/development/posts/post-1/content/old.png)',
-      ].join('\n')
-      const nextContent =
-        '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)'
-
-      await service.finalizePostContentImages({
-        postId: 'post-1',
-        nextContent,
-        previousContent,
-      })
-
-      expect(sendMock).toHaveBeenCalledTimes(1)
-      const deleteOrphan = sendMock.mock.calls[0][0] as DeleteObjectCommand
-      expect(deleteOrphan.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/old.png',
-      })
-    })
-
-    it('should keep draft source when deleteDraftSource is false', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      await service.finalizePostContentImagesWithReport({
-        postId: 'post-1',
-        draftUuid: 'draft-uuid',
-        nextContent:
-          '![new](https://cdn.example.com/development/draft/draft-uuid/content/new.png)',
-        deleteDraftSource: false,
-        removeOrphanedPrevious: false,
-      })
-
-      expect(sendMock).toHaveBeenCalledTimes(1)
-      const copyCommand = sendMock.mock.calls[0][0] as CopyObjectCommand
-      expect(copyCommand.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/new.png',
-      })
-    })
-  })
-
-  describe('cleanupRemovedPostContentImages', () => {
-    it('should delete only removed post content images', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      await service.cleanupRemovedPostContentImages({
-        postId: 'post-1',
-        previousContent: [
-          '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)',
-          '![old](https://cdn.example.com/development/posts/post-1/content/old.png)',
-        ].join('\n'),
-        nextContent:
-          '![keep](https://cdn.example.com/development/posts/post-1/content/keep.png)',
-      })
-
-      expect(sendMock).toHaveBeenCalledTimes(1)
-      const deleteOrphan = sendMock.mock.calls[0][0] as DeleteObjectCommand
-      expect(deleteOrphan.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/old.png',
-      })
-    })
-  })
-
-  describe('deleteObjectByUrl', () => {
-    it('should delete object when url belongs to bucket', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-
-      await service.deleteObjectByUrl('https://cdn.example.com/development/about/avatar.png')
-
-      const deleteCmd = sendMock.mock.calls[0][0] as DeleteObjectCommand
-      expect(deleteCmd.input).toMatchObject({
-        Bucket: 'development',
-        Key: 'about/avatar.png',
-      })
-    })
-
-    it('should ignore unknown urls', async () => {
-      const service = createService()
-
-      await service.deleteObjectByUrl('https://other.cdn/about/avatar.png')
-
-      expect(sendMock).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('deleteObjectsByKeys', () => {
-    it('should delete unique keys in best-effort mode', async () => {
-      const service = createService()
-      sendMock.mockResolvedValue(undefined)
-      sendMock.mockRejectedValueOnce(new Error('delete failed'))
-
-      await service.deleteObjectsByKeys([
-        'posts/post-1/content/a.png',
-        'posts/post-1/content/a.png',
-        'posts/post-1/content/b.png',
-      ])
-
-      expect(sendMock).toHaveBeenCalledTimes(2)
-      expect((sendMock.mock.calls[0][0] as DeleteObjectCommand).input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/a.png',
-      })
-      expect((sendMock.mock.calls[1][0] as DeleteObjectCommand).input).toMatchObject({
-        Bucket: 'development',
-        Key: 'posts/post-1/content/b.png',
-      })
-    })
+    await expect(
+      service.finalizeAboutImage('https://cdn.example.com/development/about/avatar.png'),
+    ).rejects.toThrow(BadRequestException)
   })
 })

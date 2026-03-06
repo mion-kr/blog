@@ -202,7 +202,6 @@ describe('PostsService', () => {
         title: 'New Post',
         content: '# Hello',
         excerpt: 'Hello world',
-        coverImage: null,
         coverImageKey: 'development/draft/test-draft/thumbnail/file.png',
         draftUuid: '018f1aeb-4b58-79f7-b555-725f0c602114',
         published: true,

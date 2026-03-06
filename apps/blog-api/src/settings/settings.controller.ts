@@ -1,18 +1,11 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiExtraModels,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
-
-import { AdminGuard } from '../auth/guards/admin.guard';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 import {
   ResponseMessage,
   User,
   CurrentUser,
+  ApiAdminDetail,
   ApiAdminPatch,
+  ApiAdminController,
 } from '../common/decorators';
 import { SettingsService } from './settings.service';
 import { SettingsResponseDto, UpdateSettingsDto } from './dto';
@@ -24,10 +17,7 @@ import { SettingsResponseDto, UpdateSettingsDto } from './dto';
  * - GET /api/admin/settings - 설정 조회 (ADMIN 전용)
  * - PATCH /api/admin/settings - 설정 업데이트 (ADMIN 전용)
  */
-@ApiTags('admin/settings')
-@ApiExtraModels(SettingsResponseDto)
-@ApiBearerAuth()
-@UseGuards(AdminGuard)
+@ApiAdminController('admin/settings', SettingsResponseDto)
 @Controller('admin/settings')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
@@ -36,14 +26,11 @@ export class SettingsController {
    * 전체 설정 조회
    */
   @Get()
-  @ApiOperation({
-    summary: '블로그 설정 조회',
-    description: 'ADMIN 권한으로 모든 블로그 설정을 조회합니다.',
-  })
-  @ApiOkResponse({
-    description: '설정 조회 성공',
-    type: SettingsResponseDto,
-  })
+  @ApiAdminDetail(
+    SettingsResponseDto,
+    '블로그 설정 조회',
+    'ADMIN 권한으로 모든 블로그 설정을 조회합니다.',
+  )
   async findAll(): Promise<SettingsResponseDto> {
     return this.settingsService.findAll();
   }

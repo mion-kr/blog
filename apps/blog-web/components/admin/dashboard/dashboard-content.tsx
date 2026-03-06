@@ -1,24 +1,17 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { startTransition, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import type { LucideIcon } from "lucide-react"
 import { CalendarCheck2, FileText, Pencil, PlusCircle, RotateCw, Sparkles, Tags } from "lucide-react"
 
-import type { PostResponseDto } from "@repo/shared"
-
-import { AdminDashboardSkeleton } from "./dashboard-skeleton"
-
-interface DashboardData {
-  publishedTotal: number
-  draftTotal: number
-  categoryTotal: number
-  tagTotal: number
-  recentDrafts: PostResponseDto[]
-}
+import type { AdminDashboardData } from "@/features/admin/server/get-admin-dashboard"
 
 interface AdminDashboardContentProps {
   userName: string
+  initialData: AdminDashboardData | null
+  initialError?: string | null
 }
 
 function StatCard({
@@ -44,70 +37,25 @@ function StatCard({
   )
 }
 
-export function AdminDashboardContent({ userName }: AdminDashboardContentProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [reloadFlag, setReloadFlag] = useState(0)
-
-  useEffect(() => {
-    let isMounted = true
-    const controller = new AbortController()
-
-    async function loadDashboard() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch("/api/admin/overview", {
-          method: "GET",
-          cache: "no-store",
-          signal: controller.signal,
-        })
-
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: DashboardData; message?: string }
-          | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "대시보드 데이터를 불러오지 못했어요.")
-        }
-
-        if (isMounted) {
-          setData(payload.data)
-        }
-      } catch (err: unknown) {
-        if (!controller.signal.aborted) {
-          const message =
-            err instanceof Error ? err.message : "대시보드 데이터를 불러오지 못했어요."
-          setError(message)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadDashboard()
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
-  }, [reloadFlag])
-
+export function AdminDashboardContent({
+  userName,
+  initialData,
+  initialError,
+}: AdminDashboardContentProps) {
+  const router = useRouter()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const data = initialData
+  const error = initialError ?? null
   const recentDrafts = useMemo(() => data?.recentDrafts ?? [], [data])
 
-  if (loading && !data) {
-    return <AdminDashboardSkeleton />
-  }
-
   const handleRetry = () => {
-    setLoading(true)
-    setError(null)
-    setData(null)
-    setReloadFlag((flag) => flag + 1)
+    setIsRefreshing(true)
+
+    // 서버에서 다시 데이터를 읽어 route 계층 기준으로 화면을 새로 그립니다.
+    startTransition(() => {
+      router.refresh()
+      setIsRefreshing(false)
+    })
   }
 
   if (error) {
@@ -117,10 +65,11 @@ export function AdminDashboardContent({ userName }: AdminDashboardContentProps) 
         <button
           type="button"
           onClick={handleRetry}
+          disabled={isRefreshing}
           className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60 hover:text-white"
         >
           <RotateCw className="h-3.5 w-3.5" aria-hidden />
-          다시 시도
+          {isRefreshing ? "새로고침 중" : "다시 시도"}
         </button>
       </div>
     )
@@ -200,20 +149,7 @@ export function AdminDashboardContent({ userName }: AdminDashboardContentProps) 
           </div>
 
           <div className="mt-4 space-y-4">
-            {loading && data ? (
-              Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={`draft-skeleton-${index}`}
-                  className="flex items-start justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-4"
-                >
-                  <div className="space-y-2">
-                    <div className="h-4 w-40 rounded-md bg-slate-800/70" />
-                    <div className="h-3 w-24 rounded-md bg-slate-800/50" />
-                  </div>
-                  <div className="h-3 w-12 rounded-md bg-slate-800/60" />
-                </div>
-              ))
-            ) : recentDrafts.length === 0 ? (
+            {recentDrafts.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-800 bg-slate-900/50 p-6 text-center text-sm text-slate-500">
                 아직 작성 중인 초안이 없어요. 새로운 아이디어를 바로 기록해보세요!
               </div>

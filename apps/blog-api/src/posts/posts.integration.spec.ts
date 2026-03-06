@@ -24,6 +24,23 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const TEST_ADMIN_TOKEN = 'test-admin-token';
 const TEST_ADMIN_USER_ID = 'test-admin-user';
+const testCategory = {
+  id: '01234567-89ab-cdef-0123-456789abcdef',
+  name: '개발',
+  slug: 'development',
+};
+const testTags = [
+  {
+    id: '12345678-9abc-def0-1234-56789abcdef0',
+    name: 'Next.js',
+    slug: 'nextjs',
+  },
+  {
+    id: '23456789-abcd-ef01-2345-6789abcdef01',
+    name: 'React',
+    slug: 'react',
+  },
+];
 
 const createMockAdminGuard = (): CanActivate => ({
   canActivate: (context: ExecutionContext) => {
@@ -64,25 +81,6 @@ describe.skip('PostsController (Integration)', () => {
 
   // JWT 토큰 (테스트용 관리자 토큰)
   let adminToken: string;
-
-  // 테스트 데이터
-  const testCategory = {
-    id: '01234567-89ab-cdef-0123-456789abcdef',
-    name: '개발',
-    slug: 'development',
-  };
-  const testTags = [
-    {
-      id: '12345678-9abc-def0-1234-56789abcdef0',
-      name: 'Next.js',
-      slug: 'nextjs',
-    },
-    {
-      id: '23456789-abcd-ef01-2345-6789abcdef01',
-      name: 'React',
-      slug: 'react',
-    },
-  ];
 
   const testPost = {
     title: 'Next.js 15에서 달라진 점들',

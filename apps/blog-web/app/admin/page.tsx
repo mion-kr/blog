@@ -1,16 +1,13 @@
-import { Suspense } from "react"
-
 import { AdminDashboardContent } from "@/components/admin/dashboard/dashboard-content"
-import { AdminDashboardSkeleton } from "@/components/admin/dashboard/dashboard-skeleton"
-import { getSession } from "@/lib/auth"
+import { getAuthorizationToken, getSession } from "@/lib/auth"
+import { getAdminDashboard } from "@/features/admin/server/get-admin-dashboard"
 
 export default async function AdminDashboardPage() {
-  const session = await getSession()
+  const [session, token] = await Promise.all([getSession(), getAuthorizationToken()])
   const userName = session?.user?.name ?? "관리자"
+  const { data, error } = await getAdminDashboard({ token })
 
   return (
-    <Suspense fallback={<AdminDashboardSkeleton />}>
-      <AdminDashboardContent userName={userName} />
-    </Suspense>
+    <AdminDashboardContent userName={userName} initialData={data} initialError={error} />
   )
 }

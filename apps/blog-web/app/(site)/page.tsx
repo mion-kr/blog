@@ -336,6 +336,7 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
 
   return (
     <article className="featured-post">
+      <Link href={href} className="stretched-link" aria-label={`${post.title} 상세 보기`} />
       <div className="featured-cover">
         {post.coverImage ? (
           <Image
@@ -352,7 +353,10 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
       </div>
 
       <div className="featured-meta">
-        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+        <Link
+          href={`/posts?categorySlug=${post.category.slug}`}
+          className="category-badge relative z-20"
+        >
           <span className="dot" aria-hidden="true" />
           {post.category.name}
         </Link>
@@ -365,7 +369,7 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
       </div>
 
       <h3 className="featured-title">
-        <Link href={href}>{post.title}</Link>
+        <Link href={href} className="relative z-20">{post.title}</Link>
       </h3>
 
       {post.excerpt && <p className="featured-excerpt">{post.excerpt}</p>}
@@ -376,13 +380,13 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
             <Link
               key={tag.id}
               href={`/posts?tagSlug=${tag.slug}`}
-              className="tag"
+              className="tag relative z-20"
             >
               #{tag.name}
             </Link>
           ))}
         </div>
-        <Link href={href} className="read-more">
+        <Link href={href} className="read-more relative z-20">
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>
@@ -399,22 +403,26 @@ function PostCard({ post }: { post: PostResponseDto }) {
 
   return (
     <article className="post-card">
+      <Link href={href} className="stretched-link" aria-label={`${post.title} 상세 보기`} />
       <div className="post-card-meta">
-        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+        <Link
+          href={`/posts?categorySlug=${post.category.slug}`}
+          className="category-badge relative z-20"
+        >
           <span className="dot" aria-hidden="true" />
           {post.category.name}
         </Link>
         <span className="meta-item">{formatMonthDay(displayDate)}</span>
       </div>
       <h3 className="post-card-title">
-        <Link href={href}>{post.title}</Link>
+        <Link href={href} className="relative z-20">{post.title}</Link>
       </h3>
       {post.excerpt && <p className="post-card-excerpt">{post.excerpt}</p>}
       <div className="post-card-footer">
         <span className="view-count">
           <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
         </span>
-        <Link href={href} className="read-more">
+        <Link href={href} className="read-more relative z-20">
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>

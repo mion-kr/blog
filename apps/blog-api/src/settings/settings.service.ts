@@ -1,51 +1,92 @@
-import { Injectable } from '@nestjs/common';
-import { blogSettings, db } from '@repo/database';
+import { Inject, Injectable } from '@nestjs/common';
 
-import { SettingsResponseDto, UpdateSettingsDto } from './dto';
+import {
+  PublicSettingsResponseDto,
+  SettingsResponseDto,
+  UpdateSettingsDto,
+} from './dto';
+import {
+  mapSettingsRowsToResponse,
+  mapSettingsToPublicResponse,
+} from './application/settings-response.mapper';
 import { UploadsService } from '../uploads/uploads.service';
+import {
+  SettingKey,
+  SETTINGS_REPOSITORY,
+  SettingsRepository,
+  SettingsUpsertEntry,
+} from './repositories/settings.repository';
 
-type SettingKey =
-  | 'site_title'
-  | 'site_description'
-  | 'site_url'
-  | 'posts_per_page'
-  | 'profile_image_url';
-
-const SETTINGS_KEY_MAP: Record<SettingKey, keyof SettingsResponseDto> = {
-  site_title: 'siteTitle',
-  site_description: 'siteDescription',
-  site_url: 'siteUrl',
-  posts_per_page: 'postsPerPage',
-  profile_image_url: 'profileImageUrl',
-};
-
-const DEFAULT_SETTINGS: SettingsResponseDto = new SettingsResponseDto({
-  siteTitle: "Mion's Blog",
-  siteDescription: '개발과 기술에 관한 이야기를 나눕니다.',
-  siteUrl: 'http://localhost:3000',
-  postsPerPage: 10,
-  profileImageUrl: null,
-});
-
+/**
+ * 설정 use-case를 처리하는 서비스입니다.
+ */
 @Injectable()
 export class SettingsService {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(
+    private readonly uploadsService: UploadsService,
+    @Inject(SETTINGS_REPOSITORY)
+    private readonly settingsRepository: SettingsRepository,
+  ) {}
 
+  /**
+   * 전체 설정을 조회합니다.
+   */
   async findAll(): Promise<SettingsResponseDto> {
-    const rows = await db.select().from(blogSettings);
-    return this.mapToResponse(
-      rows.map((row) => ({ key: row.key, value: row.value })),
-    );
+    const rows = await this.settingsRepository.findAll();
+
+    return mapSettingsRowsToResponse(rows);
   }
 
+  /**
+   * 공개 화면에 필요한 설정만 조회합니다.
+   */
+  async findPublicSettings(): Promise<PublicSettingsResponseDto> {
+    const settings = await this.findAll();
+
+    return mapSettingsToPublicResponse(settings);
+  }
+
+  /**
+   * 설정 변경을 계산하고 저장한 뒤 최신 값을 반환합니다.
+   */
   async update(
     updateSettingsDto: UpdateSettingsDto,
     userId: string,
   ): Promise<SettingsResponseDto> {
     const currentSettings = await this.findAll();
+    const updates = this.collectValueUpdates(updateSettingsDto, currentSettings);
 
-    const updates: Array<{ key: SettingKey; value: string }> = [];
+    if (
+      updateSettingsDto.profileImageRemove ||
+      updateSettingsDto.profileImageUrl !== undefined
+    ) {
+      await this.applyProfileImageUpdate(
+        updateSettingsDto,
+        currentSettings,
+        updates,
+      );
+    }
 
+    if (updates.length === 0) {
+      return currentSettings;
+    }
+
+    // 변경 집합 저장은 persistence 계층에 위임합니다.
+    await this.settingsRepository.upsertMany(updates, userId);
+
+    return this.findAll();
+  }
+
+  /**
+   * 단순 값 변경을 설정 업데이트 집합으로 수집합니다.
+   */
+  private collectValueUpdates(
+    updateSettingsDto: UpdateSettingsDto,
+    currentSettings: SettingsResponseDto,
+  ): SettingsUpsertEntry[] {
+    const updates: SettingsUpsertEntry[] = [];
+
+    // 기본 설정 필드는 값이 실제로 바뀔 때만 저장합니다.
     if (
       updateSettingsDto.siteTitle !== undefined &&
       updateSettingsDto.siteTitle !== currentSettings.siteTitle
@@ -80,16 +121,27 @@ export class SettingsService {
       });
     }
 
+    return updates;
+  }
+
+  /**
+   * 프로필 이미지 관련 변경을 처리하고 설정 업데이트 집합에 반영합니다.
+   */
+  private async applyProfileImageUpdate(
+    updateSettingsDto: UpdateSettingsDto,
+    currentSettings: SettingsResponseDto,
+    updates: SettingsUpsertEntry[],
+  ): Promise<void> {
     let nextProfileImageUrl = currentSettings.profileImageUrl ?? null;
 
     if (updateSettingsDto.profileImageRemove) {
+      // 프로필 이미지 제거는 현재 객체 정리 후 빈 값으로 저장합니다.
       await this.uploadsService.deleteObjectByUrl(nextProfileImageUrl ?? undefined);
       nextProfileImageUrl = null;
-      if (currentSettings.profileImageUrl) {
-        updates.push({ key: 'profile_image_url', value: '' });
-      }
     } else if (updateSettingsDto.profileImageUrl) {
       const incomingUrl = updateSettingsDto.profileImageUrl;
+
+      // draft 업로드 URL은 저장 전 최종 경로로 확정합니다.
       if (incomingUrl.includes('/draft/')) {
         nextProfileImageUrl = await this.uploadsService.finalizeAboutImage(incomingUrl);
         if (currentSettings.profileImageUrl) {
@@ -98,77 +150,13 @@ export class SettingsService {
       } else {
         nextProfileImageUrl = incomingUrl;
       }
-
-      if (nextProfileImageUrl !== currentSettings.profileImageUrl) {
-        updates.push({ key: 'profile_image_url', value: nextProfileImageUrl ?? '' });
-      }
     }
 
-    if (updates.length === 0) {
-      return currentSettings;
+    if (nextProfileImageUrl !== currentSettings.profileImageUrl) {
+      updates.push({
+        key: 'profile_image_url' as SettingKey,
+        value: nextProfileImageUrl ?? '',
+      });
     }
-
-    const now = new Date();
-
-    await db.transaction(async (tx) => {
-      for (const { key, value } of updates) {
-        await tx
-          .insert(blogSettings)
-          .values({
-            key,
-            value,
-            updatedAt: now,
-            updatedBy: userId,
-          })
-          .onConflictDoUpdate({
-            target: blogSettings.key,
-            set: {
-              value,
-              updatedAt: now,
-              updatedBy: userId,
-            },
-          });
-      }
-    });
-
-    return this.findAll();
-  }
-
-  private mapToResponse(
-    rows: Array<{ key: string; value: string }>,
-  ): SettingsResponseDto {
-    const normalized = new Map<SettingKey, string>();
-
-    rows.forEach(({ key, value }) => {
-      if ((key as SettingKey) in SETTINGS_KEY_MAP) {
-        normalized.set(key as SettingKey, value);
-      }
-    });
-
-    return new SettingsResponseDto({
-      siteTitle: normalized.get('site_title') ?? DEFAULT_SETTINGS.siteTitle,
-      siteDescription:
-        normalized.get('site_description') ?? DEFAULT_SETTINGS.siteDescription,
-      siteUrl: normalized.get('site_url') ?? DEFAULT_SETTINGS.siteUrl,
-      postsPerPage:
-        Number(normalized.get('posts_per_page')) ||
-        DEFAULT_SETTINGS.postsPerPage,
-      profileImageUrl: this.normalizeOptionalString(
-        normalized.get('profile_image_url') ?? undefined,
-      ),
-    });
-  }
-
-  private normalizeOptionalString(value?: string): string | null {
-    if (value === undefined || value === null) {
-      return null;
-    }
-
-    const trimmed = value.trim();
-    if (trimmed.length === 0) {
-      return null;
-    }
-
-    return trimmed;
   }
 }

@@ -3,6 +3,8 @@ import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
 import { PublicSettingsController } from './public-settings.controller';
 import { UploadsModule } from '../uploads/uploads.module';
+import { DrizzleSettingsRepository } from './repositories/drizzle-settings.repository';
+import { SETTINGS_REPOSITORY } from './repositories/settings.repository';
 
 /**
  * 설정 모듈
@@ -15,7 +17,14 @@ import { UploadsModule } from '../uploads/uploads.module';
 @Module({
   imports: [UploadsModule],
   controllers: [SettingsController, PublicSettingsController],
-  providers: [SettingsService],
+  providers: [
+    SettingsService,
+    DrizzleSettingsRepository,
+    {
+      provide: SETTINGS_REPOSITORY,
+      useExisting: DrizzleSettingsRepository,
+    },
+  ],
   exports: [SettingsService],
 })
 export class SettingsModule {}

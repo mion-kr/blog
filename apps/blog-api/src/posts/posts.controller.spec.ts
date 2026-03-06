@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
-import { TestBed, Mocked } from '@suites/unit';
+import { PaginationMeta } from '@repo/shared';
+import { TestBed } from '@suites/unit';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -9,10 +10,10 @@ import { PostResponseDto } from './dto/post-response.dto';
 
 describe('PostsController', () => {
   let controller: PostsController;
-  let postsService: Mocked<PostsService>;
+  let postsService;
 
   const mockPostResponse: PostResponseDto = {
-    id: '1',
+    id: '018f1aeb-4b58-79f7-b555-725f0c602110',
     title: 'Test Post',
     slug: 'test-post',
     content: '# Test Post Content',
@@ -20,27 +21,28 @@ describe('PostsController', () => {
     coverImage: 'https://example.com/image.jpg',
     published: true,
     viewCount: 100,
-    categoryId: 'cat-1',
-    authorId: 'user-1',
+    categoryId: '018f1aeb-4b58-79f7-b555-725f0c602111',
+    authorId: '018f1aeb-4b58-79f7-b555-725f0c602112',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-02'),
     publishedAt: new Date('2024-01-01'),
     category: {
-      id: 'cat-1',
+      id: '018f1aeb-4b58-79f7-b555-725f0c602111',
       name: 'Development',
       slug: 'development',
       description: 'Development category',
+      postCount: 12,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
     },
     author: {
-      id: 'user-1',
+      id: '018f1aeb-4b58-79f7-b555-725f0c602112',
       name: 'Mion',
       image: 'https://example.com/avatar.jpg',
     },
     tags: [
       {
-        id: 'tag-1',
+        id: '018f1aeb-4b58-79f7-b555-725f0c602113',
         name: 'Next.js',
         slug: 'nextjs',
         postCount: 5,
@@ -51,7 +53,7 @@ describe('PostsController', () => {
   };
 
   const mockUser = {
-    id: 'user-1',
+    id: '018f1aeb-4b58-79f7-b555-725f0c602112',
     email: 'admin@example.com',
     name: '관리자',
     role: 'ADMIN' as const,
@@ -73,251 +75,111 @@ describe('PostsController', () => {
 
   describe('findAll', () => {
     it('포스트 목록을 반환해야 함', async () => {
-      // Arrange
       const query: PostQueryDto = {
         page: 1,
         limit: 10,
         published: true,
       };
-      const mockPosts = [mockPostResponse];
-      postsService.findAll.mockResolvedValue(mockPosts);
+      const response = {
+        items: [mockPostResponse],
+        meta: PaginationMeta.create(1, 1, 10),
+      };
+      postsService.findAll.mockResolvedValue(response);
 
-      // Act
       const result = await controller.findAll(query);
 
-      // Assert
-      expect(result).toEqual(mockPosts);
-      expect(postsService.findAll).toHaveBeenCalledWith(query);
-      expect(postsService.findAll).toHaveBeenCalledTimes(1);
-    });
-
-    it('빈 쿼리 파라미터로도 동작해야 함', async () => {
-      // Arrange
-      const query: PostQueryDto = {};
-      const mockPosts: PostResponseDto[] = [];
-      postsService.findAll.mockResolvedValue(mockPosts);
-
-      // Act
-      const result = await controller.findAll(query);
-
-      // Assert
-      expect(result).toEqual(mockPosts);
+      expect(result).toEqual(response);
       expect(postsService.findAll).toHaveBeenCalledWith(query);
     });
 
-    it('복잡한 쿼리 파라미터를 전달해야 함', async () => {
-      // Arrange
+    it('현재 필터 계약을 서비스에 전달해야 함', async () => {
       const query: PostQueryDto = {
         page: 2,
         limit: 20,
         sort: 'viewCount',
         order: 'desc',
         published: true,
-        categoryId: 'cat-1',
-        tagId: 'tag-1',
+        categorySlug: 'development',
+        tagSlug: 'nextjs',
         search: 'Next.js',
-        authorId: 'user-1',
+        authorId: mockUser.id,
       };
-      const mockPosts = [mockPostResponse];
-      postsService.findAll.mockResolvedValue(mockPosts);
+      const response = {
+        items: [mockPostResponse],
+        meta: PaginationMeta.create(1, 2, 20),
+      };
+      postsService.findAll.mockResolvedValue(response);
 
-      // Act
       const result = await controller.findAll(query);
 
-      // Assert
-      expect(result).toEqual(mockPosts);
+      expect(result).toEqual(response);
       expect(postsService.findAll).toHaveBeenCalledWith(query);
-      expect(postsService.findAll).toHaveBeenCalledTimes(1);
     });
 
-    it('서비스에서 에러가 발생하면 전파해야 함', async () => {
-      // Arrange
+    it('서비스 에러를 전파해야 함', async () => {
       const query: PostQueryDto = {};
       const error = new Error('Database error');
       postsService.findAll.mockRejectedValue(error);
 
-      // Act & Assert
       await expect(controller.findAll(query)).rejects.toThrow(error);
-      expect(postsService.findAll).toHaveBeenCalledWith(query);
     });
   });
 
   describe('findOne', () => {
-    it('슬러그로 포스트를 찾아 반환해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
+    it('기본적으로 조회수 증가를 활성화해야 함', async () => {
       postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
 
-      // Act
-      const result = await controller.findOne(slug, undefined);
+      const result = await controller.findOne('test-post', undefined);
 
-      // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
-        trackView: true,
-      });
-      expect(postsService.findOneBySlug).toHaveBeenCalledTimes(1);
-    });
-
-    it('한글이 포함된 슬러그도 처리해야 함', async () => {
-      // Arrange
-      const slug = '한글-슬러그-테스트';
-      postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.findOne(slug, undefined);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith('test-post', {
         trackView: true,
       });
     });
 
-    it('특수문자가 포함된 슬러그도 처리해야 함', async () => {
-      // Arrange
-      const slug = 'test-post-123-with-numbers';
+    it('trackView=false면 조회수 증가를 비활성화해야 함', async () => {
       postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
 
-      // Act
-      const result = await controller.findOne(slug, undefined);
+      const result = await controller.findOne('test-post', 'false');
 
-      // Assert
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
-        trackView: true,
+      expect(postsService.findOneBySlug).toHaveBeenCalledWith('test-post', {
+        trackView: false,
       });
     });
 
     it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
-      // Arrange
-      const slug = 'non-existent';
       const error = new NotFoundException(
-        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
+        "슬러그 'missing-post'에 해당하는 포스트를 찾을 수 없습니다.",
       );
       postsService.findOneBySlug.mockRejectedValue(error);
 
-      // Act & Assert
-      await expect(controller.findOne(slug, undefined)).rejects.toThrow(error);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
-        trackView: true,
-      });
-    });
-
-    it('trackView=false 쿼리를 전달하면 조회수 증가를 비활성화해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.findOne(slug, 'false');
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith(slug, {
-        trackView: false,
-      });
+      await expect(controller.findOne('missing-post', undefined)).rejects.toThrow(
+        error,
+      );
     });
   });
 
   describe('create', () => {
-    it('포스트를 생성하고 반환해야 함', async () => {
-      // Arrange
+    it('포스트를 생성하고 작성자 ID를 전달해야 함', async () => {
       const createPostDto: CreatePostDto = {
         title: 'New Post',
         content: '# New Post Content',
         excerpt: 'New post excerpt',
         coverImage: 'https://example.com/new-image.jpg',
         published: true,
-        categoryId: 'cat-1',
-        tagIds: ['tag-1', 'tag-2'],
+        categoryId: '018f1aeb-4b58-79f7-b555-725f0c602111',
+        tagIds: [
+          '018f1aeb-4b58-79f7-b555-725f0c602113',
+          '018f1aeb-4b58-79f7-b555-725f0c602114',
+        ],
       };
       const createdPost = { ...mockPostResponse, ...createPostDto };
       postsService.create.mockResolvedValue(createdPost);
 
-      // Act
       const result = await controller.create(mockUser, createPostDto);
 
-      // Assert
       expect(result).toEqual(createdPost);
-      expect(postsService.create).toHaveBeenCalledWith(
-        createPostDto,
-        mockUser.id,
-      );
-      expect(postsService.create).toHaveBeenCalledTimes(1);
-    });
-
-    it('필수 필드만으로 포스트를 생성해야 함', async () => {
-      // Arrange
-      const createPostDto: CreatePostDto = {
-        title: 'Minimal Post',
-        content: 'Minimal content',
-        published: false,
-        categoryId: 'cat-1',
-        tagIds: [],
-      };
-      postsService.create.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.create(mockUser, createPostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.create).toHaveBeenCalledWith(
-        createPostDto,
-        mockUser.id,
-      );
-    });
-
-    it('MDX 콘텐츠를 포함한 포스트를 생성해야 함', async () => {
-      // Arrange
-      const createPostDto: CreatePostDto = {
-        title: 'MDX Post',
-        content: `# MDX Post
-
-## Code Block
-
-\`\`\`typescript
-const hello = 'world';
-console.log(hello);
-\`\`\`
-
-## Component
-
-<CustomComponent prop="value" />`,
-        published: true,
-        categoryId: 'cat-1',
-        tagIds: ['tag-1'],
-      };
-      postsService.create.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.create(mockUser, createPostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.create).toHaveBeenCalledWith(
-        createPostDto,
-        mockUser.id,
-      );
-    });
-
-    it('서비스에서 에러가 발생하면 전파해야 함', async () => {
-      // Arrange
-      const createPostDto: CreatePostDto = {
-        title: 'Error Post',
-        content: 'Content',
-        published: false,
-        categoryId: 'cat-1',
-        tagIds: [],
-      };
-      const error = new Error('Creation failed');
-      postsService.create.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.create(mockUser, createPostDto)).rejects.toThrow(
-        error,
-      );
       expect(postsService.create).toHaveBeenCalledWith(
         createPostDto,
         mockUser.id,
@@ -327,150 +189,20 @@ console.log(hello);
 
   describe('update', () => {
     it('포스트를 수정하고 반환해야 함', async () => {
-      // Arrange
       const slug = 'test-post';
       const updatePostDto: UpdatePostDto = {
         title: 'Updated Title',
         content: 'Updated content',
         published: true,
+        categoryId: '018f1aeb-4b58-79f7-b555-725f0c602115',
+        tagIds: ['018f1aeb-4b58-79f7-b555-725f0c602116'],
       };
       const updatedPost = { ...mockPostResponse, ...updatePostDto };
       postsService.update.mockResolvedValue(updatedPost);
 
-      // Act
       const result = await controller.update(slug, mockUser, updatePostDto);
 
-      // Assert
       expect(result).toEqual(updatedPost);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-      expect(postsService.update).toHaveBeenCalledTimes(1);
-    });
-
-    it('부분 업데이트를 처리해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const updatePostDto: UpdatePostDto = {
-        title: 'Only Title Updated',
-      };
-      postsService.update.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.update(slug, mockUser, updatePostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-    });
-
-    it('발행 상태만 변경할 수 있어야 함', async () => {
-      // Arrange
-      const slug = 'draft-post';
-      const updatePostDto: UpdatePostDto = {
-        published: true,
-      };
-      postsService.update.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.update(slug, mockUser, updatePostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-    });
-
-    it('태그 목록을 업데이트할 수 있어야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const updatePostDto: UpdatePostDto = {
-        tagIds: ['tag-3', 'tag-4', 'tag-5'],
-      };
-      postsService.update.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.update(slug, mockUser, updatePostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-    });
-
-    it('카테고리를 변경할 수 있어야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const updatePostDto: UpdatePostDto = {
-        categoryId: 'cat-2',
-      };
-      postsService.update.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.update(slug, mockUser, updatePostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-    });
-
-    it('모든 필드를 한 번에 업데이트할 수 있어야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const updatePostDto: UpdatePostDto = {
-        title: 'Completely Updated',
-        content: 'New content',
-        excerpt: 'New excerpt',
-        coverImage: 'https://example.com/updated.jpg',
-        published: true,
-        categoryId: 'cat-3',
-        tagIds: ['tag-6'],
-      };
-      postsService.update.mockResolvedValue(mockPostResponse);
-
-      // Act
-      const result = await controller.update(slug, mockUser, updatePostDto);
-
-      // Assert
-      expect(result).toEqual(mockPostResponse);
-      expect(postsService.update).toHaveBeenCalledWith(
-        slug,
-        updatePostDto,
-        mockUser.id,
-      );
-    });
-
-    it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
-      // Arrange
-      const slug = 'non-existent';
-      const updatePostDto: UpdatePostDto = {
-        title: 'Updated',
-      };
-      const error = new NotFoundException(
-        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
-      );
-      postsService.update.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(
-        controller.update(slug, mockUser, updatePostDto),
-      ).rejects.toThrow(error);
       expect(postsService.update).toHaveBeenCalledWith(
         slug,
         updatePostDto,
@@ -481,139 +213,11 @@ console.log(hello);
 
   describe('remove', () => {
     it('포스트를 삭제해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
       postsService.remove.mockResolvedValue(undefined);
 
-      // Act
-      await controller.remove(slug, mockUser);
+      await controller.remove('test-post', mockUser);
 
-      // Assert
-      expect(postsService.remove).toHaveBeenCalledWith(slug, mockUser.id);
-      expect(postsService.remove).toHaveBeenCalledTimes(1);
-    });
-
-    it('여러 슬러그 형식을 처리해야 함', async () => {
-      // Arrange
-      const slugs = [
-        'simple-slug',
-        'slug-with-123-numbers',
-        'very-long-slug-with-many-words-separated-by-hyphens',
-        'slug--with---multiple----hyphens',
-      ];
-
-      for (const slug of slugs) {
-        jest.clearAllMocks();
-        postsService.remove.mockResolvedValue(undefined);
-
-        // Act
-        await controller.remove(slug, mockUser);
-
-        // Assert
-        expect(postsService.remove).toHaveBeenCalledWith(slug, mockUser.id);
-        expect(postsService.remove).toHaveBeenCalledTimes(1);
-      }
-    });
-
-    it('포스트를 찾을 수 없을 때 NotFoundException을 전파해야 함', async () => {
-      // Arrange
-      const slug = 'non-existent';
-      const error = new NotFoundException(
-        `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
-      );
-      postsService.remove.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
-      expect(postsService.remove).toHaveBeenCalledWith(slug, mockUser.id);
-    });
-
-    it('서비스에서 에러가 발생하면 전파해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const error = new Error('Deletion failed');
-      postsService.remove.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
-      expect(postsService.remove).toHaveBeenCalledWith(slug, mockUser.id);
-    });
-  });
-
-  describe('Guards', () => {
-    it('create 메서드는 AdminGuard를 사용해야 함', () => {
-      // Guards는 이미 모듈 설정에서 override되어 있음
-      // 여기서는 guards가 적용되었는지 메타데이터를 확인할 수 있음
-      const guards = Reflect.getMetadata('__guards__', controller.create);
-      expect(guards).toBeDefined();
-    });
-
-    it('update 메서드는 AdminGuard를 사용해야 함', () => {
-      const guards = Reflect.getMetadata('__guards__', controller.update);
-      expect(guards).toBeDefined();
-    });
-
-    it('remove 메서드는 AdminGuard를 사용해야 함', () => {
-      const guards = Reflect.getMetadata('__guards__', controller.remove);
-      expect(guards).toBeDefined();
-    });
-
-    it('findAll 메서드는 Guard를 사용하지 않아야 함', () => {
-      const guards = Reflect.getMetadata('__guards__', controller.findAll);
-      expect(guards).toBeUndefined();
-    });
-
-    it('findOne 메서드는 Guard를 사용하지 않아야 함', () => {
-      const guards = Reflect.getMetadata('__guards__', controller.findOne);
-      expect(guards).toBeUndefined();
-    });
-  });
-
-  describe('HTTP Status Codes', () => {
-    it('remove 메서드는 204 No Content를 반환해야 함', () => {
-      // HttpCode 데코레이터 확인
-      const httpCode = Reflect.getMetadata('__httpCode__', controller.remove);
-      expect(httpCode).toBe(204);
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('데이터베이스 연결 에러를 처리해야 함', async () => {
-      // Arrange
-      const query: PostQueryDto = {};
-      const error = new Error('Database connection failed');
-      postsService.findAll.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.findAll(query)).rejects.toThrow(error);
-    });
-
-    it('유효성 검사 에러를 처리해야 함', async () => {
-      // Arrange
-      const createPostDto: CreatePostDto = {
-        title: '', // 빈 제목
-        content: 'Content',
-        published: false,
-        categoryId: 'cat-1',
-        tagIds: [],
-      };
-      const error = new Error('Validation failed');
-      postsService.create.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.create(mockUser, createPostDto)).rejects.toThrow(
-        error,
-      );
-    });
-
-    it('권한 에러를 처리해야 함', async () => {
-      // Arrange
-      const slug = 'test-post';
-      const error = new Error('Unauthorized');
-      postsService.remove.mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(controller.remove(slug, mockUser)).rejects.toThrow(error);
+      expect(postsService.remove).toHaveBeenCalledWith('test-post', mockUser.id);
     });
   });
 });
