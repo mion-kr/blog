@@ -19,7 +19,7 @@ const TAG_LIMIT = 12;
 const HOME_LOAD_MAX_ATTEMPTS = 4;
 const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const neonButtonVariants = cva("btn", {
   variants: {
@@ -147,7 +147,7 @@ export default async function HomePage() {
       tags: tagsResult.reason,
     });
 
-    throw new Error("홈 데이터를 아직 준비하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    console.warn("Homepage data is temporarily unavailable. Rendering fallback state without cache.");
   }
 
   if (latestResult.status === "rejected") {
