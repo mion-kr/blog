@@ -336,7 +336,7 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
 
   return (
     <article className="featured-post">
-      <Link href={href} className="stretched-link" aria-label={`${post.title} 상세 보기`} />
+      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
       <div className="featured-cover">
         {post.coverImage ? (
           <Image
@@ -403,7 +403,7 @@ function PostCard({ post }: { post: PostResponseDto }) {
 
   return (
     <article className="post-card">
-      <Link href={href} className="stretched-link" aria-label={`${post.title} 상세 보기`} />
+      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
       <div className="post-card-meta">
         <Link
           href={`/posts?categorySlug=${post.category.slug}`}

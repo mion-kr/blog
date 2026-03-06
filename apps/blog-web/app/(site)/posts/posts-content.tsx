@@ -341,7 +341,7 @@ function PostsNeonPostCard({
       <Link
         href={postHref}
         prefetch={false}
-        className="stretched-link"
+        className="absolute inset-0 z-10"
         aria-label={`${post.title} 상세 보기`}
       />
       <div className="neon-side-border" aria-hidden="true" />

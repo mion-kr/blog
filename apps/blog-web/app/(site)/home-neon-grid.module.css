@@ -494,6 +494,7 @@
 
 .root :global(.featured-cover-img) {
   object-fit: cover;
+  object-position: center top;
   filter: saturate(1.05) contrast(1.02);
 }
 
