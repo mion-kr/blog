@@ -2,6 +2,8 @@ import Link from "next/link"
 import { PenSquare } from "lucide-react"
 
 import { AdminStatusBanner, AdminTagsContent } from "@/components/admin"
+import { getAuthorizationToken } from "@/lib/auth"
+import { getAdminTags } from "@/features/admin/server/get-admin-tags"
 
 interface TagsPageProps {
   searchParams?: Promise<{
@@ -16,6 +18,11 @@ interface TagsPageProps {
 
 export default async function AdminTagsPage({ searchParams }: TagsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
+  const token = await getAuthorizationToken()
+  const { data, error } = await getAdminTags({
+    searchParams: resolvedSearchParams,
+    token,
+  })
 
   const search = resolvedSearchParams.search?.trim() ?? ""
   const statusParam = resolvedSearchParams.status
@@ -80,7 +87,11 @@ export default async function AdminTagsPage({ searchParams }: TagsPageProps) {
         </div>
       </form>
 
-      <AdminTagsContent searchParams={resolvedSearchParams} />
+      <AdminTagsContent
+        searchParams={resolvedSearchParams}
+        initialData={data}
+        initialError={error}
+      />
     </div>
   )
 }

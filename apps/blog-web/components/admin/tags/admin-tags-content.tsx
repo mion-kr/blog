@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { startTransition, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { RotateCw } from "lucide-react"
 
 import type { Tag, TagsQuery } from "@repo/shared"
@@ -16,9 +17,8 @@ import {
   deleteAdminTagAction,
   updateAdminTagAction,
 } from "@/lib/admin/tags-actions"
+import type { AdminTagsData } from "@/features/admin/server/get-admin-tags"
 import { cn } from "@/lib/utils"
-
-import { AdminTagsTableSkeleton } from "./admin-tags-skeleton"
 
 interface AdminTagsContentProps {
   searchParams: {
@@ -29,76 +29,19 @@ interface AdminTagsContentProps {
     status?: string
     message?: string
   }
+  initialData: AdminTagsData | null
+  initialError?: string | null
 }
 
-interface TagsFetchPayload {
-  tags: Tag[]
-  total: number
-  query: TagsQuery
-}
-
-export function AdminTagsContent({ searchParams }: AdminTagsContentProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<TagsFetchPayload | null>(null)
-  const [reloadFlag, setReloadFlag] = useState(0)
-
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams()
-    if (searchParams.page) params.set("page", searchParams.page)
-    if (searchParams.search) params.set("search", searchParams.search)
-    return params.toString()
-  }, [searchParams.page, searchParams.search])
-
-  useEffect(() => {
-    let isMounted = true
-    const controller = new AbortController()
-
-    async function loadTags() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(
-          queryString ? `/api/admin/tags?${queryString}` : "/api/admin/tags",
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        )
-
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: TagsFetchPayload; message?: string }
-          | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "태그를 불러오지 못했어요.")
-        }
-
-        if (isMounted) {
-          setData(payload.data)
-        }
-      } catch (err: unknown) {
-        if (!controller.signal.aborted) {
-          const message =
-            err instanceof Error ? err.message : "태그를 불러오지 못했어요."
-          setError(message)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadTags()
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
-  }, [queryString, reloadFlag, searchParams.status, searchParams.message])
+export function AdminTagsContent({
+  searchParams,
+  initialData,
+  initialError,
+}: AdminTagsContentProps) {
+  const router = useRouter()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const data = initialData
+  const error = initialError ?? null
 
   const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
   const limit = data?.query.limit ?? 30
@@ -120,11 +63,13 @@ export function AdminTagsContent({ searchParams }: AdminTagsContentProps) {
   const editingTag = tags.find((tag) => tag.slug === modalSlug)
 
   const handleRetry = () => {
-    setReloadFlag((flag) => flag + 1)
-  }
+    setIsRefreshing(true)
 
-  if (loading && !data) {
-    return <AdminTagsTableSkeleton />
+    // 목록 조회는 server page를 다시 실행해 최신 상태를 받습니다.
+    startTransition(() => {
+      router.refresh()
+      setIsRefreshing(false)
+    })
   }
 
   if (error) {
@@ -134,10 +79,11 @@ export function AdminTagsContent({ searchParams }: AdminTagsContentProps) {
         <button
           type="button"
           onClick={handleRetry}
+          disabled={isRefreshing}
           className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60 hover:text-white"
         >
           <RotateCw className="h-3.5 w-3.5" aria-hidden />
-          다시 시도
+          {isRefreshing ? "새로고침 중" : "다시 시도"}
         </button>
       </div>
     )

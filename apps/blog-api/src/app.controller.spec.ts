@@ -1,10 +1,10 @@
-import { TestBed, Mocked } from '@suites/unit';
+import { TestBed } from '@suites/unit';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 describe('AppController', () => {
   let appController: AppController;
-  let appService: Mocked<AppService>;
+  let appService;
 
   beforeAll(async () => {
     const { unit, unitRef } = await TestBed.solitary(AppController).compile();

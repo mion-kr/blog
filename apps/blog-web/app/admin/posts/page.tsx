@@ -2,6 +2,8 @@ import Link from "next/link"
 import { PenSquare } from "lucide-react"
 
 import { AdminPostsContent, AdminStatusBanner } from "@/components/admin"
+import { getAuthorizationToken } from "@/lib/auth"
+import { getAdminPosts } from "@/features/posts/server/get-admin-posts"
 
 interface PostsPageProps {
   searchParams?: Promise<Record<string, string | undefined>>
@@ -9,6 +11,13 @@ interface PostsPageProps {
 
 export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
+  const token = await getAuthorizationToken()
+  const { posts, total, postsPerPage, query, error } =
+    (await getAdminPosts({
+      searchParams: resolvedSearchParams,
+      token,
+    })) ?? { posts: [], total: 0, postsPerPage: 10, query: { page: 1, limit: 10 }, error: null }
+  const initialError = error ?? (!token ? "관리자 인증이 필요해요." : null)
 
   const search = resolvedSearchParams.search?.trim() ?? ""
   const published = resolvedSearchParams.published
@@ -81,7 +90,11 @@ export default async function AdminPostsPage({ searchParams }: PostsPageProps) {
         </div>
       </form>
 
-      <AdminPostsContent searchParams={resolvedSearchParams} />
+      <AdminPostsContent
+        searchParams={resolvedSearchParams}
+        initialData={{ posts, total, postsPerPage, query }}
+        initialError={initialError}
+      />
     </div>
   )
 }

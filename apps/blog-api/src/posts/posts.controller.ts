@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiExtraModels, ApiQuery } from '@nestjs/swagger';
+import { ApiQuery } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -37,6 +37,7 @@ import {
   PaginatedResponse,
   User,
   CurrentUser,
+  ApiFeatureController,
 } from '../common/decorators';
 
 /**
@@ -49,13 +50,13 @@ import {
  * - PUT /api/posts/:slug - 포스트 수정 (ADMIN + CSRF)
  * - DELETE /api/posts/:slug - 포스트 삭제 (ADMIN + CSRF)
  */
-@ApiExtraModels(
+@ApiFeatureController(
+  'posts',
   PostResponseDto,
   AuthorResponseDto,
   PostCategoryResponseDto,
   TagResponseDto,
 )
-@ApiTags('posts')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}

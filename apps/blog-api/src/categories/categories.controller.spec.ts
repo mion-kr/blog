@@ -1,5 +1,5 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import { TestBed, Mocked } from '@suites/unit';
+import { TestBed } from '@suites/unit';
 import { PaginationMeta } from '@repo/shared';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
@@ -10,7 +10,7 @@ import { CategoryResponseDto } from './dto/category-response.dto';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
-  let categoriesService: Mocked<CategoriesService>;
+  let categoriesService;
 
   beforeAll(async () => {
     const { unit, unitRef } =

@@ -5,11 +5,17 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { UploadsController } from './uploads.controller';
 import { UploadsService } from './uploads.service';
 import { S3_CLIENT_TOKEN } from './uploads.constants';
+import { UploadPolicyService } from './application/upload-policy.service';
+import { ContentImageFinalizer } from './application/content-image-finalizer';
+import { ObjectStorageService } from './storage/object-storage.service';
 
 @Module({
   imports: [ConfigModule],
   controllers: [UploadsController],
   providers: [
+    ObjectStorageService,
+    UploadPolicyService,
+    ContentImageFinalizer,
     UploadsService,
     {
       provide: S3_CLIENT_TOKEN,

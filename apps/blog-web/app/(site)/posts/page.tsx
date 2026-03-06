@@ -4,6 +4,7 @@ import { PostsContent } from './posts-content';
 import { postsApi } from '@/lib/api-client';
 import { parsePostsSearchParams } from './query-utils';
 import { PostsNeonSidebar } from './posts-neon-sidebar';
+import { getPostsSidebarData } from '@/features/site/server/get-posts-sidebar-data';
 import styles from './posts-neon-grid.module.css';
 import { cn } from '@/lib/utils';
 import { NeonHeader } from '@/components/layout/neon-header';
@@ -53,30 +54,23 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   let initialPosts: PostResponseDto[] = [];
   let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
   let initialError: string | null = null;
-  const [postsResult] = await Promise.allSettled([
-    postsApi.getPosts(initialQuery),
+  const [postsResult, sidebarData] = await Promise.all([
+    postsApi.getPosts(initialQuery).catch((error) => error),
+    getPostsSidebarData(),
   ]);
 
-  if (postsResult.status === 'fulfilled') {
-    const response = postsResult.value;
-
-    if (response.success) {
-      initialPosts = response.data ?? [];
-      initialMeta = normalizePaginationMeta(
-        response.meta,
-        initialQuery,
-        initialPosts.length,
-      );
-    } else {
-      initialError =
-        response.message ?? '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
-    }
+  if (!(postsResult instanceof Error) && postsResult.success) {
+    initialPosts = postsResult.data ?? [];
+    initialMeta = normalizePaginationMeta(
+      postsResult.meta,
+      initialQuery,
+      initialPosts.length,
+    );
   } else {
-    const error = postsResult.reason;
     initialError =
-      error instanceof Error
-        ? error.message
-        : '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
+      postsResult instanceof Error
+        ? postsResult.message
+        : postsResult.message ?? '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
   }
 
   return (
@@ -102,7 +96,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
               initialError={initialError}
             />
           </div>
-          <PostsNeonSidebar />
+          <PostsNeonSidebar
+            initialCategories={sidebarData.categories}
+            initialTags={sidebarData.tags}
+          />
         </div>
       </main>
     </div>

@@ -64,11 +64,6 @@ export class CategoriesService {
     };
   }
 
-  async findAllOld(query: CategoryQueryDto): Promise<CategoryResponseDto[]> {
-    const result = await this.findAll(query);
-    return result.items;
-  }
-
   async findOneBySlug(slug: string): Promise<CategoryResponseDto> {
     const category = await this.categoriesRepository.findBySlug(slug);
 

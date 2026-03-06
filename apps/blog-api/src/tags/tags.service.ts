@@ -61,11 +61,6 @@ export class TagsService {
     };
   }
 
-  async findAllOld(query: TagQueryDto): Promise<TagResponseDto[]> {
-    const result = await this.findAll(query);
-    return result.items;
-  }
-
   async findOneBySlug(slug: string): Promise<TagResponseDto> {
     const tag = await this.tagsRepository.findBySlug(slug);
 

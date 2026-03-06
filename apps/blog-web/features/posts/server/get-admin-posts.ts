@@ -20,6 +20,7 @@ export interface AdminPostsResult {
   query: PostsQuery;
   statusParam?: string;
   messageParam?: string;
+  error?: string | null;
 }
 
 function parseBoolean(value: string | undefined): boolean | undefined {
@@ -74,7 +75,15 @@ export async function getAdminPosts({
     : await apiClient.posts.getPosts(query);
 
   if (!response || !isSuccessResponse(response)) {
-    return null;
+    return {
+      posts: [],
+      total: 0,
+      postsPerPage,
+      query,
+      statusParam: (resolved as Record<string, string>).status,
+      messageParam: (resolved as Record<string, string>).message,
+      error: '포스트 목록을 불러오지 못했어요.',
+    };
   }
 
   return {
@@ -84,5 +93,6 @@ export async function getAdminPosts({
     query,
     statusParam: (resolved as Record<string, string>).status,
     messageParam: (resolved as Record<string, string>).message,
+    error: null,
   };
 }
