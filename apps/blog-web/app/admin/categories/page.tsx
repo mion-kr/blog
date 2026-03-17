@@ -2,6 +2,8 @@ import Link from "next/link"
 import { PenSquare } from "lucide-react"
 
 import { AdminCategoriesContent, AdminStatusBanner } from "@/components/admin"
+import { getAuthorizationToken } from "@/lib/auth"
+import { getAdminCategories } from "@/features/admin/server/get-admin-categories"
 
 type CategoriesSearchParams = {
   page?: string
@@ -18,6 +20,11 @@ interface CategoriesPageProps {
 
 export default async function AdminCategoriesPage({ searchParams }: CategoriesPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
+  const token = await getAuthorizationToken()
+  const { data, error } = await getAdminCategories({
+    searchParams: resolvedSearchParams,
+    token,
+  })
 
   const search = resolvedSearchParams.search?.trim() ?? ""
   const statusParam = resolvedSearchParams.status
@@ -80,7 +87,11 @@ export default async function AdminCategoriesPage({ searchParams }: CategoriesPa
         </div>
       </form>
 
-      <AdminCategoriesContent searchParams={resolvedSearchParams} />
+      <AdminCategoriesContent
+        searchParams={resolvedSearchParams}
+        initialData={data}
+        initialError={error}
+      />
     </div>
   )
 }

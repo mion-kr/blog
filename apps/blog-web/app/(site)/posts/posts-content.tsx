@@ -338,9 +338,16 @@ function PostsNeonPostCard({
 }) {
   const displayDate = post.publishedAt ?? post.createdAt;
   const readingTimeLabel = formatReadingTimeMinutes(readingTimeMinutes);
+  const postHref = `/posts/${post.slug}`;
 
   return (
     <article className="post-card-neon">
+      <Link
+        href={postHref}
+        prefetch={false}
+        className="absolute inset-0 z-10"
+        aria-label={`${post.title} 상세 보기`}
+      />
       <div className="neon-side-border" aria-hidden="true" />
 
       <div className="post-thumbnail">
@@ -361,13 +368,18 @@ function PostsNeonPostCard({
 
       <div className="post-content">
         <div className="post-content-meta">
-          <span className="category-tag">{post.category.name}</span>
+          <Link
+            href={`/posts?categorySlug=${post.category.slug}`}
+            className="category-tag relative z-20"
+          >
+            {post.category.name}
+          </Link>
           <time className="post-date" dateTime={new Date(displayDate).toISOString()}>
             {formatNeonDate(displayDate)}
           </time>
         </div>
 
-        <Link href={`/posts/${post.slug}`} prefetch={false} className="post-title-link">
+        <Link href={postHref} prefetch={false} className="post-title-link relative z-20">
           {post.title}
         </Link>
 
@@ -376,7 +388,11 @@ function PostsNeonPostCard({
         <div className="post-card-footer">
           <div className="tag-list" aria-label="태그">
             {post.tags.slice(0, 3).map((tag) => (
-              <Link key={tag.id} href={`/posts?tagSlug=${tag.slug}`} className="tag-item">
+              <Link
+                key={tag.id}
+                href={`/posts?tagSlug=${tag.slug}`}
+                className="tag-item relative z-20"
+              >
                 #{tag.name}
               </Link>
             ))}

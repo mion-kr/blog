@@ -11,7 +11,6 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { PaginatedData } from '@repo/shared';
 
@@ -31,6 +30,7 @@ import {
   ApiAdminDelete,
   ApiConflictError,
   PaginatedResponse,
+  ApiFeatureController,
 } from '../common/decorators';
 
 /**
@@ -43,8 +43,7 @@ import {
  * - PUT /api/categories/:slug - 카테고리 수정 (ADMIN + CSRF)
  * - DELETE /api/categories/:slug - 카테고리 삭제 (ADMIN + CSRF)
  */
-@ApiExtraModels(CategoryResponseDto)
-@ApiTags('categories')
+@ApiFeatureController('categories', CategoryResponseDto)
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}

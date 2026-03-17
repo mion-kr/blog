@@ -12,19 +12,17 @@ import { useFormStatus } from "react-dom"
 import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react"
 import { uuidv7 } from "uuidv7"
 
-import type {
-  ApiResponse,
-  Category,
-  PreSignedUploadRequestDto,
-  PreSignedUploadResponseDto,
-  Tag,
-} from "@repo/shared"
+import type { Category, PreSignedUploadRequestDto, Tag } from "@repo/shared"
 
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  formatUploadFileSize,
+  uploadImageFromBrowser,
+  validateUploadableImage,
+} from "@/features/uploads/client/upload-image"
 import { cn } from "@/lib/utils"
 import { TagMultiSelect } from "./tag-multi-select"
-
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"]
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 interface PostFormProps {
   action: (formData: FormData) => Promise<void>
@@ -45,12 +43,6 @@ interface PostFormProps {
   cancelHref?: string
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-}
-
 /**
  * 파일명에서 마크다운 이미지 대체 텍스트로 사용할 문자열을 생성합니다.
  */
@@ -65,60 +57,6 @@ function toAltTextFromFileName(fileName: string): string {
     .replace(/\\/g, "\\\\")
     .replace(/\[/g, "\\[")
     .replace(/\]/g, "\\]")
-}
-
-/**
- * 업로드할 이미지 파일의 형식과 크기를 검증합니다.
- */
-function validateImageFile(file: File): string | null {
-  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return "지원하지 않는 파일 형식입니다. JPEG, PNG, WEBP만 업로드할 수 있어요."
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return `파일 용량이 너무 커요. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 가능합니다.`
-  }
-
-  return null
-}
-
-async function requestPreSignedUpload(
-  payload: PreSignedUploadRequestDto,
-): Promise<PreSignedUploadResponseDto> {
-  const response = await fetch("/api/admin/uploads/pre-signed", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  })
-
-  const data = (await response.json()) as ApiResponse<PreSignedUploadResponseDto>
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.message ?? "업로드 URL을 발급받지 못했어요.")
-  }
-
-  if (!data.data) {
-    throw new Error("서버가 예상한 응답을 반환하지 않았어요.")
-  }
-
-  return data.data
-}
-
-async function uploadFileToSignedUrl(uploadUrl: string, file: File) {
-  const result = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type,
-    },
-    body: file,
-  })
-
-  if (!result.ok) {
-    throw new Error("MinIO에 파일을 업로드하지 못했어요.")
-  }
 }
 
 function SubmitButton({
@@ -185,7 +123,7 @@ export function PostForm({
         return
       }
 
-      const validationMessage = validateImageFile(file)
+      const validationMessage = validateUploadableImage(file)
       if (validationMessage) {
         setCoverUploadError(validationMessage)
         event.target.value = ""
@@ -204,9 +142,7 @@ export function PostForm({
           type: "thumbnail",
         }
 
-        const { uploadUrl, objectKey, publicUrl } = await requestPreSignedUpload(payload)
-
-        await uploadFileToSignedUrl(uploadUrl, file)
+        const { objectKey, publicUrl } = await uploadImageFromBrowser(payload, file)
 
         setCoverImageUrl(publicUrl)
         setCoverImageKey(objectKey)
@@ -262,7 +198,7 @@ export function PostForm({
         return
       }
 
-      const validationMessage = validateImageFile(file)
+      const validationMessage = validateUploadableImage(file)
       if (validationMessage) {
         setContentUploadError(validationMessage)
         event.target.value = ""
@@ -281,9 +217,7 @@ export function PostForm({
           type: "content",
         }
 
-        const { uploadUrl, publicUrl } = await requestPreSignedUpload(payload)
-
-        await uploadFileToSignedUrl(uploadUrl, file)
+        const { publicUrl } = await uploadImageFromBrowser(payload, file)
         insertMarkdownImageToContent(publicUrl, file.name)
       } catch (error) {
         console.error(error)
@@ -401,7 +335,7 @@ export function PostForm({
             <input
               ref={coverFileInputRef}
               type="file"
-              accept={ALLOWED_MIME_TYPES.join(",")}
+              accept={ALLOWED_IMAGE_MIME_TYPES.join(",")}
               className="hidden"
               onChange={handleCoverFileChange}
             />
@@ -432,7 +366,7 @@ export function PostForm({
           </div>
 
           <p className="text-xs text-slate-500">
-            지원 형식: JPG, PNG, WEBP • 최대 {formatFileSize(MAX_FILE_SIZE)}
+            지원 형식: JPG, PNG, WEBP • 최대 {formatUploadFileSize(MAX_IMAGE_FILE_SIZE)}
           </p>
           {coverUploadError ? <p className="text-xs text-red-400">{coverUploadError}</p> : null}
         </div>
@@ -447,7 +381,7 @@ export function PostForm({
             <input
               ref={contentFileInputRef}
               type="file"
-              accept={ALLOWED_MIME_TYPES.join(",")}
+              accept={ALLOWED_IMAGE_MIME_TYPES.join(",")}
               className="hidden"
               onChange={handleContentImageFileChange}
             />

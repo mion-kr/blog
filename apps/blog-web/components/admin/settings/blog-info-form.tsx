@@ -5,57 +5,16 @@ import { useFormStatus } from "react-dom"
 import { Globe, ImageIcon, Loader2, Trash2, Upload } from "lucide-react"
 import { uuidv7 } from "uuidv7"
 
-import type {
-  ApiResponse,
-  PreSignedUploadRequestDto,
-  PreSignedUploadResponseDto,
-} from "@repo/shared"
+import type { PreSignedUploadRequestDto } from "@repo/shared"
 
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_IMAGE_FILE_SIZE,
+  formatUploadFileSize,
+  uploadImageFromBrowser,
+  validateUploadableImage,
+} from "@/features/uploads/client/upload-image"
 import type { SettingsActionState } from "@/lib/admin/settings-types"
-
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"]
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-}
-
-async function requestPreSignedUpload(
-  payload: PreSignedUploadRequestDto,
-): Promise<PreSignedUploadResponseDto> {
-  const response = await fetch("/api/admin/uploads/pre-signed", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  })
-
-  const data = (await response.json()) as ApiResponse<PreSignedUploadResponseDto>
-
-  if (!response.ok || !data.success || !data.data) {
-    throw new Error(data.message ?? "업로드 URL을 발급받지 못했어요.")
-  }
-
-  return data.data
-}
-
-async function uploadFileToSignedUrl(uploadUrl: string, file: File) {
-  const result = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type,
-    },
-    body: file,
-  })
-
-  if (!result.ok) {
-    throw new Error("MinIO에 파일을 업로드하지 못했어요.")
-  }
-}
 
 interface BlogInfoFormProps {
   initialData: {
@@ -199,14 +158,9 @@ export function BlogInfoForm({ initialData, action }: BlogInfoFormProps) {
       return
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      setProfileImageError("지원하지 않는 파일 형식입니다. JPEG, PNG, WEBP만 업로드할 수 있어요.")
-      event.target.value = ""
-      return
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setProfileImageError(`파일 용량이 너무 커요. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 가능합니다.`)
+    const validationMessage = validateUploadableImage(file)
+    if (validationMessage) {
+      setProfileImageError(validationMessage)
       event.target.value = ""
       return
     }
@@ -223,8 +177,7 @@ export function BlogInfoForm({ initialData, action }: BlogInfoFormProps) {
         type: "about",
       }
 
-      const { uploadUrl, publicUrl } = await requestPreSignedUpload(payload)
-      await uploadFileToSignedUrl(uploadUrl, file)
+      const { publicUrl } = await uploadImageFromBrowser(payload, file)
 
       setProfileImageUrl(publicUrl)
       setProfileImageRemove(false)
@@ -361,14 +314,14 @@ export function BlogInfoForm({ initialData, action }: BlogInfoFormProps) {
         <div>
           <label className="block text-sm font-medium text-slate-300">프로필 이미지</label>
           <p className="mt-1 text-xs text-slate-500">
-            JPEG, PNG, WEBP · 최대 {formatFileSize(MAX_FILE_SIZE)}. 저장 전에는 draft 경로에서 임시로 관리돼요.
+            JPEG, PNG, WEBP · 최대 {formatUploadFileSize(MAX_IMAGE_FILE_SIZE)}. 저장 전에는 draft 경로에서 임시로 관리돼요.
           </p>
 
           <div className="mt-3 flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 px-4 py-4">
             <input
               ref={fileInputRef}
               type="file"
-              accept={ALLOWED_MIME_TYPES.join(",")}
+              accept={ALLOWED_IMAGE_MIME_TYPES.join(",")}
               className="hidden"
               onChange={handleProfileImageChange}
             />

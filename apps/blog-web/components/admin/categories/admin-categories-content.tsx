@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { startTransition, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { RotateCw } from "lucide-react"
 
 import type { CategoriesQuery, Category } from "@repo/shared"
@@ -16,9 +17,8 @@ import {
   deleteAdminCategoryAction,
   updateAdminCategoryAction,
 } from "@/lib/admin/categories-actions"
+import type { AdminCategoriesData } from "@/features/admin/server/get-admin-categories"
 import { cn } from "@/lib/utils"
-
-import { AdminCategoriesTableSkeleton } from "./admin-categories-skeleton"
 
 interface AdminCategoriesContentProps {
   searchParams: {
@@ -29,76 +29,19 @@ interface AdminCategoriesContentProps {
     status?: string
     message?: string
   }
+  initialData: AdminCategoriesData | null
+  initialError?: string | null
 }
 
-interface CategoriesFetchPayload {
-  categories: Category[]
-  total: number
-  query: CategoriesQuery
-}
-
-export function AdminCategoriesContent({ searchParams }: AdminCategoriesContentProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<CategoriesFetchPayload | null>(null)
-  const [reloadFlag, setReloadFlag] = useState(0)
-
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams()
-    if (searchParams.page) params.set("page", searchParams.page)
-    if (searchParams.search) params.set("search", searchParams.search)
-    return params.toString()
-  }, [searchParams.page, searchParams.search])
-
-  useEffect(() => {
-    let isMounted = true
-    const controller = new AbortController()
-
-    async function loadCategories() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(
-          queryString ? `/api/admin/categories?${queryString}` : "/api/admin/categories",
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        )
-
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: CategoriesFetchPayload; message?: string }
-          | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "카테고리를 불러오지 못했어요.")
-        }
-
-        if (isMounted) {
-          setData(payload.data)
-        }
-      } catch (err: unknown) {
-        if (!controller.signal.aborted) {
-          const message =
-            err instanceof Error ? err.message : "카테고리를 불러오지 못했어요."
-          setError(message)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadCategories()
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
-  }, [queryString, reloadFlag, searchParams.status, searchParams.message])
+export function AdminCategoriesContent({
+  searchParams,
+  initialData,
+  initialError,
+}: AdminCategoriesContentProps) {
+  const router = useRouter()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const data = initialData
+  const error = initialError ?? null
 
   const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
   const limit = data?.query.limit ?? 20
@@ -120,11 +63,13 @@ export function AdminCategoriesContent({ searchParams }: AdminCategoriesContentP
   const editingCategory = categories.find((category) => category.slug === modalSlug)
 
   const handleRetry = () => {
-    setReloadFlag((flag) => flag + 1)
-  }
+    setIsRefreshing(true)
 
-  if (loading && !data) {
-    return <AdminCategoriesTableSkeleton />
+    // 목록 조회는 route 계층에서 다시 읽도록 refresh만 트리거합니다.
+    startTransition(() => {
+      router.refresh()
+      setIsRefreshing(false)
+    })
   }
 
   if (error) {
@@ -134,10 +79,11 @@ export function AdminCategoriesContent({ searchParams }: AdminCategoriesContentP
         <button
           type="button"
           onClick={handleRetry}
+          disabled={isRefreshing}
           className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60 hover:text-white"
         >
           <RotateCw className="h-3.5 w-3.5" aria-hidden />
-          다시 시도
+          {isRefreshing ? "새로고침 중" : "다시 시도"}
         </button>
       </div>
     )

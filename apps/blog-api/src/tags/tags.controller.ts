@@ -11,7 +11,6 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
 
 import { PaginatedData } from '@repo/shared';
 
@@ -31,6 +30,7 @@ import {
   ApiAdminDelete,
   ApiConflictError,
   PaginatedResponse,
+  ApiFeatureController,
 } from '../common/decorators';
 
 /**
@@ -43,8 +43,7 @@ import {
  * - PUT /api/tags/:slug - 태그 수정 (ADMIN + CSRF)
  * - DELETE /api/tags/:slug - 태그 삭제 (ADMIN + CSRF)
  */
-@ApiExtraModels(TagResponseDto)
-@ApiTags('tags')
+@ApiFeatureController('tags', TagResponseDto)
 @Controller('tags')
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}

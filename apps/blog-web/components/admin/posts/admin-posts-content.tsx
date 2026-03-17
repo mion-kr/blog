@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { startTransition, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { FileText, RotateCw } from "lucide-react"
 
 import type { PostResponseDto, PostsQuery } from "@repo/shared"
 
 import { cn } from "@/lib/utils"
-import { AdminPostsTableSkeleton } from "./admin-posts-skeleton"
 
 interface AdminPostsContentProps {
   searchParams: {
@@ -18,6 +18,8 @@ interface AdminPostsContentProps {
     order?: string
     limit?: string
   }
+  initialData: PostsFetchPayload
+  initialError?: string | null
 }
 
 interface PostsFetchPayload {
@@ -27,75 +29,15 @@ interface PostsFetchPayload {
   query: PostsQuery
 }
 
-function buildQueryString(params: AdminPostsContentProps["searchParams"]) {
-  const search = new URLSearchParams()
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      search.set(key, String(value))
-    }
-  })
-
-  return search.toString()
-}
-
-export function AdminPostsContent({ searchParams }: AdminPostsContentProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<PostsFetchPayload | null>(null)
-  const [reloadFlag, setReloadFlag] = useState(0)
-
-  const queryString = useMemo(() => buildQueryString(searchParams), [searchParams])
-
-  useEffect(() => {
-    let isMounted = true
-    const controller = new AbortController()
-
-    async function loadPosts() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(
-          queryString ? `/api/admin/posts?${queryString}` : "/api/admin/posts",
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        )
-
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: PostsFetchPayload; message?: string }
-          | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "포스트를 불러오지 못했어요.")
-        }
-
-        if (isMounted) {
-          setData(payload.data)
-        }
-      } catch (err: unknown) {
-        if (!controller.signal.aborted) {
-          const message =
-            err instanceof Error ? err.message : "포스트를 불러오지 못했어요."
-          setError(message)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadPosts()
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
-  }, [queryString, reloadFlag])
+export function AdminPostsContent({
+  searchParams,
+  initialData,
+  initialError,
+}: AdminPostsContentProps) {
+  const router = useRouter()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const data = initialData
+  const error = initialError ?? null
 
   const page = (data?.query.page ?? Number(searchParams.page ?? "1")) || 1
   const limit = (data?.query.limit ?? Number(searchParams.limit ?? "10")) || 10
@@ -113,11 +55,13 @@ export function AdminPostsContent({ searchParams }: AdminPostsContentProps) {
   }, [searchParams.search, searchParams.published, searchParams.sort, searchParams.order])
 
   const handleRetry = () => {
-    setReloadFlag((flag) => flag + 1)
-  }
+    setIsRefreshing(true)
 
-  if (loading && !data) {
-    return <AdminPostsTableSkeleton />
+    // route 계층에서 목록을 다시 읽어오도록 새로고침합니다.
+    startTransition(() => {
+      router.refresh()
+      setIsRefreshing(false)
+    })
   }
 
   if (error) {
@@ -127,10 +71,11 @@ export function AdminPostsContent({ searchParams }: AdminPostsContentProps) {
         <button
           type="button"
           onClick={handleRetry}
+          disabled={isRefreshing}
           className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60 hover:text-white"
         >
           <RotateCw className="h-3.5 w-3.5" aria-hidden />
-          다시 시도
+          {isRefreshing ? "새로고침 중" : "다시 시도"}
         </button>
       </div>
     )

@@ -63,7 +63,7 @@ async function fetchPublicSettings(): Promise<PublicSiteSettings | null> {
   try {
     const response = await fetch(`${apiBaseUrl}${PUBLIC_SETTINGS_ENDPOINT}`, {
       method: 'GET',
-      cache: 'no-store',
+      next: { revalidate: 300 },
     });
 
     if (!response.ok) {

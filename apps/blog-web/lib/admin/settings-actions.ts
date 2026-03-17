@@ -11,6 +11,7 @@ import { getAuthorizationToken, handleServerAuthError } from '../auth'
 import { ApiError, ReauthenticationRequiredError } from '../api-errors'
 
 const SETTINGS_RETURN_PATH = '/admin/settings'
+const ABOUT_RETURN_PATH = '/about'
 
 function extractValidationErrors(details: unknown): ValidationError[] | undefined {
   if (!details || typeof details !== 'object') {
@@ -88,12 +89,16 @@ function parseBoolean(value: FormDataEntryValue | null | undefined): boolean | u
   return undefined
 }
 
+/**
+ * 관리자 설정 저장 요청을 처리합니다.
+ */
 async function updateAdminSettings(
   payload: UpdateBlogSettingsDto
 ): Promise<SettingsActionState> {
   const token = await requireTokenOrRedirect()
 
   try {
+    // 관리자 설정 화면은 모든 설정 저장 성공 시 최신 상태로 다시 검증합니다.
     const response = await apiClient.settings.updateSettings(payload, { token })
     revalidatePath(SETTINGS_RETURN_PATH)
 
@@ -140,6 +145,9 @@ async function updateAdminSettings(
   }
 }
 
+/**
+ * 관리자 블로그 정보 설정을 저장합니다.
+ */
 export async function updateAdminBlogInfoAction(
   _prevState: SettingsActionState,
   formData: FormData
@@ -161,9 +169,19 @@ export async function updateAdminBlogInfoAction(
     }
   }
 
-  return updateAdminSettings(payload)
+  const result = await updateAdminSettings(payload)
+
+  if (result.success) {
+    // About 페이지는 블로그 정보 저장 성공 시 다시 생성되도록 캐시를 무효화합니다.
+    revalidatePath(ABOUT_RETURN_PATH)
+  }
+
+  return result
 }
 
+/**
+ * 관리자 게시글 목록 설정을 저장합니다.
+ */
 export async function updateAdminPostSettingsAction(
   _prevState: SettingsActionState,
   formData: FormData

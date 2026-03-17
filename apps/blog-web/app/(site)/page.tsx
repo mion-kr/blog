@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import styles from "./home-neon-grid.module.css";
 
 import { NeonHeader } from "@/components/layout/neon-header";
+import { ApiError } from "@/lib/api-errors";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { toPostSummaries } from "@/lib/posts/post-summary";
 import { cn } from "@/lib/utils";
@@ -16,8 +17,10 @@ const LATEST_POSTS_LIMIT = 9;
 const TRENDING_POSTS_LIMIT = 5;
 const CATEGORY_LIMIT = 8;
 const TAG_LIMIT = 12;
+const HOME_LOAD_MAX_ATTEMPTS = 4;
+const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const neonButtonVariants = cva("btn", {
   variants: {
@@ -32,39 +35,121 @@ const neonButtonVariants = cva("btn", {
 });
 
 /**
+ * 홈 데이터 로딩 에러가 재시도 가능한지 판별합니다.
+ */
+function isRetriableHomeLoadError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    // 배포 직후 백엔드 기동 지연이나 5xx 응답은 짧게 재시도합니다.
+    return error.code === "NETWORK_ERROR" || error.status >= 500;
+  }
+
+  return false;
+}
+
+/**
+ * 지정한 시간만큼 대기합니다.
+ */
+async function sleep(ms: number): Promise<void> {
+  // 홈 첫 진입 시 일시적인 기동 지연을 흡수하기 위한 짧은 대기입니다.
+  await new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * 홈 화면용 API 요청을 재시도와 함께 실행합니다.
+ */
+async function loadHomeResource<T>(
+  label: string,
+  loader: () => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < HOME_LOAD_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      // 첫 시도 이후에는 지수에 가까운 짧은 backoff를 둡니다.
+      const delay = HOME_LOAD_RETRY_DELAYS_MS[attempt] ?? 0;
+      if (delay > 0) {
+        await sleep(delay);
+      }
+
+      return await loader();
+    } catch (error) {
+      lastError = error;
+
+      if (!isRetriableHomeLoadError(error) || attempt === HOME_LOAD_MAX_ATTEMPTS - 1) {
+        break;
+      }
+
+      console.warn(`[home] retrying ${label}`, {
+        attempt: attempt + 1,
+        maxAttempts: HOME_LOAD_MAX_ATTEMPTS,
+        error,
+      });
+    }
+  }
+
+  throw lastError;
+}
+
+/**
  * 홈 페이지(샘플 `sample-neon-grid.html` 1:1 포팅).
  * - 홈에서만 sample header/footer/배경을 직접 렌더링합니다.
  * - 데이터(포스트/카테고리/태그)는 기존 API를 그대로 사용합니다.
  */
 export default async function HomePage() {
   const [latestResult, trendingResult, categoriesResult, tagsResult] = await Promise.allSettled([
-    postsApi.getPosts({
-      page: 1,
-      limit: LATEST_POSTS_LIMIT,
-      published: true,
-      sort: "publishedAt",
-      order: "desc",
-    }),
-    postsApi.getPosts({
-      page: 1,
-      limit: TRENDING_POSTS_LIMIT + 2,
-      published: true,
-      sort: "viewCount",
-      order: "desc",
-    }),
-    categoriesApi.getCategories({
-      page: 1,
-      limit: CATEGORY_LIMIT,
-      sort: "name",
-      order: "asc",
-    }),
-    tagsApi.getTags({
-      page: 1,
-      limit: TAG_LIMIT,
-      sort: "name",
-      order: "asc",
-    }),
+    loadHomeResource("latest posts", () =>
+      postsApi.getPosts({
+        page: 1,
+        limit: LATEST_POSTS_LIMIT,
+        published: true,
+        sort: "publishedAt",
+        order: "desc",
+      }),
+    ),
+    loadHomeResource("trending posts", () =>
+      postsApi.getPosts({
+        page: 1,
+        limit: TRENDING_POSTS_LIMIT + 2,
+        published: true,
+        sort: "viewCount",
+        order: "desc",
+      }),
+    ),
+    loadHomeResource("categories", () =>
+      categoriesApi.getCategories({
+        page: 1,
+        limit: CATEGORY_LIMIT,
+        sort: "name",
+        order: "asc",
+      }),
+    ),
+    loadHomeResource("tags", () =>
+      tagsApi.getTags({
+        page: 1,
+        limit: TAG_LIMIT,
+        sort: "name",
+        order: "asc",
+      }),
+    ),
   ]);
+
+  if (
+    latestResult.status === "rejected" &&
+    trendingResult.status === "rejected" &&
+    categoriesResult.status === "rejected" &&
+    tagsResult.status === "rejected"
+  ) {
+    console.error("Failed to bootstrap homepage data", {
+      latest: latestResult.reason,
+      trending: trendingResult.reason,
+      categories: categoriesResult.reason,
+      tags: tagsResult.reason,
+    });
+
+    console.warn("Homepage data is temporarily unavailable. Rendering fallback state without cache.");
+  }
 
   if (latestResult.status === "rejected") {
     console.error("Failed to load latest posts", latestResult.reason);
@@ -339,6 +424,7 @@ function FeaturedPost({ post }: { post: PostSummary }) {
 
   return (
     <article className="featured-post">
+      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
       <div className="featured-cover">
         {post.coverImage ? (
           <Image
@@ -355,7 +441,10 @@ function FeaturedPost({ post }: { post: PostSummary }) {
       </div>
 
       <div className="featured-meta">
-        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+        <Link
+          href={`/posts?categorySlug=${post.category.slug}`}
+          className="category-badge relative z-20"
+        >
           <span className="dot" aria-hidden="true" />
           {post.category.name}
         </Link>
@@ -368,7 +457,7 @@ function FeaturedPost({ post }: { post: PostSummary }) {
       </div>
 
       <h3 className="featured-title">
-        <Link href={href}>{post.title}</Link>
+        <Link href={href} className="relative z-20">{post.title}</Link>
       </h3>
 
       <p className="featured-excerpt">{post.excerpt}</p>
@@ -379,13 +468,13 @@ function FeaturedPost({ post }: { post: PostSummary }) {
             <Link
               key={tag.id}
               href={`/posts?tagSlug=${tag.slug}`}
-              className="tag"
+              className="tag relative z-20"
             >
               #{tag.name}
             </Link>
           ))}
         </div>
-        <Link href={href} className="read-more">
+        <Link href={href} className="read-more relative z-20">
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>
@@ -402,22 +491,26 @@ function PostCard({ post }: { post: PostSummary }) {
 
   return (
     <article className="post-card">
+      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
       <div className="post-card-meta">
-        <Link href={`/posts?categorySlug=${post.category.slug}`} className="category-badge">
+        <Link
+          href={`/posts?categorySlug=${post.category.slug}`}
+          className="category-badge relative z-20"
+        >
           <span className="dot" aria-hidden="true" />
           {post.category.name}
         </Link>
         <span className="meta-item">{formatMonthDay(displayDate)}</span>
       </div>
       <h3 className="post-card-title">
-        <Link href={href}>{post.title}</Link>
+        <Link href={href} className="relative z-20">{post.title}</Link>
       </h3>
       <p className="post-card-excerpt">{post.excerpt}</p>
       <div className="post-card-footer">
         <span className="view-count">
           <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
         </span>
-        <Link href={href} className="read-more">
+        <Link href={href} className="read-more relative z-20">
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>

@@ -1,11 +1,12 @@
-import { Module, Global } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { DatabaseService } from './database.service';
 import { DatabaseController } from './database.controller';
 
-@Global()
+/**
+ * 데이터베이스 헬스체크 모듈입니다.
+ */
 @Module({
   controllers: [DatabaseController],
   providers: [DatabaseService],
-  exports: [DatabaseService],
 })
 export class DatabaseModule {}

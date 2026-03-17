@@ -1,14 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import type { Request } from 'express';
 import { jwtDecrypt, type JWTPayload } from 'jose';
 import hkdf from '@panva/hkdf';
-import { db, users, eq } from '@repo/database';
+import { AUTH_USERS_REPOSITORY, AuthUsersRepository } from '../repositories/auth-users.repository';
 
-type UserRecord = typeof users.$inferSelect;
-type UserInsert = typeof users.$inferInsert;
+interface AuthUserRecord {
+  id: string;
+  email: string;
+  name: string;
+  image?: string | null;
+  role: 'ADMIN' | 'USER';
+}
 
 /**
  * JWT 페이로드 인터페이스
@@ -39,7 +44,11 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
   private readonly encryptionKeyPromise: Promise<Uint8Array>;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(AUTH_USERS_REPOSITORY)
+    private readonly authUsersRepository: AuthUsersRepository,
+  ) {
     super();
 
     // NEXTAUTH_SECRET 또는 JWT_SECRET 사용 (동일한 값이어야 함)
@@ -190,22 +199,25 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
     };
   }
 
+  /**
+   * 토큰 사용자 정보를 기준으로 로컬 사용자 레코드를 보장합니다.
+   */
   private async ensureUserExists(user: {
     googleId: string;
     email: string;
     name: string;
     role: 'ADMIN' | 'USER';
     image?: string;
-  }) {
-    const existing = await db
-      .select()
-      .from(users)
-      .where(eq(users.googleId, user.googleId))
-      .limit(1);
+  }): Promise<AuthUserRecord> {
+    const existing = await this.authUsersRepository.findByGoogleId(user.googleId);
 
-    if (existing.length > 0) {
-      const record = existing[0];
-      const updates: Partial<UserInsert> = {};
+    if (existing) {
+      const record = existing;
+      const updates: Partial<{
+        name: string;
+        image?: string | null;
+        role: 'ADMIN' | 'USER';
+      }> = {};
 
       if (record.name !== user.name) {
         updates.name = user.name;
@@ -220,48 +232,28 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
       }
 
       if (Object.keys(updates).length > 0) {
-        await db
-          .update(users)
-          .set({
-            ...updates,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, record.id));
+        // 토큰 기준 사용자 변경분만 저장소를 통해 반영합니다.
+        await this.authUsersRepository.updateById(record.id, updates);
 
         return {
           ...record,
           ...updates,
-        } as UserRecord;
+        };
       }
 
-      return record as UserRecord;
+      return record;
     }
 
     try {
-      const [created] = await db
-        .insert(users)
-        .values({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          googleId: user.googleId,
-          role: user.role,
-        })
-        .returning();
-
-      return created;
+      return await this.authUsersRepository.create(user);
     } catch (error) {
-      const fallback = await db
-        .select()
-        .from(users)
-        .where(eq(users.googleId, user.googleId))
-        .limit(1);
+      const fallback = await this.authUsersRepository.findByGoogleId(user.googleId);
 
-      if (fallback.length === 0) {
+      if (!fallback) {
         throw error;
       }
 
-      return fallback[0] as UserRecord;
+      return fallback;
     }
   }
 }
