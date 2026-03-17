@@ -12,11 +12,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { postsApi } from '@/lib/api-client';
+import { toPostSummaries } from '@/lib/posts/post-summary';
 import { PostsFilter, SortPreset } from './posts-filter';
 import { PostsPagination } from './posts-pagination';
 
 import type {
-  PostResponseDto,
+  PostSummary,
   PostsQuery,
   ApiPaginationMeta,
 } from '@repo/shared';
@@ -30,12 +31,11 @@ import {
   extractPostsSearchParams,
 } from './query-utils';
 import {
-  calculateReadingTimeMinutesFromMdx,
   formatReadingTimeMinutes,
 } from '@/lib/reading-time';
 
 interface PostsContentProps {
-  initialPosts: PostResponseDto[];
+  initialPosts: PostSummary[];
   initialMeta: ApiPaginationMeta;
   initialQuery: PostsQuery;
   initialError?: string | null;
@@ -59,7 +59,7 @@ export function PostsContent({
   const urlSearchParams = useSearchParams();
 
   // State
-  const [posts, setPosts] = useState<PostResponseDto[]>(initialPosts);
+  const [posts, setPosts] = useState<PostSummary[]>(initialPosts);
   const [pagination, setPagination] = useState(() =>
     mapPagination(initialMeta, initialQuery, initialPosts.length),
   );
@@ -128,9 +128,11 @@ export function PostsContent({
       const response = await postsApi.getPosts(query);
 
       if (response.success && response.data) {
-        setPosts(response.data);
+        // 목록 상태에는 summary만 저장해 상세 본문이 렌더 경로로 새지 않게 합니다.
+        const summaries = toPostSummaries(response.data);
+        setPosts(summaries);
         setPagination(
-          mapPagination(response.meta, query, response.data.length),
+          mapPagination(response.meta, query, summaries.length),
         );
         lastLoadedQueryKeyRef.current = buildPostsQueryKey(query);
       }
@@ -182,16 +184,6 @@ export function PostsContent({
     currentQuery.categorySlug ||
     currentQuery.tagSlug
   );
-
-  const readingTimeByPostId = useMemo(() => {
-    // 목록 렌더링 비용을 줄이기 위해 reading time을 미리 계산합니다.
-    return new Map(
-      posts.map((post) => {
-        const minutes = calculateReadingTimeMinutesFromMdx(post.content);
-        return [post.id, minutes] as const;
-      }),
-    );
-  }, [posts]);
 
   if (error) {
     return (
@@ -249,7 +241,7 @@ export function PostsContent({
             <PostsNeonPostCard
               key={post.id}
               post={post}
-              readingTimeMinutes={readingTimeByPostId.get(post.id) ?? 1}
+              readingTimeMinutes={post.readingTimeMinutes}
             />
           ))}
         </div>
@@ -293,6 +285,9 @@ export function PostsContent({
   );
 }
 
+/**
+ * 목록 페이지에서 사용할 페이지네이션 값을 계산합니다.
+ */
 function mapPagination(
   meta?: ApiPaginationMeta,
   query?: PostsQuery,
@@ -313,10 +308,16 @@ function mapPagination(
   };
 }
 
+/**
+ * 조회수를 compact 포맷으로 표시합니다.
+ */
 function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat('en', { notation: 'compact' }).format(value);
 }
 
+/**
+ * 네온 목록 카드용 날짜 문자열을 포맷합니다.
+ */
 function formatNeonDate(value: Date | string): string {
   const dateObj = typeof value === 'string' ? new Date(value) : value;
   const y = dateObj.getFullYear();
@@ -325,11 +326,14 @@ function formatNeonDate(value: Date | string): string {
   return `${y}.${m}.${d}`;
 }
 
+/**
+ * 목록 카드 한 개를 렌더링합니다.
+ */
 function PostsNeonPostCard({
   post,
   readingTimeMinutes,
 }: {
-  post: PostResponseDto;
+  post: PostSummary;
   readingTimeMinutes: number;
 }) {
   const displayDate = post.publishedAt ?? post.createdAt;
@@ -403,6 +407,9 @@ function PostsNeonPostCard({
   );
 }
 
+/**
+ * 목록 로딩 중 스켈레톤 카드를 렌더링합니다.
+ */
 function PostsNeonPostSkeleton() {
   return (
     <article className="post-card-neon" aria-hidden="true">

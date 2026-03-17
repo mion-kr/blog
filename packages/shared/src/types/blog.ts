@@ -92,6 +92,26 @@ export interface PostResponseDto extends PostWithRelations {
   // 추가적인 API 응답 전용 필드가 있다면 여기에 추가
 }
 
+export interface PostSummaryCategory
+  extends Pick<Category, "id" | "name" | "slug"> {}
+
+export interface PostSummaryTag extends Pick<Tag, "id" | "name" | "slug"> {}
+
+export interface PostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImage?: string;
+  viewCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt?: Date;
+  readingTimeMinutes: number;
+  category: PostSummaryCategory;
+  tags: PostSummaryTag[];
+}
+
 // 블로그 설정 DTO
 export interface BlogSettings {
   siteTitle: string;

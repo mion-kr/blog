@@ -5,13 +5,13 @@ import { buildApiResponse, mockApiRoutes } from './test-helpers'
 
 const MOCK_IMAGE_BASE_URL = 'https://bucket-production-d421.up.railway.app/test'
 
-const featuredPost = {
-  id: 'post-nextauth',
-  title: 'NextAuth',
-  slug: 'nextauth',
-  content: '# NextAuth',
-  excerpt: 'NextAuth에 대한 설명 입니다.',
-  coverImage: `${MOCK_IMAGE_BASE_URL}/nextauth.png`,
+const primaryPost = {
+  id: 'post-primary',
+  title: 'NestJS 운영 기록',
+  slug: 'nestjs-ops-log',
+  content: '# NestJS 운영 기록\n\n이 문장은 목록 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.',
+  excerpt: 'NestJS 운영 경험을 요약한 글입니다.',
+  coverImage: `${MOCK_IMAGE_BASE_URL}/nestjs.png`,
   published: true,
   publishedAt: '2025-10-01T00:00:00.000Z',
   createdAt: '2025-09-20T00:00:00.000Z',
@@ -29,9 +29,9 @@ const featuredPost = {
   },
   tags: [
     {
-      id: 'tag-nextjs',
-      name: 'Next.js',
-      slug: 'nextjs',
+      id: 'tag-nest',
+      name: 'Nest.js',
+      slug: 'nestjs',
       postCount: 12,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-02T00:00:00.000Z',
@@ -46,10 +46,10 @@ const featuredPost = {
 }
 
 const secondaryPost = {
-  id: 'post-success',
-  title: '최종 성공 포스트 - MCP 수정 확인',
-  slug: '최종-성공-포스트-수정됨',
-  content: '# MCP\n\n이 문장은 홈 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.',
+  id: 'post-secondary',
+  title: 'MCP 자동화 메모',
+  slug: 'mcp-automation-note',
+  content: '# MCP\n\n이 상세 본문도 목록 SSR HTML에 포함되면 안 됩니다.',
   excerpt: undefined,
   coverImage: `${MOCK_IMAGE_BASE_URL}/mcp.png`,
   published: true,
@@ -69,18 +69,10 @@ const secondaryPost = {
   },
   tags: [
     {
-      id: 'tag-typescript',
-      name: 'TypeScript',
-      slug: 'typescript',
-      postCount: 4,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-02T00:00:00.000Z',
-    },
-    {
       id: 'tag-nextjs',
       name: 'Next.js',
       slug: 'nextjs',
-      postCount: 12,
+      postCount: 8,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-02T00:00:00.000Z',
     },
@@ -96,67 +88,47 @@ const secondaryPost = {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:43110'
 const apiUrl = new URL(API_BASE_URL)
 
-const latestPostsResponse = buildApiResponse(
-  [featuredPost, secondaryPost],
+const postsResponse = buildApiResponse(
+  [primaryPost, secondaryPost],
   '/api/posts',
   {
     total: 2,
-    limit: 10,
+    limit: 12,
     page: 1,
     hasNext: false,
     hasPrev: false,
     totalPages: 1,
-  }
-)
-
-const trendingPostsResponse = buildApiResponse(
-  [secondaryPost],
-  '/api/posts',
-  {
-    total: 1,
-    limit: 5,
-    page: 1,
-    hasNext: false,
-    hasPrev: false,
-    totalPages: 1,
-  }
+  },
 )
 
 const categoriesResponse = buildApiResponse(
   [
     { id: 'category-dev', name: '개발', slug: 'development', description: '', color: '#1f2937', postCount: 20, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'category-ai', name: '으아아이', slug: 'euaai', description: '', color: '#1f2937', postCount: 10, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'category-tutorial', name: '튜토리얼', slug: 'tutorial', description: '', color: '#1f2937', postCount: 8, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'category-fe', name: '프론트엔드', slug: 'peuronteuendeu', description: '', color: '#1f2937', postCount: 7, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'category-retro', name: '회고', slug: 'retrospective', description: '', color: '#1f2937', postCount: 5, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
   ],
   '/api/categories',
   {
-    total: 5,
-    limit: 8,
+    total: 1,
+    limit: 50,
     page: 1,
     hasNext: false,
     hasPrev: false,
     totalPages: 1,
-  }
+  },
 )
 
 const tagsResponse = buildApiResponse(
   [
-    { id: 'tag-ai', name: 'AI', slug: 'ai', postCount: 5, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'tag-nextjs', name: 'Next.js', slug: 'nextjs', postCount: 12, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'tag-nodejs', name: 'Node.js', slug: 'nodejs', postCount: 4, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
-    { id: 'tag-ts', name: 'TypeScript', slug: 'typescript', postCount: 6, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
+    { id: 'tag-nest', name: 'Nest.js', slug: 'nestjs', postCount: 12, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z' },
   ],
   '/api/tags',
   {
-    total: 4,
-    limit: 14,
+    total: 1,
+    limit: 30,
     page: 1,
     hasNext: false,
     hasPrev: false,
     totalPages: 1,
-  }
+  },
 )
 
 let mockServer: http.Server
@@ -170,7 +142,6 @@ test.beforeAll(async () => {
     }
 
     const requestUrl = new URL(req.url, API_BASE_URL)
-
     const sendJson = (body: unknown) => {
       const payload = JSON.stringify(body)
       res.writeHead(200, {
@@ -181,14 +152,7 @@ test.beforeAll(async () => {
     }
 
     if (requestUrl.pathname === '/api/posts') {
-      const sort = requestUrl.searchParams.get('sort')
-
-      if (sort === 'viewCount') {
-        sendJson(trendingPostsResponse)
-        return
-      }
-
-      sendJson(latestPostsResponse)
+      sendJson(postsResponse)
       return
     }
 
@@ -233,17 +197,7 @@ test.beforeEach(async ({ page }) => {
     const url = new URL(request.url())
 
     if (url.pathname === '/api/posts') {
-      const sort = url.searchParams.get('sort')
-
-      if (sort === 'publishedAt') {
-        return { body: latestPostsResponse }
-      }
-
-      if (sort === 'viewCount') {
-        return { body: trendingPostsResponse }
-      }
-
-      return { body: latestPostsResponse }
+      return { body: postsResponse }
     }
 
     if (url.pathname === '/api/categories') {
@@ -258,26 +212,23 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test.describe('[UI] 홈 화면', () => {
-  test('[UI] 핵심 콘텐츠를 노출한다', async ({ page }) => {
-    await page.goto('/')
+test.describe('[UI] 포스트 목록 화면', () => {
+  test('[UI] summary와 fallback excerpt를 노출한다', async ({ page }) => {
+    await page.goto('/posts')
 
-    await expect(page.getByRole('heading', { name: '백엔드 개발 기록' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '오늘의 추천' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '최근 글' })).toBeVisible()
-    await expect(page.getByText('NextAuth에 대한 설명 입니다.')).toBeVisible()
-    await expect(
-      page.getByText('최종 성공 포스트 - MCP 수정 확인 글의 핵심 내용을 빠르게 확인해보세요.'),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'All Technical Stories' })).toBeVisible()
+    await expect(page.getByText('NestJS 운영 경험을 요약한 글입니다.')).toBeVisible()
+    await expect(page.getByText('MCP 자동화 메모 글의 핵심 내용을 빠르게 확인해보세요.')).toBeVisible()
   })
 
-  test('[UI] 홈 SSR HTML에는 상세 원문 대신 summary만 노출한다', async ({ request }) => {
-    const response = await request.get('/')
+  test('[UI] 목록 SSR HTML에는 상세 원문이 포함되지 않는다', async ({ request }) => {
+    const response = await request.get('/posts')
     const html = await response.text()
 
     expect(response.ok()).toBeTruthy()
-    expect(html).toContain('NextAuth에 대한 설명 입니다.')
-    expect(html).toContain('최종 성공 포스트 - MCP 수정 확인 글의 핵심 내용을 빠르게 확인해보세요.')
-    expect(html).not.toContain('이 문장은 홈 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.')
+    expect(html).toContain('NestJS 운영 경험을 요약한 글입니다.')
+    expect(html).toContain('MCP 자동화 메모 글의 핵심 내용을 빠르게 확인해보세요.')
+    expect(html).not.toContain('이 문장은 목록 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.')
+    expect(html).not.toContain('이 상세 본문도 목록 SSR HTML에 포함되면 안 됩니다.')
   })
 })
