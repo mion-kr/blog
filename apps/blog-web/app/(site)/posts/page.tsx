@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 
 import { PostsContent } from './posts-content';
 import { postsApi } from '@/lib/api-client';
+import { toPostSummaries } from '@/lib/posts/post-summary';
 import { parsePostsSearchParams } from './query-utils';
 import { PostsNeonSidebar } from './posts-neon-sidebar';
 import styles from './posts-neon-grid.module.css';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { NeonHeader } from '@/components/layout/neon-header';
 import type {
   ApiPaginationMeta,
-  PostResponseDto,
+  PostSummary,
   PostsQuery,
 } from '@repo/shared';
 
@@ -50,7 +51,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = await searchParams;
   const initialQuery = parsePostsSearchParams(resolvedSearchParams);
 
-  let initialPosts: PostResponseDto[] = [];
+  let initialPosts: PostSummary[] = [];
   let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
   let initialError: string | null = null;
   const [postsResult] = await Promise.allSettled([
@@ -61,7 +62,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     const response = postsResult.value;
 
     if (response.success) {
-      initialPosts = response.data ?? [];
+      initialPosts = toPostSummaries(response.data ?? []);
       initialMeta = normalizePaginationMeta(
         response.meta,
         initialQuery,
@@ -109,6 +110,9 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   );
 }
 
+/**
+ * 페이지네이션 메타를 기본값과 함께 정규화합니다.
+ */
 function normalizePaginationMeta(
   meta: ApiPaginationMeta | undefined,
   query: PostsQuery,

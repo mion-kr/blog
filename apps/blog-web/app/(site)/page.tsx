@@ -6,9 +6,10 @@ import styles from "./home-neon-grid.module.css";
 
 import { NeonHeader } from "@/components/layout/neon-header";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
+import { toPostSummaries } from "@/lib/posts/post-summary";
 import { cn } from "@/lib/utils";
 
-import type { PostResponseDto } from "@repo/shared";
+import type { PostSummary } from "@repo/shared";
 
 // 데이터 로딩 설정
 const LATEST_POSTS_LIMIT = 9;
@@ -83,8 +84,10 @@ export default async function HomePage() {
   const categoriesResponse = categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
   const tagsResponse = tagsResult.status === "fulfilled" ? tagsResult.value : null;
 
-  const latestPosts = latestResponse?.data ?? [];
-  const trendingPosts = (trendingResponse?.data ?? []).slice(0, TRENDING_POSTS_LIMIT);
+  const latestPosts = toPostSummaries(latestResponse?.data ?? []);
+  const trendingPosts = toPostSummaries(
+    (trendingResponse?.data ?? []).slice(0, TRENDING_POSTS_LIMIT),
+  );
   const categories = categoriesResponse?.data ?? [];
   const tags = tagsResponse?.data ?? [];
 
@@ -330,7 +333,7 @@ function SectionHeader({
 /**
  * 추천(Featured) 포스트.
  */
-function FeaturedPost({ post }: { post: PostResponseDto }) {
+function FeaturedPost({ post }: { post: PostSummary }) {
   const href = `/posts/${post.slug}`;
   const displayDate = post.publishedAt ?? post.createdAt;
 
@@ -368,7 +371,7 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
         <Link href={href}>{post.title}</Link>
       </h3>
 
-      {post.excerpt && <p className="featured-excerpt">{post.excerpt}</p>}
+      <p className="featured-excerpt">{post.excerpt}</p>
 
       <div className="featured-footer">
         <div className="tags">
@@ -393,7 +396,7 @@ function FeaturedPost({ post }: { post: PostResponseDto }) {
 /**
  * 최근 글 카드.
  */
-function PostCard({ post }: { post: PostResponseDto }) {
+function PostCard({ post }: { post: PostSummary }) {
   const href = `/posts/${post.slug}`;
   const displayDate = post.publishedAt ?? post.createdAt;
 
@@ -409,7 +412,7 @@ function PostCard({ post }: { post: PostResponseDto }) {
       <h3 className="post-card-title">
         <Link href={href}>{post.title}</Link>
       </h3>
-      {post.excerpt && <p className="post-card-excerpt">{post.excerpt}</p>}
+      <p className="post-card-excerpt">{post.excerpt}</p>
       <div className="post-card-footer">
         <span className="view-count">
           <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
@@ -425,7 +428,7 @@ function PostCard({ post }: { post: PostResponseDto }) {
 /**
  * 인기 글 행.
  */
-function TrendingItem({ post, rank }: { post: PostResponseDto; rank: number }) {
+function TrendingItem({ post, rank }: { post: PostSummary; rank: number }) {
   return (
     <Link href={`/posts/${post.slug}`} className="trending-item">
       <div className="trending-rank">{String(rank).padStart(2, "0")}</div>
