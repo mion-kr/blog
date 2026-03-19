@@ -20,7 +20,8 @@ const TAG_LIMIT = 12;
 const HOME_LOAD_MAX_ATTEMPTS = 4;
 const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
 
-export const dynamic = "force-dynamic";
+// 홈은 구글 크롤러가 일관된 HTML을 보도록 짧은 ISR 캐시를 둡니다.
+export const revalidate = 300;
 
 const neonButtonVariants = cva("btn", {
   variants: {
