@@ -226,6 +226,7 @@ test.describe('[UI] 포스트 목록 화면', () => {
     const html = await response.text()
 
     expect(response.ok()).toBeTruthy()
+    expect(html).toContain('noindex')
     expect(html).toContain('NestJS 운영 경험을 요약한 글입니다.')
     expect(html).toContain('MCP 자동화 메모 글의 핵심 내용을 빠르게 확인해보세요.')
     expect(html).not.toContain('이 문장은 목록 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.')

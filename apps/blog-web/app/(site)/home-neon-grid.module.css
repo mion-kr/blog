@@ -348,6 +348,85 @@
   gap: 16px;
 }
 
+.root :global(.landing-notes) {
+  margin-bottom: 32px;
+}
+
+.root :global(.landing-grid) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .root :global(.landing-grid) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.root :global(.landing-card) {
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  box-shadow: 0 0 0 1px var(--grid-line), 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.root :global(.landing-badge) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 28px;
+  padding: 0 12px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid var(--border-active);
+  color: var(--neon-cyan);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.root :global(.landing-card h3) {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.root :global(.landing-card p) {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.root :global(.landing-chips) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.root :global(.landing-chip) {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-active);
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--neon-cyan);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.root :global(.landing-chip-tag) {
+  border-color: var(--border-dim);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+}
+
 .root :global(.stat-card) {
   padding: 20px;
   border-radius: var(--radius-sm);
