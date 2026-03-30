@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
@@ -8,6 +9,7 @@ import { NeonHeader } from "@/components/layout/neon-header";
 import { ApiError } from "@/lib/api-errors";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { toPostSummaries } from "@/lib/posts/post-summary";
+import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 import type { PostSummary } from "@repo/shared";
@@ -19,9 +21,33 @@ const CATEGORY_LIMIT = 8;
 const TAG_LIMIT = 12;
 const HOME_LOAD_MAX_ATTEMPTS = 4;
 const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
+const SITE_URL = getSiteUrl();
+const HOME_DESCRIPTION =
+  "NestJS를 중심으로 백엔드 설계, 운영, 장애 대응 경험을 정리하는 Mion의 기술 블로그입니다.";
 
 // 홈은 구글 크롤러가 일관된 HTML을 보도록 짧은 ISR 캐시를 둡니다.
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+  title: "Mion's Blog | NestJS 백엔드 아카이브",
+  description: HOME_DESCRIPTION,
+  keywords: ["NestJS", "백엔드", "아키텍처", "운영", "인프라", "보안"],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Mion's Blog | NestJS 백엔드 아카이브",
+    description: HOME_DESCRIPTION,
+    type: "website",
+    locale: "ko_KR",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mion's Blog | NestJS 백엔드 아카이브",
+    description: HOME_DESCRIPTION,
+  },
+};
 
 const neonButtonVariants = cva("btn", {
   variants: {
@@ -186,10 +212,16 @@ export default async function HomePage() {
     tags: tagsResponse?.meta?.total ?? tags.length,
     lastUpdated: featuredPost ? new Date(featuredPost.publishedAt ?? featuredPost.createdAt) : undefined,
   };
+  const homeJsonLd = buildHomeJsonLd(stats);
 
   return (
     <div className={cn(styles.root, "neon-grid-home")}>
       <div className="neon-grid-bg" aria-hidden="true" />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
+      />
 
       <NeonHeader activePath="/" />
 
@@ -221,6 +253,57 @@ export default async function HomePage() {
               <HeroStatCard value={formatNumber(stats.tags)} label="태그" />
               <HeroStatCard value={stats.lastUpdated ? formatShortDate(stats.lastUpdated) : "작성 예정"} label="마지막 업데이트" />
             </div>
+          </div>
+        </section>
+
+        <section className="landing-notes" aria-label="블로그 소개">
+          <SectionHeader
+            eyebrow="Overview"
+            title="이 블로그에서 다루는 것"
+            actionHref="/about"
+            actionLabel="운영 의도 보기"
+          />
+
+          <div className="landing-grid">
+            <LandingGuideCard
+              badge="01"
+              title="설계와 운영의 선택"
+              description="NestJS 기반 서비스 설계, API 구조, 데이터 흐름, 운영 중의 트레이드오프를 실무 맥락으로 정리합니다."
+            />
+            <LandingGuideCard
+              badge="02"
+              title="장애와 이슈 기록"
+              description="보안 이슈, 트래픽 편향, 배포 후 문제처럼 실제로 부딪힌 사례를 복기하고 대응 과정을 남깁니다."
+            />
+            <article className="landing-card">
+              <div className="landing-badge">03</div>
+              <h3>주제별로 바로 탐색하기</h3>
+              <p>
+                홈에서는 대표 글을 먼저 보고, 더 필요한 내용은 카테고리와 태그를 기준으로 바로 이어서 읽을 수 있어요.
+              </p>
+              {categories.length > 0 || tags.length > 0 ? (
+                <div className="landing-chips" aria-label="핵심 탐색 주제">
+                  {categories.slice(0, 3).map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/posts?categorySlug=${category.slug}`}
+                      className="landing-chip"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  {tags.slice(0, 3).map((tag) => (
+                    <Link
+                      key={tag.id}
+                      href={`/posts?tagSlug=${tag.slug}`}
+                      className="landing-chip landing-chip-tag"
+                    >
+                      #{tag.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </article>
           </div>
         </section>
 
@@ -384,6 +467,27 @@ function HeroStatCard({ value, label }: { value: string; label: string }) {
       <div className="stat-value">{value}</div>
       <div className="stat-label">{label}</div>
     </div>
+  );
+}
+
+/**
+ * 홈 랜딩 신호를 보강하는 안내 카드입니다.
+ */
+function LandingGuideCard({
+  badge,
+  title,
+  description,
+}: {
+  badge: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <article className="landing-card">
+      <div className="landing-badge">{badge}</div>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </article>
   );
 }
 
@@ -573,4 +677,41 @@ function formatShortDate(date: Date): string {
  */
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(value);
+}
+
+/**
+ * 홈 랜딩용 구조화데이터를 생성합니다.
+ */
+function buildHomeJsonLd(stats: {
+  posts: number;
+  categories: number;
+  tags: number;
+}) {
+  // 홈을 대표 블로그 랜딩으로 인식할 수 있도록 WebSite와 Organization을 함께 노출합니다.
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": `${SITE_URL}#website`,
+      name: "Mion's Blog",
+      url: SITE_URL,
+      inLanguage: "ko-KR",
+      description: HOME_DESCRIPTION,
+      publisher: {
+        "@id": `${SITE_URL}#organization`,
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": `${SITE_URL}#organization`,
+      name: "Mion's Blog",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/favicon.ico`,
+      },
+      description: `${stats.posts}개의 포스트와 ${stats.categories}개 카테고리, ${stats.tags}개 태그를 운영하는 기술 블로그입니다.`,
+    },
+  ];
 }

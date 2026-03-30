@@ -263,12 +263,11 @@ test.describe('[UI] 홈 화면', () => {
     await page.goto('/')
 
     await expect(page.getByRole('heading', { name: '백엔드 개발 기록' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '이 블로그에서 다루는 것' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '오늘의 추천' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '최근 글' })).toBeVisible()
     await expect(page.getByText('NextAuth에 대한 설명 입니다.')).toBeVisible()
-    await expect(
-      page.getByText('최종 성공 포스트 - MCP 수정 확인 글의 핵심 내용을 빠르게 확인해보세요.'),
-    ).toBeVisible()
+    await expect(page.getByText('최종 성공 포스트 - MCP 수정 확인 글의 핵심 내용을 빠르게 확인해보세요.')).toBeVisible()
   })
 
   test('[UI] 홈 SSR HTML에는 상세 원문 대신 summary만 노출한다', async ({ request }) => {
@@ -276,6 +275,8 @@ test.describe('[UI] 홈 화면', () => {
     const html = await response.text()
 
     expect(response.ok()).toBeTruthy()
+    expect(html).toContain('"@type":"WebSite"')
+    expect(html).toContain('이 블로그에서 다루는 것')
     expect(html).toContain('NextAuth에 대한 설명 입니다.')
     expect(html).toContain('최종 성공 포스트 - MCP 수정 확인 글의 핵심 내용을 빠르게 확인해보세요.')
     expect(html).not.toContain('이 문장은 홈 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.')
