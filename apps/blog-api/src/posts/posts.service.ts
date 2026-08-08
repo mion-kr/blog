@@ -127,7 +127,6 @@ export class PostsService {
         // 조회수 추적이 활성화된 요청에서만 viewCount를 증가시킵니다.
         updatedViewCount = await this.postsRepository.incrementViewCount(post.id);
         post.viewCount = updatedViewCount;
-        post.updatedAt = new Date();
       } catch (error) {
         // 조회수 갱신 실패는 사용자 흐름을 막지 않음
         console.warn('조회수 증가 실패:', error);

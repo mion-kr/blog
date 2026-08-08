@@ -11,7 +11,15 @@ const postForSitemap = {
   id: 'post-sitemap-1',
   title: 'Sitemap 대상 포스트',
   slug: 'sitemap-target-post',
-  content: '# Sitemap',
+  content: [
+    '# Sitemap 본문 제목',
+    '',
+    '첫 번째 서버 렌더링 검증 문장입니다.',
+    '',
+    '두 번째 문장은 초기 HTML에 직접 포함되어야 합니다.',
+    '',
+    '세 번째 문장까지 자바스크립트 실행 전에 읽을 수 있어야 합니다.',
+  ].join('\n'),
   excerpt: '사이트맵 상세 URL 테스트용 포스트입니다.',
   coverImage: null,
   published: true,
@@ -127,9 +135,9 @@ test('sitemap.xml에 상세 포스트 URL이 포함되어야 함', async ({ requ
   const xml = await response.text()
 
   expect(xml).toContain(`<loc>${SITE_URL}/</loc>`)
-  expect(xml).toContain(`<loc>${SITE_URL}/posts</loc>`)
   expect(xml).toContain(`<loc>${SITE_URL}/about</loc>`)
   expect(xml).toContain(`<loc>${SITE_URL}/posts/sitemap-target-post</loc>`)
+  expect(xml).not.toContain(`<loc>${SITE_URL}/posts</loc>`)
 })
 
 test('/posts 초기 HTML에 실제 포스트 링크가 포함되어야 함', async ({ request }) => {
@@ -142,16 +150,21 @@ test('/posts 초기 HTML에 실제 포스트 링크가 포함되어야 함', asy
   expect(html).not.toContain('Loading title…')
 })
 
-test('/posts/:slug SSR에서 metadata와 본문 렌더가 trackView 정책대로 분리되어야 함', async ({ request }) => {
+test('/posts/:slug 초기 HTML에 metadata와 실제 본문이 포함되어야 함', async ({ request }) => {
   const response = await request.get(`/posts/${postForSitemap.slug}`)
   expect(response.ok()).toBeTruthy()
 
   const html = await response.text()
 
-  expect(html).toContain(`<link rel=\"canonical\" href=\"${SITE_URL}/posts/${postForSitemap.slug}\"`)
+  expect(html).toContain(`<link rel="canonical" href="${SITE_URL}/posts/${postForSitemap.slug}"`)
   expect(html).toContain('application/ld+json')
   expect(html).toContain('"@type":"BlogPosting"')
   expect(html).not.toContain('noindex')
+  expect(html).toContain('<div class="mdx-content">')
+  expect(html).toContain('첫 번째 서버 렌더링 검증 문장입니다.')
+  expect(html).toContain('두 번째 문장은 초기 HTML에 직접 포함되어야 합니다.')
+  expect(html).toContain('세 번째 문장까지 자바스크립트 실행 전에 읽을 수 있어야 합니다.')
+  expect(html).not.toContain('space-y-6 animate-pulse')
   expect(detailTrackViewValues).toContain('false')
   expect(detailTrackViewValues).toContain('true')
 })
