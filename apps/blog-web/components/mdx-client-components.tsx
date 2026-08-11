@@ -155,7 +155,10 @@ export function MermaidChart({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <figure className="my-8 flex flex-col items-center gap-3">
+    <figure
+      data-mermaid-chart
+      className="my-8 flex flex-col items-center gap-3"
+    >
       <div className="w-full overflow-x-auto rounded-lg border border-slate-800 bg-white p-4">
         {error ? (
           <div className="text-sm text-red-600">{error}</div>
