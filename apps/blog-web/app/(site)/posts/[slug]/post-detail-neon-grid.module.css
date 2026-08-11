@@ -356,7 +356,7 @@
   color: var(--text-primary);
 }
 
-.root :global(.prose p) {
+.root :global(.prose p:not(:where([data-mermaid-chart] foreignObject p))) {
   font-size: 17px;
   margin-bottom: 24px;
   color: var(--text-secondary);

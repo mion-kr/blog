@@ -564,7 +564,7 @@
     line-height: 1.5;
   }
 
-  .prose p {
+  .prose p:not(:where([data-mermaid-chart] foreignObject p)) {
     margin-top: 1.25rem;
     margin-bottom: 1.25rem;
   }
