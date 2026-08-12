@@ -424,7 +424,6 @@ export class DrizzlePostsRepository implements PostsRepository {
       .update(posts)
       .set({
         viewCount: sql`${posts.viewCount} + 1`,
-        updatedAt: new Date(),
       })
       .where(eq(posts.id, postId))
       .returning({ viewCount: posts.viewCount });

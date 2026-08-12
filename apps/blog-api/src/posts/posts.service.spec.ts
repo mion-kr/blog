@@ -205,8 +205,9 @@ describe('PostsService', () => {
   })
 
   describe('findPublishedBySlug', () => {
-    it('조회수를 증가시키고 게시글을 반환해야 함', async () => {
-      const aggregate = createPostAggregate({ viewCount: 10 })
+    it('콘텐츠 수정 시각을 유지하면서 조회수를 증가시켜야 함', async () => {
+      const updatedAt = new Date('2024-01-02T00:00:00Z')
+      const aggregate = createPostAggregate({ viewCount: 10, updatedAt })
       postsRepository.findBySlug.mockResolvedValue(aggregate)
       postsRepository.incrementViewCount.mockResolvedValue(11)
 
@@ -215,6 +216,7 @@ describe('PostsService', () => {
       expect(postsRepository.findBySlug).toHaveBeenCalledWith('sample-post')
       expect(postsRepository.incrementViewCount).toHaveBeenCalledWith('post-1')
       expect(result.viewCount).toBe(11)
+      expect(result.updatedAt).toEqual(updatedAt)
     })
 
     it('trackView=false면 조회수를 증가시키지 않아야 함', async () => {
