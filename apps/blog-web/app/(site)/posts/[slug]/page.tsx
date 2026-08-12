@@ -9,6 +9,7 @@ import {
   calculateReadingTimeMinutesFromMdx,
   formatReadingTimeMinutes,
 } from "@/lib/reading-time";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
@@ -115,7 +116,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <script
             type="application/ld+json"
             suppressHydrationWarning
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
           />
 
           <header className="post-header">

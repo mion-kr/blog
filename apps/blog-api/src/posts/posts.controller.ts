@@ -101,7 +101,7 @@ export class PostsController {
     const trackView = this.parseTrackView(trackViewRaw);
 
     // 메타데이터/봇 경로에서 조회수 증가를 제어할 수 있도록 trackView 값을 전달합니다.
-    return this.postsService.findOneBySlug(slug, { trackView });
+    return this.postsService.findPublishedBySlug(slug, { trackView });
   }
 
   /**

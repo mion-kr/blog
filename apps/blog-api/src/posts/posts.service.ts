@@ -53,12 +53,44 @@ export class PostsService {
   ) {}
 
   async findAll(query: PostQueryDto): Promise<PaginatedData<PostResponseDto>> {
+    return this.findPosts(query, true);
+  }
+
+  async findAllForAdmin(
+    query: PostQueryDto,
+  ): Promise<PaginatedData<PostResponseDto>> {
+    return this.findPosts(query, query.published);
+  }
+
+  /**
+   * 발행된 포스트만 슬러그로 조회합니다.
+   */
+  async findPublishedBySlug(
+    slug: string,
+    options: FindPostBySlugOptions = {},
+  ): Promise<PostResponseDto> {
+    return this.findPostBySlug(slug, true, options);
+  }
+
+  /**
+   * 관리자가 발행 상태와 관계없이 슬러그로 포스트를 조회합니다.
+   */
+  async findOneBySlug(
+    slug: string,
+    options: FindPostBySlugOptions = {},
+  ): Promise<PostResponseDto> {
+    return this.findPostBySlug(slug, false, options);
+  }
+
+  private async findPosts(
+    query: PostQueryDto,
+    published: boolean | undefined,
+  ): Promise<PaginatedData<PostResponseDto>> {
     const {
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
       sort,
       order,
-      published,
       categorySlug,
       tagSlug,
       search,
@@ -104,16 +136,14 @@ export class PostsService {
     return { items, meta };
   }
 
-  /**
-   * 슬러그로 단일 포스트를 조회합니다.
-   */
-  async findOneBySlug(
+  private async findPostBySlug(
     slug: string,
+    requirePublished: boolean,
     options: FindPostBySlugOptions = {},
   ): Promise<PostResponseDto> {
     const post = await this.postsRepository.findBySlug(slug);
 
-    if (!post) {
+    if (!post || (requirePublished && !post.published)) {
       throw new NotFoundException(
         `슬러그 '${slug}'에 해당하는 포스트를 찾을 수 없습니다.`,
       );

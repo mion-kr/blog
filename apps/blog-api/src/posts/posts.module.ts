@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { CategoriesModule } from '../categories/categories.module';
 import { UploadsModule } from '../uploads/uploads.module';
 import { TagsModule } from '../tags/tags.module';
+import { AdminPostsController } from './admin-posts.controller';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { DrizzlePostsRepository } from './repositories/drizzle-posts.repository';
@@ -19,7 +20,7 @@ import { POSTS_REPOSITORY } from './repositories/posts.repository';
  */
 @Module({
   imports: [CategoriesModule, TagsModule, UploadsModule],
-  controllers: [PostsController],
+  controllers: [PostsController, AdminPostsController],
   providers: [
     PostsService,
     {

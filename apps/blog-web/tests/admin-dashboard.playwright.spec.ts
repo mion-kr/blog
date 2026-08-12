@@ -16,7 +16,7 @@ const publishedResponse = buildApiResponse(
       updatedAt: new Date().toISOString(),
     },
   ],
-  '/api/posts',
+  '/api/admin/posts',
   { total: 32, limit: 1, page: 1 }
 )
 
@@ -30,7 +30,7 @@ const draftsResponse = buildApiResponse(
       updatedAt: new Date().toISOString(),
     },
   ],
-  '/api/posts',
+  '/api/admin/posts',
   { total: 5, limit: 5, page: 1 }
 )
 
@@ -91,7 +91,7 @@ test.beforeAll(async () => {
       res.end(payload)
     }
 
-    if (requestUrl.pathname === '/api/posts') {
+    if (requestUrl.pathname === '/api/admin/posts') {
       const isPublished = requestUrl.searchParams.get('published') === 'true'
       sendJson(isPublished ? publishedResponse : draftsResponse)
       return
@@ -142,7 +142,7 @@ test.beforeEach(async ({ page }) => {
   await mockApiRoutes(page, (request) => {
     const url = new URL(request.url())
 
-    if (url.pathname === '/api/posts') {
+    if (url.pathname === '/api/admin/posts') {
       const isPublished = url.searchParams.get('published') === 'true'
 
       if (isPublished) {
@@ -199,5 +199,36 @@ test.describe('[UI] Admin dashboard', () => {
     await expect(page.getByText('태그').first()).toBeVisible()
 
     // 초안 카드 내용은 인증 상태에 따라 달라질 수 있으므로 핵심 CTA까지만 검증해요.
+  })
+
+  test('[UI] 관리자 상태 알림은 허용값만 표시한다', async ({ page, context, baseURL }) => {
+    if (!baseURL) {
+      throw new Error('Playwright baseURL이 설정되어 있어야 합니다.')
+    }
+
+    const sessionToken = await createAdminSessionToken()
+
+    await context.addCookies([
+      {
+        name: 'next-auth.session-token',
+        value: sessionToken,
+        domain: new URL(baseURL).hostname,
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+        expires: Math.floor(Date.now() / 1000) + 60 * 60,
+      },
+    ])
+
+    const validResponse = await page.goto('/admin/posts?status=created')
+
+    expect(validResponse?.status()).toBe(200)
+    await expect(page.getByText('새 포스트가 저장되었어요!')).toBeVisible()
+
+    const invalidResponse = await page.goto('/admin/posts?status=draft')
+
+    expect(invalidResponse?.status()).toBe(200)
+    await expect(page.getByRole('heading', { name: '포스트 관리' })).toBeVisible()
+    await expect(page.getByText('새 포스트가 저장되었어요!')).toHaveCount(0)
   })
 })

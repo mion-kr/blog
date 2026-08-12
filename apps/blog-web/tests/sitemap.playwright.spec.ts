@@ -46,6 +46,32 @@ const postForSitemap = {
   tags: [],
 }
 
+const jsonLdClosingScriptPayload =
+  '</script><script id="json-ld-breakout-probe">window.__jsonLdBreakout = true</script>'
+
+const postWithJsonLdClosingScriptPayload = {
+  ...postForSitemap,
+  slug: 'json-ld-closing-script-payload',
+  title: jsonLdClosingScriptPayload,
+}
+
+function extractJsonLd(html: string): string {
+  const match = html.match(
+    /<script\b[^>]*\btype="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/,
+  )
+
+  if (!match) {
+    throw new Error('JSON-LD script was not rendered')
+  }
+
+  const serializedJsonLd = match[1]
+  if (serializedJsonLd === undefined) {
+    throw new Error('JSON-LD script content was not rendered')
+  }
+
+  return serializedJsonLd
+}
+
 let mockServer: http.Server
 let detailTrackViewValues: string[] = []
 
@@ -81,12 +107,19 @@ test.beforeAll(async () => {
       return
     }
 
-    if (requestUrl.pathname === `/api/posts/${postForSitemap.slug}`) {
+    const requestedPost =
+      requestUrl.pathname === `/api/posts/${postForSitemap.slug}`
+        ? postForSitemap
+        : requestUrl.pathname === `/api/posts/${postWithJsonLdClosingScriptPayload.slug}`
+          ? postWithJsonLdClosingScriptPayload
+          : null
+
+    if (requestedPost) {
       detailTrackViewValues.push(requestUrl.searchParams.get('trackView') ?? 'true')
 
       const payload = buildApiResponse(
-        postForSitemap,
-        `/api/posts/${postForSitemap.slug}`,
+        requestedPost,
+        requestUrl.pathname,
       )
 
       const body = JSON.stringify(payload)
@@ -167,4 +200,26 @@ test('/posts/:slug 초기 HTML에 metadata와 실제 본문이 포함되어야 �
   expect(html).not.toContain('space-y-6 animate-pulse')
   expect(detailTrackViewValues).toContain('false')
   expect(detailTrackViewValues).toContain('true')
+
+  const serializedJsonLd = extractJsonLd(html)
+  expect(JSON.parse(serializedJsonLd)).toMatchObject({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: postForSitemap.title,
+  })
+})
+
+test('포스트 JSON-LD가 스크립트 종료 태그로 분리되지 않아야 함', async ({ request }) => {
+  const response = await request.get(`/posts/${postWithJsonLdClosingScriptPayload.slug}`)
+  expect(response.ok()).toBeTruthy()
+
+  const html = await response.text()
+  const serializedJsonLd = extractJsonLd(html)
+
+  expect(html).not.toContain('</script><script id="json-ld-breakout-probe">')
+  expect(serializedJsonLd).toContain('\\u003c/script>')
+  expect(JSON.parse(serializedJsonLd)).toMatchObject({
+    '@type': 'BlogPosting',
+    headline: jsonLdClosingScriptPayload,
+  })
 })

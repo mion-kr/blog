@@ -303,7 +303,7 @@ describe.skip('PostsController (Integration)', () => {
       await createTestPost(app, { ...testPost, published: false }, adminToken);
 
       const response = await request(app.getHttpServer())
-        .get('/api/posts?includeUnpublished=true')
+        .get('/api/admin/posts?published=false')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
@@ -397,7 +397,7 @@ describe.skip('PostsController (Integration)', () => {
       );
 
       const response = await request(app.getHttpServer())
-        .get(`/api/posts/${unpublishedPost.slug}`)
+        .get(`/api/admin/posts/${unpublishedPost.slug}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 

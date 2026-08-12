@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { Loader2, LogIn } from "lucide-react"
 
+import { getSafeCallbackUrl } from "@/lib/auth/callback-url"
+
 interface AdminSignInButtonProps {
   callbackUrl: string
 }
@@ -12,17 +14,18 @@ interface AdminSignInButtonProps {
 export function AdminSignInButton({ callbackUrl }: AdminSignInButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const safeCallbackUrl = getSafeCallbackUrl(callbackUrl)
 
   const handleSignIn = async () => {
     try {
       setLoading(true)
       const result = await signIn("google", {
-        callbackUrl,
+        callbackUrl: safeCallbackUrl,
         redirect: false,
       })
 
       if (result?.ok) {
-        router.push(callbackUrl ?? "/admin")
+        router.push(safeCallbackUrl)
         router.refresh()
       }
     } finally {

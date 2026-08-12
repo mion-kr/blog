@@ -8,6 +8,7 @@ import styles from "./home-neon-grid.module.css";
 import { NeonHeader } from "@/components/layout/neon-header";
 import { ApiError } from "@/lib/api-errors";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { toPostSummaries } from "@/lib/posts/post-summary";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -220,7 +221,7 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(homeJsonLd) }}
       />
 
       <NeonHeader activePath="/" />
