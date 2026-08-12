@@ -54,7 +54,7 @@ export default async function AdminCategoriesPage({ searchParams }: CategoriesPa
       </div>
 
       <AdminStatusBanner
-        status={statusParam as "created" | "updated" | "deleted" | "error" | undefined}
+        status={statusParam}
         message={messageParam}
       />
 

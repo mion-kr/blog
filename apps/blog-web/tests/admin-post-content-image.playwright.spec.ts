@@ -121,7 +121,7 @@ const adminPostsResponse = buildApiResponse(
       },
     },
   ],
-  '/api/posts',
+  '/api/admin/posts',
   { total: 1, limit: 10, page: 1, hasNext: false, hasPrev: false, totalPages: 1 },
 )
 
@@ -194,7 +194,7 @@ test.beforeAll(async () => {
       return
     }
 
-    if (requestUrl.pathname === '/api/posts' && req.method === 'GET') {
+    if (requestUrl.pathname === '/api/admin/posts' && req.method === 'GET') {
       sendJson(res, adminPostsResponse)
       return
     }
@@ -324,4 +324,3 @@ test.describe.serial('[E2E] 포스트 본문 이미지 업로드', () => {
     )
   })
 })
-

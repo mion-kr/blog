@@ -34,8 +34,8 @@ export async function getAdminDashboard({
 
   try {
     const [publishedRes, draftsRes, categoriesRes, tagsRes] = await Promise.all([
-      apiClient.posts.getPosts({ limit: 1, published: true }, { token }),
-      apiClient.posts.getPosts({ limit: 5, order: "desc", published: false }, { token }),
+      apiClient.posts.getAdminPosts({ limit: 1, published: true }, { token }),
+      apiClient.posts.getAdminPosts({ limit: 5, order: "desc", published: false }, { token }),
       apiClient.categories.getCategories({ limit: 1 }, { token }),
       apiClient.tags.getTags({ limit: 1 }, { token }),
     ])

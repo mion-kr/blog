@@ -71,8 +71,8 @@ export async function getAdminPosts({
   };
 
   const response = token
-    ? await apiClient.posts.getPosts(query, { token })
-    : await apiClient.posts.getPosts(query);
+    ? await apiClient.posts.getAdminPosts(query, { token })
+    : null;
 
   if (!response || !isSuccessResponse(response)) {
     return {

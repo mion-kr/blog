@@ -127,23 +127,23 @@ describe('PostsController', () => {
 
   describe('findOne', () => {
     it('기본적으로 조회수 증가를 활성화해야 함', async () => {
-      postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
+      postsService.findPublishedBySlug.mockResolvedValue(mockPostResponse);
 
       const result = await controller.findOne('test-post', undefined);
 
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith('test-post', {
+      expect(postsService.findPublishedBySlug).toHaveBeenCalledWith('test-post', {
         trackView: true,
       });
     });
 
     it('trackView=false면 조회수 증가를 비활성화해야 함', async () => {
-      postsService.findOneBySlug.mockResolvedValue(mockPostResponse);
+      postsService.findPublishedBySlug.mockResolvedValue(mockPostResponse);
 
       const result = await controller.findOne('test-post', 'false');
 
       expect(result).toEqual(mockPostResponse);
-      expect(postsService.findOneBySlug).toHaveBeenCalledWith('test-post', {
+      expect(postsService.findPublishedBySlug).toHaveBeenCalledWith('test-post', {
         trackView: false,
       });
     });
@@ -152,7 +152,7 @@ describe('PostsController', () => {
       const error = new NotFoundException(
         "슬러그 'missing-post'에 해당하는 포스트를 찾을 수 없습니다.",
       );
-      postsService.findOneBySlug.mockRejectedValue(error);
+      postsService.findPublishedBySlug.mockRejectedValue(error);
 
       await expect(controller.findOne('missing-post', undefined)).rejects.toThrow(
         error,

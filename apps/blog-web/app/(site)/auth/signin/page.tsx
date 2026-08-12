@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 import { AdminSignInButton } from "@/components/auth/admin-signin-button";
+import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 interface SignInSearchParams {
-  callbackUrl?: string;
+  callbackUrl?: string | string[];
   error?: string;
 }
 
@@ -15,12 +16,12 @@ interface SignInPageProps {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const callbackUrl = params?.callbackUrl ?? "/admin";
+  const callbackUrl = getSafeCallbackUrl(params?.callbackUrl);
   const errorMessage = params?.error;
 
   const session = await getSession();
   if (session?.user) {
-    redirect(callbackUrl || "/admin");
+    redirect(callbackUrl);
   }
 
   return (

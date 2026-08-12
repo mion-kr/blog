@@ -50,7 +50,7 @@ export default async function AdminNewPostPage({
       </div>
 
       <AdminStatusBanner
-        status={statusParam as 'created' | 'updated' | 'deleted' | 'error' | undefined}
+        status={statusParam}
         message={messageParam}
       />
 

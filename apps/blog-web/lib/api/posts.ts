@@ -26,6 +26,20 @@ export const postsApi = {
     return response as PaginatedResponse<PostResponseDto>;
   },
 
+  async getAdminPosts(
+    query: PostsQuery = {},
+    options: ApiRequestOptions,
+  ): Promise<PaginatedResponse<PostResponseDto>> {
+    ensureAuthToken(options.token, 'GET /api/admin/posts');
+    const queryString = buildQueryParams(query as Record<string, unknown>);
+    const response = await request<PostResponseDto[]>(
+      `/api/admin/posts${queryString}`,
+      options,
+    );
+
+    return response as PaginatedResponse<PostResponseDto>;
+  },
+
   /**
    * 슬러그로 단일 포스트를 조회합니다.
    * `trackView`를 false로 전달하면 조회수 증가 없이 데이터를 조회합니다.
@@ -40,6 +54,14 @@ export const postsApi = {
       : '';
 
     return request<PostResponseDto>(`/api/posts/${slug}${queryString}`, requestOptions);
+  },
+
+  async getAdminPostBySlug(
+    slug: string,
+    options: ApiRequestOptions,
+  ): Promise<ApiResponse<PostResponseDto>> {
+    ensureAuthToken(options.token, `GET /api/admin/posts/${slug}`);
+    return request<PostResponseDto>(`/api/admin/posts/${slug}`, options);
   },
 
   async getPostById(

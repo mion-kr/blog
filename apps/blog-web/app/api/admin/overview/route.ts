@@ -21,8 +21,8 @@ export async function GET() {
   try {
     const [publishedRes, draftsRes, categoriesRes, tagsRes] = await Promise.all(
       [
-        apiClient.posts.getPosts({ limit: 1, published: true }, { token }),
-        apiClient.posts.getPosts(
+        apiClient.posts.getAdminPosts({ limit: 1, published: true }, { token }),
+        apiClient.posts.getAdminPosts(
           { limit: 5, order: "desc", published: false },
           { token }
         ),

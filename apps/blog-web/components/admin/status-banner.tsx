@@ -32,7 +32,7 @@ const STATUS_CONFIG: Record<StatusType, { icon: typeof CheckCircle2; className: 
 }
 
 interface AdminStatusBannerProps {
-  status?: StatusType | null
+  status?: string | null
   message?: string | null
   dismissAfter?: number
 }
@@ -41,24 +41,27 @@ export function AdminStatusBanner({ status, message, dismissAfter = 3500 }: Admi
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const config =
+    status && Object.prototype.hasOwnProperty.call(STATUS_CONFIG, status) ? STATUS_CONFIG[status as StatusType] : null
 
   useEffect(() => {
-    if (!status) return
+    if (!config) return
 
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString())
       params.delete("status")
       params.delete("message")
       const queryString = params.toString()
-      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false })
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      })
     }, dismissAfter)
 
     return () => clearTimeout(timer)
-  }, [status, dismissAfter, pathname, router, searchParams])
+  }, [config, dismissAfter, pathname, router, searchParams])
 
-  if (!status) return null
+  if (!config) return null
 
-  const config = STATUS_CONFIG[status]
   const Icon = config.icon
 
   return (

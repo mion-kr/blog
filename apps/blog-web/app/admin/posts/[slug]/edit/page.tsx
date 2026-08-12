@@ -39,8 +39,8 @@ export default async function AdminPostEditPage({
 
   const [postRes, categoriesRes, tagsRes] = await Promise.all([
     token
-      ? apiClient.posts.getPostBySlug(slug, { token })
-      : apiClient.posts.getPostBySlug(slug),
+      ? apiClient.posts.getAdminPostBySlug(slug, { token })
+      : null,
     apiClient.categories.getCategories({ limit: 100 }, token ? { token } : undefined),
     apiClient.tags.getTags({ limit: 100 }, token ? { token } : undefined),
   ])
@@ -74,7 +74,7 @@ export default async function AdminPostEditPage({
       </div>
 
       <AdminStatusBanner
-        status={statusParam as 'created' | 'updated' | 'deleted' | 'error' | undefined}
+        status={statusParam}
         message={messageParam}
       />
 

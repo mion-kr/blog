@@ -128,7 +128,7 @@ describe('PostsService', () => {
         limit: 10,
         sort: 'createdAt' satisfies PostSortField,
         order: 'desc' satisfies SortDirection,
-        published: undefined,
+        published: true,
         categoryId: undefined,
         tagId: undefined,
         search: undefined,
@@ -161,15 +161,56 @@ describe('PostsService', () => {
       expect(result.meta.total).toBe(0)
       expect(postsRepository.findMany).not.toHaveBeenCalled()
     })
+
+    it('미발행 필터를 전달해도 발행된 포스트만 조회해야 함', async () => {
+      postsRepository.findMany.mockResolvedValue(createPaginatedResult([], 0))
+
+      await service.findAll({ published: false })
+
+      expect(postsRepository.findMany).toHaveBeenCalledWith({
+        page: 1,
+        limit: 10,
+        sort: 'createdAt' satisfies PostSortField,
+        order: 'desc' satisfies SortDirection,
+        published: true,
+        categoryId: undefined,
+        tagId: undefined,
+        search: undefined,
+        authorId: undefined,
+      })
+    })
   })
 
-  describe('findOneBySlug', () => {
+  describe('findAllForAdmin', () => {
+    it('관리자는 미발행 포스트를 필터링해 조회할 수 있어야 함', async () => {
+      const draft = createPostAggregate({ published: false, publishedAt: null })
+      postsRepository.findMany.mockResolvedValue(createPaginatedResult([draft], 1))
+
+      const result = await service.findAllForAdmin({ published: false })
+
+      expect(postsRepository.findMany).toHaveBeenCalledWith({
+        page: 1,
+        limit: 10,
+        sort: 'createdAt' satisfies PostSortField,
+        order: 'desc' satisfies SortDirection,
+        published: false,
+        categoryId: undefined,
+        tagId: undefined,
+        search: undefined,
+        authorId: undefined,
+      })
+      expect(result.items).toHaveLength(1)
+      expect(result.items[0].published).toBe(false)
+    })
+  })
+
+  describe('findPublishedBySlug', () => {
     it('조회수를 증가시키고 게시글을 반환해야 함', async () => {
       const aggregate = createPostAggregate({ viewCount: 10 })
       postsRepository.findBySlug.mockResolvedValue(aggregate)
       postsRepository.incrementViewCount.mockResolvedValue(11)
 
-      const result = await service.findOneBySlug('sample-post')
+      const result = await service.findPublishedBySlug('sample-post')
 
       expect(postsRepository.findBySlug).toHaveBeenCalledWith('sample-post')
       expect(postsRepository.incrementViewCount).toHaveBeenCalledWith('post-1')
@@ -180,7 +221,7 @@ describe('PostsService', () => {
       const aggregate = createPostAggregate({ viewCount: 10 })
       postsRepository.findBySlug.mockResolvedValue(aggregate)
 
-      const result = await service.findOneBySlug('sample-post', { trackView: false })
+      const result = await service.findPublishedBySlug('sample-post', { trackView: false })
 
       expect(postsRepository.findBySlug).toHaveBeenCalledWith('sample-post')
       expect(postsRepository.incrementViewCount).not.toHaveBeenCalled()
@@ -190,9 +231,31 @@ describe('PostsService', () => {
     it('게시글이 없으면 NotFoundException', async () => {
       postsRepository.findBySlug.mockResolvedValue(null)
 
-      await expect(service.findOneBySlug('missing')).rejects.toThrow(
+      await expect(service.findPublishedBySlug('missing')).rejects.toThrow(
         new NotFoundException(`슬러그 'missing'에 해당하는 포스트를 찾을 수 없습니다.`),
       )
+    })
+
+    it('미발행 포스트는 찾을 수 없음으로 처리하고 조회수를 증가시키지 않아야 함', async () => {
+      const draft = createPostAggregate({ published: false, publishedAt: null })
+      postsRepository.findBySlug.mockResolvedValue(draft)
+
+      await expect(service.findPublishedBySlug('sample-post')).rejects.toThrow(
+        new NotFoundException(`슬러그 'sample-post'에 해당하는 포스트를 찾을 수 없습니다.`),
+      )
+      expect(postsRepository.incrementViewCount).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('findOneBySlug', () => {
+    it('관리자는 미발행 포스트를 조회할 수 있어야 함', async () => {
+      const draft = createPostAggregate({ published: false, publishedAt: null })
+      postsRepository.findBySlug.mockResolvedValue(draft)
+
+      const result = await service.findOneBySlug('sample-post', { trackView: false })
+
+      expect(result.published).toBe(false)
+      expect(postsRepository.incrementViewCount).not.toHaveBeenCalled()
     })
   })
 

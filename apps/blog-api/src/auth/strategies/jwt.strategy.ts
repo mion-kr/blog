@@ -216,7 +216,6 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
       const updates: Partial<{
         name: string;
         image?: string | null;
-        role: 'ADMIN' | 'USER';
       }> = {};
 
       if (record.name !== user.name) {
@@ -227,12 +226,8 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
         updates.image = user.image;
       }
 
-      if (record.role !== user.role) {
-        updates.role = user.role;
-      }
-
       if (Object.keys(updates).length > 0) {
-        // 토큰 기준 사용자 변경분만 저장소를 통해 반영합니다.
+        // 프로필 변경분만 저장소를 통해 반영합니다.
         await this.authUsersRepository.updateById(record.id, updates);
 
         return {
