@@ -55,6 +55,15 @@ const postWithJsonLdClosingScriptPayload = {
   title: jsonLdClosingScriptPayload,
 }
 
+const draftPostForSitemap = {
+  ...postForSitemap,
+  id: 'post-sitemap-draft',
+  slug: 'sitemap-draft-post',
+  title: '사이트맵 제외 초안',
+  published: false,
+  publishedAt: null,
+}
+
 function extractJsonLd(html: string): string {
   const match = html.match(
     /<script\b[^>]*\btype="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/,
@@ -86,10 +95,10 @@ test.beforeAll(async () => {
     const requestUrl = new URL(req.url, API_BASE_URL)
     if (requestUrl.pathname === '/api/posts') {
       const payload = buildApiResponse(
-        [postForSitemap],
+        [postForSitemap, draftPostForSitemap],
         '/api/posts',
         {
-          total: 1,
+          total: 2,
           limit: 50,
           page: 1,
           hasNext: false,
@@ -168,9 +177,10 @@ test('sitemap.xml에 상세 포스트 URL이 포함되어야 함', async ({ requ
   const xml = await response.text()
 
   expect(xml).toContain(`<loc>${SITE_URL}/</loc>`)
+  expect(xml).toContain(`<loc>${SITE_URL}/posts</loc>`)
   expect(xml).toContain(`<loc>${SITE_URL}/about</loc>`)
   expect(xml).toContain(`<loc>${SITE_URL}/posts/sitemap-target-post</loc>`)
-  expect(xml).not.toContain(`<loc>${SITE_URL}/posts</loc>`)
+  expect(xml).not.toContain(`<loc>${SITE_URL}/posts/sitemap-draft-post</loc>`)
 })
 
 test('/posts 초기 HTML에 실제 포스트 링크가 포함되어야 함', async ({ request }) => {

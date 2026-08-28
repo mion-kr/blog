@@ -12,13 +12,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE_URL}/`,
       priority: 1.0,
       changeFrequency: "daily",
-      lastModified: new Date(),
+    },
+    {
+      url: `${SITE_URL}/posts`,
+      priority: 0.8,
+      changeFrequency: "daily",
     },
     {
       url: `${SITE_URL}/about`,
       priority: 0.5,
       changeFrequency: "monthly",
-      lastModified: new Date(),
     },
   ];
 
@@ -80,8 +83,8 @@ function normalizePostsForSitemap(posts: PostResponseDto[]): PostResponseDto[] {
   const visited = new Set<string>();
 
   return posts.filter((post) => {
-    // slug가 없거나 중복된 포스트는 제외해 잘못된 URL 생성을 방지합니다.
-    if (!post.slug || visited.has(post.slug)) {
+    // 발행 상태가 아니거나 slug가 없거나 중복된 포스트는 제외합니다.
+    if (!post.published || !post.slug || visited.has(post.slug)) {
       return false;
     }
 
