@@ -87,6 +87,7 @@ const secondaryPost = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:43110'
 const apiUrl = new URL(API_BASE_URL)
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.mion-space.dev').replace(/\/$/, '')
 
 const postsResponse = buildApiResponse(
   [primaryPost, secondaryPost],
@@ -226,10 +227,29 @@ test.describe('[UI] 포스트 목록 화면', () => {
     const html = await response.text()
 
     expect(response.ok()).toBeTruthy()
-    expect(html).toContain('noindex')
+    expect(html).toContain('<meta name="robots" content="index, follow"')
+    expect(html).toContain(`<link rel="canonical" href="${SITE_URL}/posts"`)
     expect(html).toContain('NestJS 운영 경험을 요약한 글입니다.')
     expect(html).toContain('MCP 자동화 메모 글의 핵심 내용을 빠르게 확인해보세요.')
     expect(html).not.toContain('이 문장은 목록 SSR HTML에 그대로 노출되면 안 되는 상세 원문입니다.')
     expect(html).not.toContain('이 상세 본문도 목록 SSR HTML에 포함되면 안 됩니다.')
+  })
+
+  test('페이지네이션 목록은 자기 자신 canonical로 색인해야 함', async ({ request }) => {
+    const response = await request.get('/posts?page=2')
+    const html = await response.text()
+
+    expect(response.ok()).toBeTruthy()
+    expect(html).toContain('<meta name="robots" content="index, follow"')
+    expect(html).toContain(`<link rel="canonical" href="${SITE_URL}/posts?page=2"`)
+  })
+
+  test('검색·필터 목록은 색인에서 제외해야 함', async ({ request }) => {
+    const response = await request.get('/posts?search=NestJS')
+    const html = await response.text()
+
+    expect(response.ok()).toBeTruthy()
+    expect(html).toContain('noindex')
+    expect(html).toContain(`<link rel="canonical" href="${SITE_URL}/posts"`)
   })
 })

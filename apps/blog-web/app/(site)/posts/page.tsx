@@ -15,32 +15,9 @@ import type {
   PostsQuery,
 } from '@repo/shared';
 
-export const metadata: Metadata = {
-  title: '전체 포스트 | Mion\'s Blog',
-  description: '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.',
-  alternates: {
-    canonical: '/posts',
-  },
-  robots: {
-    index: false,
-    follow: true,
-    googleBot: {
-      index: false,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
-    },
-  },
-  openGraph: {
-    title: '전체 포스트 | Mion\'s Blog',
-    description: '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.',
-    type: 'website',
-    url: '/posts',
-  },
-};
-
 export const revalidate = 60; // 1분마다 재검증
+
+const POSTS_DESCRIPTION = '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.';
 
 interface PostsPageProps {
   searchParams: Promise<{
@@ -53,7 +30,57 @@ interface PostsPageProps {
     tag?: string;
     sort?: string;
     order?: 'asc' | 'desc';
+    sortPreset?: string;
   }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: Pick<PostsPageProps, 'searchParams'>): Promise<Metadata> {
+  const resolvedSearchParams = await searchParams;
+  const query = parsePostsSearchParams(resolvedSearchParams);
+  const page = query.page ?? 1;
+  const hasFilteredVariant = Boolean(
+    resolvedSearchParams.limit ||
+    resolvedSearchParams.search ||
+    resolvedSearchParams.categorySlug ||
+    resolvedSearchParams.category ||
+    resolvedSearchParams.tagSlug ||
+    resolvedSearchParams.tag ||
+    resolvedSearchParams.sort ||
+    resolvedSearchParams.order ||
+    resolvedSearchParams.sortPreset
+  );
+  const isIndexable = !hasFilteredVariant;
+  const canonical = page > 1 ? `/posts?page=${page}` : '/posts';
+  const title = page > 1
+    ? `전체 포스트 ${page}페이지 | Mion's Blog`
+    : "전체 포스트 | Mion's Blog";
+
+  return {
+    title,
+    description: POSTS_DESCRIPTION,
+    alternates: {
+      canonical: isIndexable ? canonical : '/posts',
+    },
+    robots: {
+      index: isIndexable,
+      follow: true,
+      googleBot: {
+        index: isIndexable,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
+    },
+    openGraph: {
+      title,
+      description: POSTS_DESCRIPTION,
+      type: 'website',
+      url: isIndexable ? canonical : '/posts',
+    },
+  };
 }
 
 /**
