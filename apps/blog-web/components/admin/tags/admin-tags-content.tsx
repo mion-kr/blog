@@ -5,8 +5,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { RotateCw } from "lucide-react"
 
-import type { Tag, TagsQuery } from "@repo/shared"
-
 import {
   AdminModal,
   DeleteConfirmButton,

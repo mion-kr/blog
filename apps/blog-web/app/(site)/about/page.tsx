@@ -115,7 +115,7 @@ export default async function AboutPage() {
             )}
           </div>
         </div>
-        <h1>I'm Mion</h1>
+        <h1>I&apos;m Mion</h1>
         <p>
           MSA 환경에서의 서비스 개발과 안정적인 시스템 운영에 관심이 많은 백엔드 엔지니어입니다.
           <br />
