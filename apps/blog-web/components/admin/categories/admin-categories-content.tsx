@@ -5,8 +5,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { RotateCw } from "lucide-react"
 
-import type { CategoriesQuery, Category } from "@repo/shared"
-
 import {
   AdminModal,
   CategoryForm,
