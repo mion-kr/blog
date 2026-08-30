@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
@@ -27,12 +28,28 @@ const CATEGORY_LIMIT = 8;
 const TAG_LIMIT = 12;
 const HOME_LOAD_MAX_ATTEMPTS = 4;
 const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
+const HOME_DATA_CACHE_SCOPE =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const SITE_URL = getSiteUrl();
 const HOME_DESCRIPTION =
   "NestJS를 중심으로 백엔드 설계, 운영, 장애 대응 경험을 정리하는 Mion의 기술 블로그입니다.";
 
-// 홈은 구글 크롤러가 일관된 HTML을 보도록 짧은 ISR 캐시를 둡니다.
-export const revalidate = 300;
+type HomeData = {
+  latestResponse: Awaited<ReturnType<typeof postsApi.getPosts>> | null;
+  trendingResponse: Awaited<ReturnType<typeof postsApi.getPosts>> | null;
+  categoriesResponse: Awaited<ReturnType<typeof categoriesApi.getCategories>> | null;
+  tagsResponse: Awaited<ReturnType<typeof tagsApi.getTags>> | null;
+};
+
+class HomeDataLoadError extends Error {
+  constructor(readonly homeData: HomeData) {
+    super("Homepage data is temporarily unavailable");
+    this.name = "HomeDataLoadError";
+  }
+}
+
+// 빌드 시점의 API 실패가 빈 홈으로 고정되지 않도록 요청 시 렌더링합니다.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Mion's Blog | NestJS 백엔드 아카이브",
@@ -61,6 +78,17 @@ export const metadata: Metadata = {
     title: "Mion's Blog | NestJS 백엔드 아카이브",
     description: HOME_DESCRIPTION,
     images: ["/og/blog.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 
@@ -134,12 +162,7 @@ async function loadHomeResource<T>(
   throw lastError;
 }
 
-/**
- * 홈 페이지(샘플 `sample-neon-grid.html` 1:1 포팅).
- * - 홈에서만 sample header/footer/배경을 직접 렌더링합니다.
- * - 데이터(포스트/카테고리/태그)는 기존 API를 그대로 사용합니다.
- */
-export default async function HomePage() {
+async function loadHomeData() {
   const [latestResult, trendingResult, categoriesResult, tagsResult] = await Promise.allSettled([
     loadHomeResource("latest posts", () =>
       postsApi.getPosts({
@@ -177,39 +200,87 @@ export default async function HomePage() {
     ),
   ]);
 
-  if (
+  const allFailed =
     latestResult.status === "rejected" &&
     trendingResult.status === "rejected" &&
     categoriesResult.status === "rejected" &&
-    tagsResult.status === "rejected"
-  ) {
+    tagsResult.status === "rejected";
+  const hasFailure =
+    latestResult.status === "rejected" ||
+    trendingResult.status === "rejected" ||
+    categoriesResult.status === "rejected" ||
+    tagsResult.status === "rejected";
+
+  if (allFailed) {
     console.error("Failed to bootstrap homepage data", {
       latest: latestResult.reason,
       trending: trendingResult.reason,
       categories: categoriesResult.reason,
       tags: tagsResult.reason,
     });
-
-    console.warn("Homepage data is temporarily unavailable. Rendering fallback state without cache.");
+  } else {
+    if (latestResult.status === "rejected") {
+      console.error("Failed to load latest posts", latestResult.reason);
+    }
+    if (trendingResult.status === "rejected") {
+      console.error("Failed to load trending posts", trendingResult.reason);
+    }
+    if (categoriesResult.status === "rejected") {
+      console.error("Failed to load categories", categoriesResult.reason);
+    }
+    if (tagsResult.status === "rejected") {
+      console.error("Failed to load tags", tagsResult.reason);
+    }
   }
 
-  if (latestResult.status === "rejected") {
-    console.error("Failed to load latest posts", latestResult.reason);
-  }
-  if (trendingResult.status === "rejected") {
-    console.error("Failed to load trending posts", trendingResult.reason);
-  }
-  if (categoriesResult.status === "rejected") {
-    console.error("Failed to load categories", categoriesResult.reason);
-  }
-  if (tagsResult.status === "rejected") {
-    console.error("Failed to load tags", tagsResult.reason);
+  const homeData: HomeData = {
+    latestResponse: latestResult.status === "fulfilled" ? latestResult.value : null,
+    trendingResponse: trendingResult.status === "fulfilled" ? trendingResult.value : null,
+    categoriesResponse: categoriesResult.status === "fulfilled" ? categoriesResult.value : null,
+    tagsResponse: tagsResult.status === "fulfilled" ? tagsResult.value : null,
+  };
+
+  if (hasFailure) {
+    throw new HomeDataLoadError(homeData);
   }
 
-  const latestResponse = latestResult.status === "fulfilled" ? latestResult.value : null;
-  const trendingResponse = trendingResult.status === "fulfilled" ? trendingResult.value : null;
-  const categoriesResponse = categoriesResult.status === "fulfilled" ? categoriesResult.value : null;
-  const tagsResponse = tagsResult.status === "fulfilled" ? tagsResult.value : null;
+  return homeData;
+}
+
+// 기존 5분 캐시는 네 리소스가 모두 성공한 결과에만 적용합니다.
+const getCachedHomeData = unstable_cache(
+  loadHomeData,
+  ["homepage-data", HOME_DATA_CACHE_SCOPE],
+  { revalidate: 300 },
+);
+
+/**
+ * 홈 페이지(샘플 `sample-neon-grid.html` 1:1 포팅).
+ * - 홈에서만 sample header/footer/배경을 직접 렌더링합니다.
+ * - 데이터(포스트/카테고리/태그)는 기존 API를 그대로 사용합니다.
+ */
+export default async function HomePage() {
+  let homeData: HomeData = {
+    latestResponse: null,
+    trendingResponse: null,
+    categoriesResponse: null,
+    tagsResponse: null,
+  };
+
+  try {
+    homeData = await getCachedHomeData();
+  } catch (error) {
+    if (error instanceof HomeDataLoadError) {
+      homeData = error.homeData;
+    }
+
+    console.warn(
+      "Homepage data is temporarily unavailable. Rendering fallback state without caching it.",
+      error,
+    );
+  }
+
+  const { latestResponse, trendingResponse, categoriesResponse, tagsResponse } = homeData;
 
   const latestPosts = toPostSummaries(latestResponse?.data ?? []);
   const trendingPosts = toPostSummaries(

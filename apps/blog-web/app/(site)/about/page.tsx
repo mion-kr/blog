@@ -46,6 +46,17 @@ export const metadata: Metadata = {
       'NestJS·Spring Boot 기반 백엔드 개발과 AWS 운영 경험을 바탕으로, 제품 문제를 기술로 해결합니다.',
     images: [aboutOgImage],
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
 };
 
 const contactChannels = [

@@ -46,3 +46,14 @@
 
 - 배포된 운영 URL의 상태와 소셜 플랫폼 캐시는 이번 로컬 검증에 포함하지 않았다.
 - 실제 CrUX 현장 데이터와 Google Rich Results Test 9개 전체 검증은 배포 후 확인 대상이다.
+
+## 2026-08-30 잔여 항목 후속 검증
+
+- 기준 HEAD: `20b47c267d3971794710b0c534c94d083f4e0bc0`에 현재 미커밋 후속 변경을 더한 작업 트리
+- Webpack production build에서 홈 route가 요청 시 렌더링(`ƒ`)으로 확인됐다.
+- 홈 mock API 전체 503 요청은 fallback을 반환하되 캐시하지 않았고, 다음 요청에서 정상 데이터를 즉시 반환했다.
+- 한 리소스만 실패한 부분 결과도 캐시하지 않았고, 다음 완전 성공 요청은 네 API를 다시 호출했다. 이후 성공 캐시 적중 요청의 mock API 추가 호출은 0회였다.
+- 유효 page 2와 기본·검색·보정·카테고리·태그 범위 초과 URL에서 metadata와 본문이 공유한 목록 API 요청은 각각 1회였다.
+- 전역·상세·목록 범위 초과 404는 404·`noindex`이고 `index, follow`·canonical·Open Graph·큰 미리보기 robots가 없었다.
+- 홈·About·유효 상세는 Googlebot `max-image-preview:large` 지시를 유지했다.
+- `pnpm --filter blog-web exec node scripts/verify-seo-runtime.mjs` 최종 종료 코드는 0이었다.

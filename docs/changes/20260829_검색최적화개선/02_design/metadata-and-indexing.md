@@ -57,7 +57,7 @@
 - 요청 page가 1보다 크고 `page > totalPages`이면 `notFound()`를 호출한다.
 - 검색·카테고리·태그 query에도 같은 규칙을 적용한다.
 - API 오류는 존재하지 않는 페이지로 오인하지 않고 현재 오류 상태를 유지한다.
-- `generateMetadata`에서는 API를 다시 호출하지 않는다. 유효 route metadata의 현재 색인·canonical 계약을 유지하고, 404의 `noindex`는 Next.js not-found 계약으로 처리한다.
+- 목록 본문과 `generateMetadata`는 정규화된 query key를 받는 React `cache` loader를 공유한다. 범위 초과 metadata 판정을 위해 같은 pagination 결과를 읽되, 실제 API 요청은 route 요청당 한 번만 발생해야 한다. 유효 route metadata의 현재 색인·canonical 계약을 유지하고, 404의 `noindex`는 Next.js not-found 계약으로 처리한다.
 
 ### 작성자 구조화 데이터
 

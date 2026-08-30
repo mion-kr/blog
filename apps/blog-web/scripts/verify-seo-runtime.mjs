@@ -15,6 +15,10 @@ const AUTH_SECRET = 'seo-runtime-test-secret'
 const JSON_LD_CLOSING_SCRIPT_PAYLOAD =
   '</script><script id="json-ld-breakout-probe">window.__jsonLdBreakout = true</script>'
 const detailTrackViewValues = []
+let failApiRequests = false
+let failedApiPathname = null
+let postListRequestCount = 0
+let successfulApiRequestCount = 0
 
 const category = {
   id: 'category-dev',
@@ -168,7 +172,22 @@ function createMockApiServer() {
 
     const url = new URL(request.url, API_BASE_URL)
 
+    if (failApiRequests || url.pathname === failedApiPathname) {
+      sendJson(response, 503, {
+        success: false,
+        message: '의도된 초기 API 준비 지연',
+        timestamp: new Date().toISOString(),
+        path: url.pathname,
+        error: { code: 'SEO_TEST_BOOTSTRAP_DELAY', statusCode: 503 },
+      })
+      return
+    }
+
+    successfulApiRequestCount += 1
+
     if (url.pathname === '/api/posts') {
+      postListRequestCount += 1
+
       if (url.searchParams.get('search') === 'api-error') {
         sendJson(response, 500, {
           success: false,
@@ -427,9 +446,37 @@ async function verifyRuntime() {
     '인증 중복 callback fallback',
   )
 
+  let unavailableHome
+  failApiRequests = true
+  try {
+    unavailableHome = await fetchHtml('/')
+  } finally {
+    failApiRequests = false
+  }
+  assert.equal(unavailableHome.response.status, 200, '초기 API 지연 홈 status')
+  assertIncludes(unavailableHome.html, '작성 예정', '초기 API 지연 홈 fallback')
+  assertExcludes(unavailableHome.html, primaryPost.excerpt, '초기 API 지연 홈 데이터')
+
+  let partialHome
+  failedApiPathname = '/api/tags'
+  try {
+    partialHome = await fetchHtml('/')
+  } finally {
+    failedApiPathname = null
+  }
+  assert.equal(partialHome.response.status, 200, '부분 API 지연 홈 status')
+  assertIncludes(partialHome.html, primaryPost.excerpt, '부분 API 지연 홈 정상 데이터')
+
+  const fullHomeRequestCount = successfulApiRequestCount
   const home = await fetchHtml('/')
   assert.equal(home.response.status, 200, '홈 status')
+  assert.equal(
+    successfulApiRequestCount - fullHomeRequestCount,
+    4,
+    '부분 실패 결과를 캐시하지 않은 뒤 홈 API 요청 수',
+  )
   assertIncludes(home.html, `${APP_BASE_URL}/og/blog.png`, '홈 og:image')
+  assertIncludes(home.html, 'max-image-preview:large', '홈 Googlebot 미리보기 robots')
   assertIncludes(home.html, '이 블로그에서 다루는 것', '홈 핵심 콘텐츠')
   assertIncludes(home.html, '전체 포스트 보기', '홈 섹션 링크 이름')
   assertIncludes(home.html, 'SEO 런타임 검증 포스트 읽기', '홈 카드 접근성 이름')
@@ -457,6 +504,16 @@ async function verifyRuntime() {
   )
   assertIncludes(home.html, '2026년 8월 24일', '홈 한국 시간 긴 날짜')
   assertIncludes(home.html, '2026.08.24', '홈 한국 시간 숫자 날짜')
+
+  const cachedHomeRequestCount = successfulApiRequestCount
+  const cachedHome = await fetchHtml('/')
+  assert.equal(cachedHome.response.status, 200, '캐시 적중 홈 status')
+  assertIncludes(cachedHome.html, primaryPost.excerpt, '캐시 적중 홈 데이터')
+  assert.equal(
+    successfulApiRequestCount - cachedHomeRequestCount,
+    0,
+    '성공 결과 캐시 적중 후 홈 API 요청 수',
+  )
 
   const posts = await fetchHtml('/posts')
   assert.equal(posts.response.status, 200, '목록 status')
@@ -508,9 +565,15 @@ async function verifyRuntime() {
     'sitemap 초안 포스트 URL',
   )
 
+  const validPageRequestCount = postListRequestCount
   const validPage = await fetchHtml('/posts?page=2')
   assert.equal(validPage.response.status, 200, '유효 page 2 status')
   assertIncludes(validPage.html, `${APP_BASE_URL}/posts?page=2`, '유효 page 2 canonical')
+  assert.equal(
+    postListRequestCount - validPageRequestCount,
+    1,
+    '유효 page 2 metadata와 본문 API 요청 수',
+  )
 
   const emptyFirstPage = await fetchHtml('/posts?search=no-results&page=1')
   assert.equal(emptyFirstPage.response.status, 200, '빈 필터 page 1 status')
@@ -527,11 +590,29 @@ async function verifyRuntime() {
     '/posts?categorySlug=development&page=999',
     '/posts?tagSlug=nestjs&page=999',
   ]) {
+    const requestCountBefore = postListRequestCount
     const result = await fetchHtml(path)
     statusResults.push({ path, status: result.response.status })
     assert.equal(result.response.status, 404, `${path} status`)
     assertIncludes(result.html, 'noindex', `${path} robots`)
+    assertExcludes(result.html, 'content="index, follow"', `${path} index robots`)
+    assertExcludes(result.html, 'rel="canonical"', `${path} canonical`)
+    assertExcludes(result.html, 'property="og:', `${path} Open Graph`)
+    assertExcludes(result.html, 'max-image-preview:large', `${path} preview robots`)
+    assert.equal(
+      postListRequestCount - requestCountBefore,
+      1,
+      `${path} metadata와 본문 API 요청 수`,
+    )
   }
+
+  const globalNotFound = await fetchHtml('/__seo-missing__')
+  assert.equal(globalNotFound.response.status, 404, '전역 404 status')
+  assertIncludes(globalNotFound.html, 'noindex', '전역 404 robots')
+  assertExcludes(globalNotFound.html, 'content="index, follow"', '전역 404 index robots')
+  assertExcludes(globalNotFound.html, 'rel="canonical"', '전역 404 canonical')
+  assertExcludes(globalNotFound.html, 'property="og:', '전역 404 Open Graph')
+  assertExcludes(globalNotFound.html, 'max-image-preview:large', '전역 404 preview robots')
 
   const filteredPagination = await fetchHtml(
     '/posts?limit=12&search=NestJS&categorySlug=development&category=legacy-development&tagSlug=nestjs&tag=legacy-nestjs&sort=viewCount&order=desc&sortPreset=viewed&page=1',
@@ -547,6 +628,7 @@ async function verifyRuntime() {
   assert.equal(about.response.status, 200, 'About status')
   assertIncludes(about.html, `${APP_BASE_URL}/og/about.png`, 'About og:image')
   assertIncludes(about.html, 'twitter:image', 'About twitter:image')
+  assertIncludes(about.html, 'max-image-preview:large', 'About Googlebot 미리보기 robots')
 
   detailTrackViewValues.length = 0
   const detail = await fetchHtml(`/posts/${primaryPost.slug}`)
@@ -557,9 +639,15 @@ async function verifyRuntime() {
     '상세 canonical',
   )
   assertExcludes(detail.html, 'noindex', '상세 robots')
+  assertIncludes(detail.html, 'max-image-preview:large', '상세 Googlebot 미리보기 robots')
   assertIncludes(detail.html, COVER_URL, '상세 cover metadata')
   assertIncludes(detail.html, '2026.08.24', '상세 한국 시간 날짜')
   assertIncludes(detail.html, '<div class="mdx-content">', '상세 SSR 본문 container')
+  const brandLink = detail.html.match(/<a\b[^>]*class="brand"[^>]*>/)?.[0]
+  assert.ok(brandLink, '상세 브랜드 링크가 없습니다.')
+  assertExcludes(brandLink, 'aria-label=', '상세 브랜드 링크 접근성 이름')
+  assertIncludes(detail.html, '<h2 class="post-footer-title">Related Tags</h2>', '상세 태그 제목 단계')
+  assertExcludes(detail.html, '<h4 class="post-footer-title">', '상세 태그 h4')
   assertIncludes(detail.html, 'production HTML 본문 검증 문장입니다.', '상세 SSR 본문')
   assertExcludes(detail.html, 'space-y-6 animate-pulse', '상세 loading skeleton')
   const jsonLd = extractJsonLd(detail.html)
@@ -567,6 +655,14 @@ async function verifyRuntime() {
   assert.deepEqual(jsonLd.image, [COVER_URL], '상세 JSON-LD cover')
   assert.ok(detailTrackViewValues.includes('false'), '상세 metadata 조회 trackView=false')
   assert.ok(detailTrackViewValues.includes('true'), '상세 본문 조회 trackView=true')
+
+  const missingDetail = await fetchHtml('/posts/__missing__')
+  assert.equal(missingDetail.response.status, 404, '상세 404 status')
+  assertIncludes(missingDetail.html, 'noindex', '상세 404 robots')
+  assertExcludes(missingDetail.html, 'content="index, follow"', '상세 404 index robots')
+  assertExcludes(missingDetail.html, 'rel="canonical"', '상세 404 canonical')
+  assertExcludes(missingDetail.html, 'property="og:', '상세 404 Open Graph')
+  assertExcludes(missingDetail.html, 'max-image-preview:large', '상세 404 preview robots')
 
   const unsafeJsonLdDetail = await fetchHtml(
     `/posts/${postWithJsonLdClosingScriptPayload.slug}`,
@@ -640,6 +736,7 @@ try {
     nextServer.kill('SIGTERM')
   }
   if (mockApiServer.listening) {
+    mockApiServer.closeAllConnections()
     await closeServer(mockApiServer)
   }
 }
