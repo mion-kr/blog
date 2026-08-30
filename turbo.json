@@ -115,12 +115,6 @@
       "persistent": true,
       "inputs": ["src/**", "test/**", "jest.config.*", "vitest.config.*"]
     },
-    "test:e2e": {
-      "dependsOn": ["build"],
-      "inputs": ["$TURBO_DEFAULT$", "test/**", "e2e/**", "playwright.config.*"],
-      "outputs": ["test-results/**", "playwright-report/**"],
-      "outputLogs": "new-only"
-    },
     "db:generate": {
       "inputs": ["src/schema/**", "drizzle.config.ts", "drizzle/**/*.sql"],
       "outputs": ["drizzle/**"],

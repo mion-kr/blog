@@ -47,7 +47,7 @@
 - 인프라: `Railway`
 - 오브젝트 스토리지: `MinIO`
 - 패키징/워크스페이스: `pnpm`, `Turborepo`
-- 테스트: `Playwright`(웹), `Jest`(API)
+- 테스트: `Jest`(API)
 - UI: `@repo/ui`(shadcn 기반 구성)
 
 **모노레포 구조**
@@ -76,9 +76,6 @@
   - `pnpm --filter @repo/database generate`
   - `pnpm --filter @repo/database push`
   - `pnpm --filter @repo/database migrate`
-- 웹 테스트(Playwright):
-  - E2E: `pnpm --filter blog-web test:e2e`
-  - UI: `pnpm --filter blog-web test:ui`
 - API 테스트(Jest):
   - `pnpm --filter blog-api test`
 

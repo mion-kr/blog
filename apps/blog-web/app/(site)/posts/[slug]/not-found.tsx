@@ -14,7 +14,7 @@ export default function PostNotFound() {
       <div className="neon-grid-bg" aria-hidden="true" />
       <NeonHeader activePath="/posts" />
 
-      <main id="main" className="article-container">
+      <main id="main" tabIndex={-1} className="article-container">
         <div className="content-card" style={{ textAlign: "center" }}>
           <h1 style={{ fontSize: 44, fontWeight: 950, letterSpacing: "-0.04em", marginBottom: 16 }}>
             포스트를 찾을 수 없습니다

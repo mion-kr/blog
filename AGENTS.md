@@ -38,7 +38,6 @@
 - 프론트 dev: `pnpm --filter blog-web dev`
 - 백엔드 dev: `pnpm --filter blog-api dev`
 - 백엔드 테스트: `pnpm --filter blog-api test`
-- 프론트 E2E: `pnpm --filter blog-web test:e2e`
 
 ## Working Rules
 

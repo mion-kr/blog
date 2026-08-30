@@ -17,9 +17,9 @@
 - MUST server action 변경 시 mutation 결과, redirect, revalidate, auth 실패 경로를 검토합니다.
 - MUST client 상호작용 변경 시 상태 전이, 업로드, 폼 검증, 버튼 pending UX를 검토합니다.
 - MUST data access 변경 시 에러 해석과 query/body/header 계약을 검토합니다.
-- MUST 주요 사용자 흐름 변경 시 Playwright E2E 추가 또는 수정 여부를 함께 검토합니다.
+- MUST 주요 사용자 흐름 변경 시 자동화된 회귀 검증 추가 또는 수정 여부를 함께 검토합니다.
 - MUST 새 패턴 도입 시 관련 문서와 체크리스트를 같이 갱신합니다.
-- SHOULD 반복되는 회귀는 E2E 또는 route-level test helper로 자동화합니다.
+- SHOULD 반복되는 회귀는 자동화된 테스트 또는 route-level test helper로 검증합니다.
 
 ## Must Not
 
@@ -32,7 +32,7 @@
 - 변경된 코드가 어느 프론트엔드 계층 책임을 추가하거나 이동시켰는가?
 - 해당 책임 이동을 증명하는 테스트가 있는가?
 - 문서와 체크리스트가 새 패턴을 반영하고 있는가?
-- 이 회귀는 E2E로 자동화해야 하는가?
+- 이 회귀는 자동화된 회귀 검증으로 보존해야 하는가?
 
 ## Exception Process
 

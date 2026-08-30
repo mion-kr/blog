@@ -21,7 +21,7 @@
   /* Text */
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.72);
-  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-muted: rgba(255, 255, 255, 0.52);
 
   /* Borders */
   --border-dim: rgba(0, 229, 255, 0.12);
@@ -389,7 +389,7 @@
 
 .root :global(.contact-btn) {
   background: var(--bg-deep);
-  border: 1px solid var(--border-dim);
+  border: 1px solid var(--border-glow);
   padding: 12px 24px;
   border-radius: 999px;
   font-weight: 800;
@@ -418,5 +418,16 @@
 
   .root :global(.contact-card) {
     padding: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .root :global(.header-inner) {
+    height: auto;
+    min-height: 64px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
   }
 }
