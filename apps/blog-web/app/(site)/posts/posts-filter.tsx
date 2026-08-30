@@ -52,7 +52,7 @@ export function PostsFilter({
   }, []);
 
   return (
-    <div className="filter-bar" aria-label="포스트 필터">
+    <div className="filter-bar" role="group" aria-label="포스트 필터">
       <div className="filter-row">
         <div className="search-box">
           <span className="search-icon" aria-hidden="true">

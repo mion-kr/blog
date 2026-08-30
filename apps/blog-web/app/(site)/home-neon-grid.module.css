@@ -738,6 +738,12 @@
   margin-bottom: 10px;
 }
 
+.root :global(.post-card-title a) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
 .root :global(.post-card-title a:hover) {
   color: var(--neon-cyan);
 }
@@ -776,6 +782,7 @@
   font-weight: 600;
   color: var(--neon-cyan);
   transition: all 0.2s ease;
+  min-height: 24px;
 }
 
 .root :global(.read-more:hover) {
@@ -993,6 +1000,8 @@
 .root :global(.footer-text a) {
   color: var(--neon-cyan);
   transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
 }
 
 .root :global(.footer-text a:hover) {
@@ -1069,5 +1078,16 @@
 
   .root :global(.container) {
     padding: 24px 16px 60px;
+  }
+}
+
+@media (max-width: 360px) {
+  .root :global(.header-inner) {
+    height: auto;
+    min-height: 64px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
   }
 }

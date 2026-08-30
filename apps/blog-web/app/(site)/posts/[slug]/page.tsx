@@ -10,6 +10,7 @@ import {
   formatReadingTimeMinutes,
 } from "@/lib/reading-time";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { formatKoreanNumericDate } from "@/lib/date-format";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
@@ -131,11 +132,11 @@ export default async function PostPage({ params }: PostPageProps) {
 
             <h1 className="post-title">{post.title}</h1>
 
-            <div className="post-meta" aria-label="포스트 메타 정보">
+            <div className="post-meta" role="group" aria-label="포스트 메타 정보">
               <span className="meta-item">
                 🗓️{" "}
                 <time dateTime={new Date(displayDate).toISOString()}>
-                  {formatNeonDate(displayDate)}
+                  {formatKoreanNumericDate(displayDate)}
                 </time>
               </span>
               <span className="meta-item">👁️ {formatNumber(post.viewCount)} views</span>
@@ -160,7 +161,7 @@ export default async function PostPage({ params }: PostPageProps) {
             </div>
           ) : null}
 
-          <main className="content-card">
+          <main id="main" tabIndex={-1} className="content-card">
             <div className="prose">
               <MDXRenderer content={post.content} />
             </div>
@@ -168,7 +169,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.length > 0 ? (
               <footer className="post-footer">
                 <h4 className="post-footer-title">Related Tags</h4>
-                <div className="tag-row" aria-label="태그">
+                <div className="tag-row" role="group" aria-label="태그">
                   {post.tags.map((tag) => (
                     <Link
                       key={tag.id}
@@ -193,17 +194,6 @@ export default async function PostPage({ params }: PostPageProps) {
     console.error("Error loading post:", error);
     notFound();
   }
-}
-
-/**
- * 날짜를 `YYYY.MM.DD` 형식으로 포맷팅합니다.
- */
-function formatNeonDate(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const d = String(dateObj.getDate()).padStart(2, "0");
-  return `${y}.${m}.${d}`;
 }
 
 /**
@@ -236,6 +226,7 @@ function buildPostJsonLd(post: PostResponseDto, url: string) {
     author: {
       "@type": "Person",
       name: post.author?.name ?? "Mion",
+      url: `${siteUrl}/about`,
     },
     publisher: {
       "@type": "Organization",

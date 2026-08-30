@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import { PostsContent } from './posts-content';
 import { postsApi } from '@/lib/api-client';
@@ -79,6 +80,20 @@ export async function generateMetadata({
       description: POSTS_DESCRIPTION,
       type: 'website',
       url: isIndexable ? canonical : '/posts',
+      images: [
+        {
+          url: '/og/blog.png',
+          width: 1200,
+          height: 630,
+          alt: 'Mion 기술 블로그 포스트 목록 공유 이미지',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: POSTS_DESCRIPTION,
+      images: ['/og/blog.png'],
     },
   };
 }
@@ -105,6 +120,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       initialQuery,
       initialPosts.length,
     );
+
+    const totalPages = initialMeta.totalPages ?? 0;
+    const requestedPage = initialQuery.page ?? 1;
+    if (requestedPage > 1 && requestedPage > totalPages) {
+      notFound();
+    }
   } else {
     initialError =
       postsResult instanceof Error

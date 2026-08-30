@@ -33,6 +33,7 @@ import {
 import {
   formatReadingTimeMinutes,
 } from '@/lib/reading-time';
+import { formatKoreanNumericDate } from '@/lib/date-format';
 
 interface PostsContentProps {
   initialPosts: PostSummary[];
@@ -170,9 +171,11 @@ export function PostsContent({
     updateURL({ sort: 'publishedAt', order: 'desc', sortPreset: preset, page: 1 });
   }, [updateURL]);
 
-  const handlePageChange = useCallback((page: number) => {
-    updateURL({ page });
-  }, [updateURL]);
+  const getPageHref = useCallback((page: number) => {
+    const params = new URLSearchParams(urlSearchParams.toString());
+    params.set('page', String(page));
+    return `/posts?${params.toString()}`;
+  }, [urlSearchParams]);
 
   const handleClearFilters = useCallback(() => {
     router.push('/posts');
@@ -278,7 +281,7 @@ export function PostsContent({
           itemsPerPage={pagination.limit}
           hasNext={pagination.hasNext}
           hasPrev={pagination.hasPrev}
-          onPageChange={handlePageChange}
+          getPageHref={getPageHref}
         />
       )}
     </>
@@ -313,17 +316,6 @@ function mapPagination(
  */
 function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat('en', { notation: 'compact' }).format(value);
-}
-
-/**
- * 네온 목록 카드용 날짜 문자열을 포맷합니다.
- */
-function formatNeonDate(value: Date | string): string {
-  const dateObj = typeof value === 'string' ? new Date(value) : value;
-  const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getDate()).padStart(2, '0');
-  return `${y}.${m}.${d}`;
 }
 
 /**
@@ -375,7 +367,7 @@ function PostsNeonPostCard({
             {post.category.name}
           </Link>
           <time className="post-date" dateTime={new Date(displayDate).toISOString()}>
-            {formatNeonDate(displayDate)}
+            {formatKoreanNumericDate(displayDate)}
           </time>
         </div>
 
@@ -386,7 +378,7 @@ function PostsNeonPostCard({
         {post.excerpt && <p className="post-excerpt">{post.excerpt}</p>}
 
         <div className="post-card-footer">
-          <div className="tag-list" aria-label="태그">
+          <div className="tag-list" role="group" aria-label="태그">
             {post.tags.slice(0, 3).map((tag) => (
               <Link
                 key={tag.id}
@@ -397,7 +389,7 @@ function PostsNeonPostCard({
               </Link>
             ))}
           </div>
-          <div className="read-stats" aria-label="읽기/조회수">
+          <div className="read-stats" role="group" aria-label="읽기/조회수">
             <span>👁️ {formatCompactNumber(post.viewCount)}</span>
             <span>⏱️ {readingTimeLabel}</span>
           </div>

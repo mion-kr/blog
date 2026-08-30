@@ -9,6 +9,11 @@ import { NeonHeader } from "@/components/layout/neon-header";
 import { ApiError } from "@/lib/api-errors";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { serializeJsonLd } from "@/lib/json-ld";
+import {
+  formatKoreanLongDate,
+  formatKoreanMonthDay,
+  formatKoreanNumericDate,
+} from "@/lib/date-format";
 import { toPostSummaries } from "@/lib/posts/post-summary";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -42,11 +47,20 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ko_KR",
     url: "/",
+    images: [
+      {
+        url: "/og/blog.png",
+        width: 1200,
+        height: 630,
+        alt: "Mion 기술 블로그 공유 이미지",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Mion's Blog | NestJS 백엔드 아카이브",
     description: HOME_DESCRIPTION,
+    images: ["/og/blog.png"],
   },
 };
 
@@ -248,11 +262,11 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="hero-stats" aria-label="블로그 통계">
+            <div className="hero-stats" role="group" aria-label="블로그 통계">
               <HeroStatCard value={formatNumber(stats.posts)} label="총 포스트" />
               <HeroStatCard value={formatNumber(stats.categories)} label="카테고리" />
               <HeroStatCard value={formatNumber(stats.tags)} label="태그" />
-              <HeroStatCard value={stats.lastUpdated ? formatShortDate(stats.lastUpdated) : "작성 예정"} label="마지막 업데이트" />
+              <HeroStatCard value={stats.lastUpdated ? formatKoreanNumericDate(stats.lastUpdated) : "작성 예정"} label="마지막 업데이트" />
             </div>
           </div>
         </section>
@@ -283,7 +297,7 @@ export default async function HomePage() {
                 홈에서는 대표 글을 먼저 보고, 더 필요한 내용은 카테고리와 태그를 기준으로 바로 이어서 읽을 수 있어요.
               </p>
               {categories.length > 0 || tags.length > 0 ? (
-                <div className="landing-chips" aria-label="핵심 탐색 주제">
+                <div className="landing-chips" role="group" aria-label="핵심 탐색 주제">
                   {categories.slice(0, 3).map((category) => (
                     <Link
                       key={category.id}
@@ -315,7 +329,7 @@ export default async function HomePage() {
                 eyebrow="Featured"
                 title="오늘의 추천"
                 actionHref="/posts"
-                actionLabel="전체 보기"
+                actionLabel="전체 포스트 보기"
               />
 
               {featuredPost ? (
@@ -344,7 +358,7 @@ export default async function HomePage() {
             </section>
 
             <section aria-label="최근 글">
-              <SectionHeader eyebrow="Latest" title="최근 글" actionHref="/posts" actionLabel="더 보기" />
+              <SectionHeader eyebrow="Latest" title="최근 글" actionHref="/posts" actionLabel="최근 포스트 더 보기" />
 
               <div className="posts-grid">
                 {recentPosts.map((post) => (
@@ -438,7 +452,7 @@ export default async function HomePage() {
               <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
                 마지막 업데이트:{" "}
                 <span style={{ color: "var(--neon-cyan)" }}>
-                  {stats.lastUpdated ? formatDate(stats.lastUpdated) : "작성 예정"}
+                  {stats.lastUpdated ? formatKoreanLongDate(stats.lastUpdated) : "작성 예정"}
                 </span>
               </div>
             </div>
@@ -555,7 +569,7 @@ function FeaturedPost({ post }: { post: PostSummary }) {
           {post.category.name}
         </Link>
         <span className="meta-item">
-          <span className="icon-calendar" aria-hidden="true" /> {formatDate(displayDate)}
+          <span className="icon-calendar" aria-hidden="true" /> {formatKoreanLongDate(displayDate)}
         </span>
         <span className="meta-item">
           <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
@@ -580,7 +594,11 @@ function FeaturedPost({ post }: { post: PostSummary }) {
             </Link>
           ))}
         </div>
-        <Link href={href} className="read-more relative z-20">
+        <Link
+          href={href}
+          className="read-more relative z-20"
+          aria-label={`${post.title} 읽기`}
+        >
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>
@@ -606,7 +624,7 @@ function PostCard({ post }: { post: PostSummary }) {
           <span className="dot" aria-hidden="true" />
           {post.category.name}
         </Link>
-        <span className="meta-item">{formatMonthDay(displayDate)}</span>
+        <span className="meta-item">{formatKoreanMonthDay(displayDate)}</span>
       </div>
       <h3 className="post-card-title">
         <Link href={href} className="relative z-20">{post.title}</Link>
@@ -616,7 +634,11 @@ function PostCard({ post }: { post: PostSummary }) {
         <span className="view-count">
           <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
         </span>
-        <Link href={href} className="read-more relative z-20">
+        <Link
+          href={href}
+          className="read-more relative z-20"
+          aria-label={`${post.title} 읽기`}
+        >
           읽기 <span className="icon-arrow" aria-hidden="true" />
         </Link>
       </div>
@@ -639,38 +661,6 @@ function TrendingItem({ post, rank }: { post: PostSummary; rank: number }) {
       </div>
     </Link>
   );
-}
-
-/**
- * 날짜 포맷(긴 형식).
- */
-function formatDate(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(dateObj);
-}
-
-/**
- * 날짜 포맷(월/일, 샘플 카드용).
- */
-function formatMonthDay(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  const month = dateObj.getMonth() + 1;
-  const day = dateObj.getDate();
-  return `${month}월 ${day}일`;
-}
-
-/**
- * 짧은 날짜 포맷(히어로 스탯용).
- */
-function formatShortDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}.${month}.${day}`;
 }
 
 /**

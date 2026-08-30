@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
 
 interface PostsPaginationProps {
   currentPage: number;
@@ -8,12 +9,12 @@ interface PostsPaginationProps {
   itemsPerPage: number;
   hasNext: boolean;
   hasPrev: boolean;
-  onPageChange: (page: number) => void;
+  getPageHref: (page: number) => string;
 }
 
 /**
  * 네온 posts 화면 전용 페이지네이션.
- * - 샘플 HTML의 버튼 스타일을 그대로 사용합니다.
+ * - 샘플 HTML의 시각 스타일을 유지하면서 실제 링크로 이동합니다.
  */
 export function PostsPagination({
   currentPage,
@@ -21,7 +22,7 @@ export function PostsPagination({
   itemsPerPage,
   hasNext,
   hasPrev,
-  onPageChange,
+  getPageHref,
 }: PostsPaginationProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -71,15 +72,22 @@ export function PostsPagination({
 
   return (
     <nav className="pagination" aria-label="페이지네이션">
-      <button
-        type="button"
-        className={`page-btn ${!hasPrev ? 'disabled' : ''}`}
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={!hasPrev}
-        aria-label="이전 페이지"
-      >
-        ‹
-      </button>
+      {hasPrev ? (
+        <Link
+          href={getPageHref(currentPage - 1)}
+          prefetch={false}
+          scroll={false}
+          className="page-btn"
+          aria-label="이전 페이지"
+        >
+          ‹
+        </Link>
+      ) : (
+        <span className="page-btn disabled" aria-disabled="true">
+          <span aria-hidden="true">‹</span>
+          <span className="sr-only">이전 페이지 없음</span>
+        </span>
+      )}
 
       {pageNumbers.map((page, index) => {
         if (page === 'ellipsis') {
@@ -92,29 +100,49 @@ export function PostsPagination({
 
         const isCurrentPage = page === currentPage;
 
+        if (isCurrentPage) {
+          return (
+            <span
+              key={page}
+              className="page-btn active"
+              aria-current="page"
+            >
+              <span aria-hidden="true">{page}</span>
+              <span className="sr-only">페이지 {page}, 현재 페이지</span>
+            </span>
+          );
+        }
+
         return (
-          <button
+          <Link
             key={page}
-            type="button"
-            className={`page-btn ${isCurrentPage ? 'active' : ''}`}
-            onClick={() => onPageChange(page)}
-            aria-current={isCurrentPage ? 'page' : undefined}
-            aria-label={`페이지 ${page}${isCurrentPage ? ' (현재 페이지)' : ''}`}
+            href={getPageHref(page)}
+            prefetch={false}
+            scroll={false}
+            className="page-btn"
+            aria-label={`페이지 ${page}`}
           >
             {page}
-          </button>
+          </Link>
         );
       })}
 
-      <button
-        type="button"
-        className={`page-btn ${!hasNext ? 'disabled' : ''}`}
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={!hasNext}
-        aria-label="다음 페이지"
-      >
-        ›
-      </button>
+      {hasNext ? (
+        <Link
+          href={getPageHref(currentPage + 1)}
+          prefetch={false}
+          scroll={false}
+          className="page-btn"
+          aria-label="다음 페이지"
+        >
+          ›
+        </Link>
+      ) : (
+        <span className="page-btn disabled" aria-disabled="true">
+          <span aria-hidden="true">›</span>
+          <span className="sr-only">다음 페이지 없음</span>
+        </span>
+      )}
     </nav>
   );
 }

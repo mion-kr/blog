@@ -1,9 +1,26 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdminSignInButton } from "@/components/auth/admin-signin-button";
 import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "관리자 로그인 | Mion's Blog",
+  description: "Mion's Blog 관리자 로그인",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+  alternates: null,
+  openGraph: null,
+  twitter: null,
+};
 
 interface SignInSearchParams {
   callbackUrl?: string | string[];
@@ -46,9 +63,12 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
         <div className="space-y-4">
           <AdminSignInButton callbackUrl={callbackUrl} />
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-400">
             로그인에 문제가 있으면{" "}
-            <Link className="text-emerald-300 hover:text-emerald-200" href="/">
+            <Link
+              className="text-emerald-300 underline underline-offset-2 hover:text-emerald-200"
+              href="/"
+            >
               홈으로 돌아가기
             </Link>
             를 눌러주세요.

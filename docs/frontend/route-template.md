@@ -52,7 +52,6 @@ features/feature/client/upload-file.ts
 components/feature/feature-view.tsx
 components/feature/feature-form.tsx
 lib/api/feature.ts
-tests/feature-flow.playwright.spec.ts
 ```
 
 ## 새 화면 시작 체크
@@ -64,4 +63,4 @@ tests/feature-flow.playwright.spec.ts
 5. 브라우저 이벤트와 local state가 크면 client component로 분리합니다.
 6. 파일 업로드가 있으면 inline fetch 대신 공용 client helper를 둡니다.
 7. 공통 UI와 route-local UI를 구분합니다.
-8. 회귀 가능성이 큰 사용자 흐름은 E2E 후보로 표시합니다.
+8. 회귀 가능성이 큰 사용자 흐름은 자동화된 회귀 검증 후보로 표시합니다.

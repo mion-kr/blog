@@ -39,6 +39,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: "About | Mion's Blog",
+    description:
+      'NestJS·Spring Boot 기반 백엔드 개발과 AWS 운영 경험을 바탕으로, 제품 문제를 기술로 해결합니다.',
+    images: [aboutOgImage],
+  },
 };
 
 const contactChannels = [
@@ -157,7 +164,7 @@ export default async function AboutPage() {
           <div className="contact-card">
             <h2>Let&apos;s connect in the grid</h2>
             <p>협업 제안이나 기술적인 수다는 언제든 환영입니다.</p>
-            <div className="contact-links" aria-label="연락 링크">
+            <div className="contact-links" role="group" aria-label="연락 링크">
               {contactChannels.map((channel) => (
                 <Link key={channel.label} href={channel.href} className="contact-btn">
                   {channel.label === 'Email' ? '📧' : '🐙'} {channel.label}
