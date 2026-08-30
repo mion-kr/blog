@@ -1,10 +1,21 @@
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { postsApi } from "@/lib/api-client";
 import type { PostResponseDto } from "@repo/shared";
 import { getSiteUrl } from "@/lib/site";
 
 const SITE_URL = getSiteUrl();
-export const revalidate = 300;
+const SITEMAP_CACHE_SCOPE =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const MAX_SITEMAP_PAGES = 100;
+
+export const dynamic = "force-dynamic";
+
+const getCachedSitemapPosts = unstable_cache(
+  async () => normalizePostsForSitemap(await fetchAllPosts()),
+  ["sitemap-posts", SITEMAP_CACHE_SCOPE],
+  { revalidate: 300 },
+);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -25,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const posts = normalizePostsForSitemap(await fetchAllPosts());
+  const posts = await getCachedSitemapPosts();
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${SITE_URL}/posts/${post.slug}`,
@@ -45,35 +56,41 @@ async function fetchAllPosts(): Promise<PostResponseDto[]> {
   // published 글만 색인합니다.
   // postsApi.getPosts는 서버 환경에서 NEXT_PUBLIC_API_URL 기준으로 백엔드를 호출합니다.
   // pagination 메타를 활용해서 모든 페이지를 순회합니다.
-  // 실패 시에는 관측 가능한 로그를 남기고 정적 라우트만 반환합니다.
+  // 어느 페이지에서든 실패하면 부분 결과를 반환하지 않고 오류를 전파합니다.
   try {
-    // 최대 100 페이지 루프 안전장치
-    for (let i = 0; i < 100; i++) {
+    // 페이지네이션 오류로 무한 순회하지 않도록 최대 페이지 수를 제한합니다.
+    for (let i = 0; i < MAX_SITEMAP_PAGES; i++) {
       const res = await postsApi.getPosts({ page, limit, published: true });
       if (!res.success) {
-        // API 실패 시 원인을 추적할 수 있도록 로그를 남깁니다.
-        console.error("[sitemap] failed to fetch posts page", {
-          page,
-          limit,
-          message: res.message,
-        });
-        break;
+        throw new Error(res.message);
       }
 
       items.push(...res.data);
 
       const totalPages = res.meta.totalPages ?? Math.ceil(res.meta.total / res.meta.limit);
-      if (page >= totalPages || !res.meta.hasNext) break;
+      if (!res.meta.hasNext) {
+        if (page < totalPages) {
+          throw new Error("sitemap pagination ended before totalPages");
+        }
+        return items;
+      }
+      if (page >= totalPages) {
+        throw new Error("sitemap pagination hasNext exceeded totalPages");
+      }
       page += 1;
     }
+
+    throw new Error(`sitemap pagination exceeded ${MAX_SITEMAP_PAGES} pages`);
   } catch (error) {
-    // 네트워크/런타임 오류도 로그로 남겨서 sitemap 누락 원인을 관측 가능하게 합니다.
+    // 실패를 캐시하지 않고 다음 요청이 다시 시도할 수 있도록 오류를 전파합니다.
     console.error("[sitemap] unexpected error while fetching posts", {
+      page,
+      limit,
       message: error instanceof Error ? error.message : String(error),
     });
+    throw error;
   }
 
-  return items;
 }
 
 /**
