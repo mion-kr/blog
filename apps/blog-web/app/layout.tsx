@@ -24,34 +24,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Mion" }],
   creator: "Mion",
   applicationName: "Mion Blog",
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: "Mion's Blog",
-    description: "Mion의 기술 블로그 - 개발 이야기",
-    type: "website",
-    locale: "ko_KR",
-    url: "/",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Mion's Blog",
-    description: "Mion의 기술 블로그 - 개발 이야기",
-  },
   icons: {
     icon: "/favicon.ico",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 

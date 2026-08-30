@@ -11,6 +11,7 @@ import {
 } from "@/lib/reading-time";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { formatKoreanNumericDate } from "@/lib/date-format";
+import { NOT_FOUND_METADATA } from "@/lib/notFoundMetadata";
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
@@ -35,9 +36,7 @@ export async function generateMetadata({
     const { slug } = await params;
     const post = await getPostForSeo(slug);
     if (!post) {
-      return {
-        title: "포스트를 찾을 수 없습니다 | Mion Blog",
-      };
+      return NOT_FOUND_METADATA;
     }
     const baseUrl = getSiteUrl();
 
@@ -80,11 +79,20 @@ export async function generateMetadata({
       alternates: {
         canonical: `${baseUrl}/posts/${slug}`,
       },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+          "max-video-preview": -1,
+        },
+      },
     };
   } catch {
-    return {
-      title: "포스트를 찾을 수 없습니다 | Mion Blog",
-    };
+    return NOT_FOUND_METADATA;
   }
 }
 
@@ -168,7 +176,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
             {post.tags.length > 0 ? (
               <footer className="post-footer">
-                <h4 className="post-footer-title">Related Tags</h4>
+                <h2 className="post-footer-title">Related Tags</h2>
                 <div className="tag-row" role="group" aria-label="태그">
                   {post.tags.map((tag) => (
                     <Link

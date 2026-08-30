@@ -1,15 +1,17 @@
+import { cache } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { PostsContent } from './posts-content';
 import { postsApi } from '@/lib/api-client';
 import { toPostSummaries } from '@/lib/posts/post-summary';
-import { parsePostsSearchParams } from './query-utils';
+import { buildPostsQueryKey, parsePostsSearchParams } from './query-utils';
 import { PostsNeonSidebar } from './posts-neon-sidebar';
 import { getPostsSidebarData } from '@/features/site/server/get-posts-sidebar-data';
 import styles from './posts-neon-grid.module.css';
 import { cn } from '@/lib/utils';
 import { NeonHeader } from '@/components/layout/neon-header';
+import { NOT_FOUND_METADATA } from '@/lib/notFoundMetadata';
 import type {
   ApiPaginationMeta,
   PostSummary,
@@ -19,6 +21,15 @@ import type {
 export const revalidate = 60; // 1분마다 재검증
 
 const POSTS_DESCRIPTION = '기술 인사이트와 개발 경험을 공유하는 Mion의 블로그 전체 포스트 목록입니다.';
+
+const getPostsByQueryKey = cache(async (queryKey: string) => {
+  const query = JSON.parse(queryKey) as PostsQuery;
+  return postsApi.getPosts(query);
+});
+
+function getPosts(query: PostsQuery) {
+  return getPostsByQueryKey(buildPostsQueryKey(query));
+}
 
 interface PostsPageProps {
   searchParams: Promise<{
@@ -57,6 +68,19 @@ export async function generateMetadata({
   const title = page > 1
     ? `전체 포스트 ${page}페이지 | Mion's Blog`
     : "전체 포스트 | Mion's Blog";
+
+  if (page > 1) {
+    try {
+      const response = await getPosts(query);
+      const meta = normalizePaginationMeta(response.meta, query, response.data.length);
+
+      if (page > (meta.totalPages ?? 0)) {
+        return NOT_FOUND_METADATA;
+      }
+    } catch {
+      // API 실패는 기존 목록 오류 화면으로 처리하고 404로 바꾸지 않습니다.
+    }
+  }
 
   return {
     title,
@@ -109,7 +133,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   let initialMeta = normalizePaginationMeta(undefined, initialQuery, 0);
   let initialError: string | null = null;
   const [postsResult, sidebarData] = await Promise.all([
-    postsApi.getPosts(initialQuery).catch((error) => error),
+    getPosts(initialQuery).catch((error) => error),
     getPostsSidebarData(),
   ]);
 

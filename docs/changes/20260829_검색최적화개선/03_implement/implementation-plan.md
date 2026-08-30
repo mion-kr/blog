@@ -69,11 +69,21 @@
 - [x] `apps/blog-web/app/(site)/auth/signin/page.tsx`에 route-level `Metadata`를 추가한다.
 - [x] `robots.index`를 false로 두고 leaf metadata에서 홈 canonical·Open Graph·Twitter 상속을 제거한다. `nofollow`는 기존 관리자 layout 관례를 따르는 기술 선택으로 적용하되 별도 제품 요구사항으로 확대하지 않는다.
 - [x] `apps/blog-web/app/(site)/posts/page.tsx`에서 성공한 기존 fetch의 정규화된 meta만 사용해 `page > 1 && page > totalPages`에 `notFound()`를 호출한다.
-- [x] metadata 생성을 위해 API를 추가 호출하지 않고 API 실패는 기존 오류 화면으로 유지한다.
+- [x] metadata와 본문이 query key 기반 React `cache` loader를 공유해 실제 API 요청을 한 번만 수행하고, API 실패는 기존 오류 화면으로 유지한다.
 - [x] 비인증 로그인 200·인증 로그인 redirect·callback 회귀, 최종 head 태그, 기본·filter 목록의 200/404/noindex를 검증한다.
 - [x] build 후 production 서버에 직접 HTTP 요청해 범위 초과 응답의 status가 실제 404인지 확인한다. development not-found 화면이나 `noindex`만으로 완료 판정하지 않는다.
 
 완료 게이트: 비인증 `/auth/signin` 최종 HTML에 `noindex`가 있고 홈 canonical·`og:*`·`twitter:*`가 없으며, 범위 초과 목록만 production HTTP 404여야 한다.
+
+### 2-1. 2026-08-30 잔여 SEO·접근성·초기 캐시 후속
+
+- [x] 루트에는 홈 전용 canonical·Open Graph·Twitter·`index, follow`를 두지 않고 공개 유효 route가 각자 metadata를 소유한다. 홈·About·상세의 Googlebot 큰 미리보기 지시는 leaf metadata로 유지한다.
+- [x] 전역·목록 범위 초과 404는 공통 `main#main` UI를 사용하고 Next.js 자동 `noindex`만 남긴다. 홈 canonical·Open Graph·큰 미리보기 robots는 노출하지 않는다.
+- [x] 브랜드 링크의 보이는 이름과 접근성 이름을 일치시키고 상세 태그 제목을 `h2`로 바꾼다.
+- [x] 홈은 빌드 시 빈 fallback을 정적 생성하지 않도록 요청 시 렌더링하고, 네 API가 모두 성공한 결과만 300초 데이터 캐시에 저장한다. 전체·부분 실패 결과는 해당 요청에만 표시하고 캐시하지 않는다.
+- [x] production 검증에서 전체 실패 후 즉시 복구, 부분 실패 후 완전 복구, 성공 캐시 적중 시 mock API 추가 호출 0회, 목록 metadata·본문의 API 요청 1회를 확인한다.
+
+이 변경은 LCP 최적화를 재개하지 않는다. 요청 시 렌더링 전환의 배포 후 TTFB·CrUX·LCP 영향은 이번 로컬 완료 판정에 포함하지 않는다.
 
 ### 3. KST 날짜와 작성자 구조화 데이터
 

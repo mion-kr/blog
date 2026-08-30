@@ -19,7 +19,7 @@ export function NeonHeader({ activePath, ariaLabel = "페이지 헤더" }: NeonH
   return (
     <header className="header" aria-label={ariaLabel}>
       <div className="header-inner">
-        <Link href="/" className="brand" aria-label="Mion's Blog 홈">
+        <Link href="/" className="brand">
           <div className="brand-icon" aria-hidden="true">
             M
           </div>
