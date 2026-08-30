@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "@mantine/core/styles.css";
 import "./globals.css";
 import { Providers } from "../components/providers";
 import { getSiteUrl } from "@/lib/site";
@@ -65,7 +64,6 @@ export default function RootLayout({
     <html
       lang="ko"
       data-theme="dark"
-      data-mantine-color-scheme="dark"
       suppressHydrationWarning
     >
       <body
