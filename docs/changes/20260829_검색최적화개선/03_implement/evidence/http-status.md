@@ -57,3 +57,9 @@
 - 전역·상세·목록 범위 초과 404는 404·`noindex`이고 `index, follow`·canonical·Open Graph·큰 미리보기 robots가 없었다.
 - 홈·About·유효 상세는 Googlebot `max-image-preview:large` 지시를 유지했다.
 - `pnpm --filter blog-web exec node scripts/verify-seo-runtime.mjs` 최종 종료 코드는 0이었다.
+
+## 2026-08-30 운영 sitemap 후속
+
+- merge commit `bdf37a13e063f9ea6848b6cde81b91587c45412b` 배포 직후 sitemap이 정적 route 3개만 포함한 fallback을 300초 캐시했고, 2026-08-30 22:23:30 +0900 첫 stale 응답 뒤 재검증되어 22:23:44 +0900부터 공개 글 9개를 포함한 12개 URL로 복구됐다.
+- 후속 구현은 sitemap route를 요청 시 생성하고, 게시글 전체 조회가 성공한 결과만 300초 캐시한다. API 실패나 일부 페이지만 조회된 결과는 캐시하지 않고 오류 응답을 반환한다.
+- 로컬 production 검증은 초기 API 실패와 2페이지 실패의 오류 응답, 다음 요청의 정적 3개와 fixture 게시글 2개를 포함한 5개 URL 전체 복구, 이후 성공 캐시 적중 시 API 추가 호출 0회를 확인했다. 실제 운영 URL 수는 배포 후 별도로 확인한다.

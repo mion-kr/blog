@@ -17,6 +17,7 @@ const JSON_LD_CLOSING_SCRIPT_PAYLOAD =
 const detailTrackViewValues = []
 let failApiRequests = false
 let failedApiPathname = null
+let failedSitemapPage = null
 let postListRequestCount = 0
 let successfulApiRequestCount = 0
 
@@ -115,16 +116,18 @@ function buildPostsResponse(url) {
   )
 
   if (isSitemapQuery) {
+    const data = page === 1 ? [primaryPost] : [secondaryPost, draftPost]
+
     return buildSuccessResponse(
-      [primaryPost, secondaryPost, draftPost],
+      data,
       '/api/posts',
       {
         total: 3,
         limit: 50,
-        page: 1,
-        hasNext: false,
-        hasPrev: false,
-        totalPages: 1,
+        page,
+        hasNext: page < 2,
+        hasPrev: page > 1,
+        totalPages: 2,
       },
     )
   }
@@ -172,7 +175,12 @@ function createMockApiServer() {
 
     const url = new URL(request.url, API_BASE_URL)
 
-    if (failApiRequests || url.pathname === failedApiPathname) {
+    const isFailedSitemapPage =
+      url.pathname === '/api/posts' &&
+      url.searchParams.get('published') === 'true' &&
+      Number(url.searchParams.get('page') ?? '1') === failedSitemapPage
+
+    if (failApiRequests || url.pathname === failedApiPathname || isFailedSitemapPage) {
       sendJson(response, 503, {
         success: false,
         message: '의도된 초기 API 준비 지연',
@@ -549,8 +557,38 @@ async function verifyRuntime() {
     '유효 검색 필터 canonical',
   )
 
+  let unavailableSitemap
+  failedApiPathname = '/api/posts'
+  try {
+    unavailableSitemap = await fetchHtml('/sitemap.xml')
+  } finally {
+    failedApiPathname = null
+  }
+  assert.equal(unavailableSitemap.response.status, 500, '초기 API 지연 sitemap status')
+
+  let partialSitemap
+  const partialSitemapRequestCount = successfulApiRequestCount
+  failedSitemapPage = 2
+  try {
+    partialSitemap = await fetchHtml('/sitemap.xml')
+  } finally {
+    failedSitemapPage = null
+  }
+  assert.equal(partialSitemap.response.status, 500, '2페이지 실패 sitemap status')
+  assert.equal(
+    successfulApiRequestCount - partialSitemapRequestCount,
+    1,
+    '2페이지 실패 전 성공한 sitemap API 요청 수',
+  )
+
+  const freshSitemapRequestCount = successfulApiRequestCount
   const sitemap = await fetchHtml('/sitemap.xml')
   assert.equal(sitemap.response.status, 200, 'sitemap status')
+  assert.equal(
+    successfulApiRequestCount - freshSitemapRequestCount,
+    2,
+    '초기 실패 후 sitemap API 요청 수',
+  )
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/</loc>`, 'sitemap 홈 URL')
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/posts</loc>`, 'sitemap 목록 URL')
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/about</loc>`, 'sitemap About URL')
@@ -559,10 +597,30 @@ async function verifyRuntime() {
     `<loc>${APP_BASE_URL}/posts/${primaryPost.slug}</loc>`,
     'sitemap 발행 포스트 URL',
   )
+  assertIncludes(
+    sitemap.html,
+    `<loc>${APP_BASE_URL}/posts/${secondaryPost.slug}</loc>`,
+    'sitemap 2페이지 발행 포스트 URL',
+  )
   assertExcludes(
     sitemap.html,
     `<loc>${APP_BASE_URL}/posts/${draftPost.slug}</loc>`,
     'sitemap 초안 포스트 URL',
+  )
+  assert.equal(sitemap.html.match(/<loc>/g)?.length, 5, 'sitemap 전체 URL 수')
+
+  const cachedSitemapRequestCount = successfulApiRequestCount
+  const cachedSitemap = await fetchHtml('/sitemap.xml')
+  assert.equal(cachedSitemap.response.status, 200, '캐시 적중 sitemap status')
+  assertIncludes(
+    cachedSitemap.html,
+    `<loc>${APP_BASE_URL}/posts/${primaryPost.slug}</loc>`,
+    '캐시 적중 sitemap 발행 포스트 URL',
+  )
+  assert.equal(
+    successfulApiRequestCount - cachedSitemapRequestCount,
+    0,
+    '성공 결과 캐시 적중 후 sitemap API 요청 수',
   )
 
   const validPageRequestCount = postListRequestCount
