@@ -339,6 +339,7 @@ function assertPublicFooter(html, context) {
   assertIncludes(html, 'aria-label="푸터 네비게이션"', `${context} 푸터 네비게이션`)
   assertIncludes(html, 'href="/terms"', `${context} 이용약관 링크`)
   assertIncludes(html, 'href="/privacy-policy"', `${context} 개인정보처리방침 링크`)
+  assertExcludes(html, 'Google로 로그인', `${context} 공용 Google 로그인 버튼`)
 }
 
 function extractSerializedJsonLd(html) {

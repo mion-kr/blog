@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
-import { Loader2, LogIn, LogOut, Shield } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { Loader2, LogOut, Shield } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -20,15 +20,6 @@ export function AuthButton({ className }: AuthButtonProps) {
   const { isAuthenticated, isAdmin, user, isLoading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSignIn = async () => {
-    try {
-      setIsProcessing(true);
-      await signIn("google");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleSignOut = async () => {
     try {
       setIsProcessing(true);
@@ -38,35 +29,8 @@ export function AuthButton({ className }: AuthButtonProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <button className={cn(buttonStyles, className)} type="button" disabled>
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        <span className="sr-only">세션 확인 중</span>
-      </button>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <button
-        className={cn(
-          buttonStyles,
-          "bg-[var(--color-primary)] text-white hover:bg-[var(--color-accent-primary-hover)]",
-          className,
-        )}
-        type="button"
-        onClick={handleSignIn}
-        disabled={isProcessing}
-      >
-        {isProcessing ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <LogIn className="h-4 w-4" aria-hidden />
-        )}
-        Google로 로그인
-      </button>
-    );
+  if (isLoading || !isAuthenticated) {
+    return null;
   }
 
   return (
