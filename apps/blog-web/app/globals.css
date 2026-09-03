@@ -1068,10 +1068,20 @@
     color: rgba(255, 255, 255, 0.72);
   }
 
+  .neon-footer-brand,
+  .neon-footer-link {
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
+
   .neon-footer-brand {
     color: rgba(255, 255, 255, 0.92);
   }
 
+  .neon-footer-link {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .neon-footer-brand:hover,
   .neon-footer-link:hover {
     color: rgba(0, 229, 255, 0.95);
     text-shadow: 0 0 14px rgba(0, 229, 255, 0.22);

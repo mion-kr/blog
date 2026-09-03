@@ -1,26 +1,43 @@
+import Link from "next/link";
+
+const legalLinks = [
+  { href: "/terms", label: "이용약관" },
+  { href: "/privacy-policy", label: "개인정보처리방침" },
+] as const;
+
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-[var(--color-border)] bg-[var(--color-card)]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-6 py-8 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1 text-sm text-[var(--color-text-secondary)]">
-          <p className="font-medium text-[var(--color-text-primary)]">Mion&apos;s Blog</p>
-          <p>© {year} Mion. All rights reserved.</p>
-        </div>
+    <footer className="neon-footer">
+      <div className="neon-footer-inner text-sm">
+        <p className="neon-footer-text">
+          © {year}{" "}
+          <Link href="/" className="neon-footer-brand font-semibold">
+            Mion&apos;s Blog
+          </Link>
+          . All rights reserved.
+        </p>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-text-secondary)]">
+        <nav
+          aria-label="푸터 네비게이션"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2"
+        >
+          {legalLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="neon-footer-link">
+              {link.label}
+            </Link>
+          ))}
           <a
             href="https://github.com/mion-kr"
             target="_blank"
             rel="noopener noreferrer"
-            className="transition-colors hover:text-[var(--color-primary)]"
+            className="neon-footer-link"
           >
             GitHub
           </a>
-        </div>
+        </nav>
       </div>
     </footer>
   );
 }
-
