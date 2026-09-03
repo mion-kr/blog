@@ -34,6 +34,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
       changeFrequency: "monthly",
     },
+    {
+      url: `${SITE_URL}/terms`,
+      priority: 0.3,
+      changeFrequency: "monthly",
+    },
+    {
+      url: `${SITE_URL}/privacy-policy`,
+      priority: 0.3,
+      changeFrequency: "monthly",
+    },
   ];
 
   const posts = await getCachedSitemapPosts();

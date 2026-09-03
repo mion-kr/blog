@@ -8,19 +8,25 @@ import { SiteHeader } from "@/components/site-header";
 
 /**
  * (site) 라우트용 크롬(헤더/푸터) 래퍼.
- * - 홈(`/`)은 샘플 홈이 페이지에서 직접 header/footer를 렌더링하므로 크롬을 숨깁니다.
- * - 그 외 경로는 기존 SiteHeader/SiteFooter 레이아웃을 유지합니다.
+ * - 네온 테마 경로는 페이지가 직접 렌더링하는 헤더를 유지합니다.
+ * - 모든 공개 경로는 공용 SiteFooter를 렌더링합니다.
  */
 export function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  if (
+  const hasNeonHeader =
     pathname === "/" ||
     pathname === "/about" ||
     pathname === "/posts" ||
-    pathname.startsWith("/posts/")
-  ) {
-    return <>{children}</>;
+    pathname.startsWith("/posts/");
+
+  if (hasNeonHeader) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </div>
+    );
   }
 
   return (

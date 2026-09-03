@@ -330,6 +330,17 @@ function assertExcludes(value, expected, context) {
   assert.ok(!value.includes(expected), `${context}: unexpected ${expected}`)
 }
 
+function assertPublicFooter(html, context) {
+  assert.equal(
+    html.match(/<footer\b[^>]*class="neon-footer"/g)?.length,
+    1,
+    `${context} 공용 푸터 수`,
+  )
+  assertIncludes(html, 'aria-label="푸터 네비게이션"', `${context} 푸터 네비게이션`)
+  assertIncludes(html, 'href="/terms"', `${context} 이용약관 링크`)
+  assertIncludes(html, 'href="/privacy-policy"', `${context} 개인정보처리방침 링크`)
+}
+
 function extractSerializedJsonLd(html) {
   const match = html.match(
     /<script\b[^>]*\btype="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/,
@@ -361,6 +372,7 @@ async function verifyRuntime() {
   assertExcludes(signIn.html, 'rel="canonical"', '로그인 canonical')
   assertExcludes(signIn.html, 'property="og:', '로그인 Open Graph')
   assertExcludes(signIn.html, 'name="twitter:', '로그인 Twitter')
+  assertPublicFooter(signIn.html, '로그인')
 
   const adminSessionToken = await encode({
     token: {
@@ -512,6 +524,7 @@ async function verifyRuntime() {
   )
   assertIncludes(home.html, '2026년 8월 24일', '홈 한국 시간 긴 날짜')
   assertIncludes(home.html, '2026.08.24', '홈 한국 시간 숫자 날짜')
+  assertPublicFooter(home.html, '홈')
 
   const cachedHomeRequestCount = successfulApiRequestCount
   const cachedHome = await fetchHtml('/')
@@ -547,6 +560,7 @@ async function verifyRuntime() {
   assertIncludes(posts.html, `/posts/${primaryPost.slug}`, '목록 상세 링크')
   assertExcludes(posts.html, 'Loading title…', '목록 loading title')
   assertIncludes(posts.html, '2026.08.24', '목록 한국 시간 날짜')
+  assertPublicFooter(posts.html, '목록')
 
   const validFilteredPosts = await fetchHtml('/posts?search=NestJS')
   assert.equal(validFilteredPosts.response.status, 200, '유효 검색 필터 status')
@@ -592,6 +606,12 @@ async function verifyRuntime() {
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/</loc>`, 'sitemap 홈 URL')
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/posts</loc>`, 'sitemap 목록 URL')
   assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/about</loc>`, 'sitemap About URL')
+  assertIncludes(sitemap.html, `<loc>${APP_BASE_URL}/terms</loc>`, 'sitemap 이용약관 URL')
+  assertIncludes(
+    sitemap.html,
+    `<loc>${APP_BASE_URL}/privacy-policy</loc>`,
+    'sitemap 개인정보처리방침 URL',
+  )
   assertIncludes(
     sitemap.html,
     `<loc>${APP_BASE_URL}/posts/${primaryPost.slug}</loc>`,
@@ -607,7 +627,7 @@ async function verifyRuntime() {
     `<loc>${APP_BASE_URL}/posts/${draftPost.slug}</loc>`,
     'sitemap 초안 포스트 URL',
   )
-  assert.equal(sitemap.html.match(/<loc>/g)?.length, 5, 'sitemap 전체 URL 수')
+  assert.equal(sitemap.html.match(/<loc>/g)?.length, 7, 'sitemap 전체 URL 수')
 
   const cachedSitemapRequestCount = successfulApiRequestCount
   const cachedSitemap = await fetchHtml('/sitemap.xml')
@@ -687,6 +707,46 @@ async function verifyRuntime() {
   assertIncludes(about.html, `${APP_BASE_URL}/og/about.png`, 'About og:image')
   assertIncludes(about.html, 'twitter:image', 'About twitter:image')
   assertIncludes(about.html, 'max-image-preview:large', 'About Googlebot 미리보기 robots')
+  assertPublicFooter(about.html, 'About')
+
+  for (const { path, title, contentMarker } of [
+    { path: '/terms', title: '이용약관', contentMarker: '본 이용약관은' },
+    {
+      path: '/privacy-policy',
+      title: '개인정보처리방침',
+      contentMarker: '개인정보 보호책임자',
+    },
+  ]) {
+    const legalPage = await fetchHtml(path)
+    assert.equal(legalPage.response.status, 200, `${title} status`)
+    assertIncludes(legalPage.html, `>${title}</h1>`, `${title} 제목`)
+    assertIncludes(legalPage.html, contentMarker, `${title} 본문`)
+    assertExcludes(legalPage.html, '내용 준비 중입니다.', `${title} 준비 안내 제거`)
+    assertIncludes(legalPage.html, 'content="index, follow"', `${title} robots`)
+    assertIncludes(
+      legalPage.html,
+      `<link rel="canonical" href="${APP_BASE_URL}${path}"`,
+      `${title} canonical`,
+    )
+    assertPublicFooter(legalPage.html, title)
+  }
+
+  const termsPage = await fetchHtml('/terms')
+  assertIncludes(termsPage.html, 'href="/privacy-policy"', '이용약관 개인정보처리방침 링크')
+  assertIncludes(termsPage.html, 'mailto:contact@mion-space.dev', '이용약관 문의 이메일')
+
+  const privacyPage = await fetchHtml('/privacy-policy')
+  assertIncludes(
+    privacyPage.html,
+    'https://www.cloudflare.com/policies/privacy/',
+    '개인정보처리방침 Cloudflare 정책 링크',
+  )
+  assertIncludes(
+    privacyPage.html,
+    'https://policies.google.com/privacy?hl=ko',
+    '개인정보처리방침 Google 정책 링크',
+  )
+  assertIncludes(privacyPage.html, 'mailto:contact@mion-space.dev', '개인정보처리방침 문의 이메일')
 
   detailTrackViewValues.length = 0
   const detail = await fetchHtml(`/posts/${primaryPost.slug}`)
@@ -713,6 +773,7 @@ async function verifyRuntime() {
   assert.deepEqual(jsonLd.image, [COVER_URL], '상세 JSON-LD cover')
   assert.ok(detailTrackViewValues.includes('false'), '상세 metadata 조회 trackView=false')
   assert.ok(detailTrackViewValues.includes('true'), '상세 본문 조회 trackView=true')
+  assertPublicFooter(detail.html, '상세')
 
   const missingDetail = await fetchHtml('/posts/__missing__')
   assert.equal(missingDetail.response.status, 404, '상세 404 status')

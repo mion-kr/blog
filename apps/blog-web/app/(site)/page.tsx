@@ -530,15 +530,6 @@ export default async function HomePage() {
           </aside>
         </div>
 
-        <footer className="footer">
-          <p className="footer-text">
-            © {new Date().getFullYear()}{" "}
-            <Link href="/" aria-label="Mion's Blog">
-              Mion&apos;s Blog
-            </Link>
-            . Neon Grid Theme · Dark Mode Only
-          </p>
-        </footer>
       </div>
     </div>
   );
