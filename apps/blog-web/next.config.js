@@ -5,13 +5,13 @@ const backendUrl = new URL(backendApiUrl)
 const backendOrigin = backendUrl.origin
 const backendPathname = backendUrl.pathname.replace(/\/$/, '')
 const imageEndpointRaw =
-  process.env.NEXT_PUBLIC_IMAGE_ENDPOINT ?? 'https://bucket-production-d421.up.railway.app'
+  process.env.NEXT_PUBLIC_IMAGE_ENDPOINT ?? 'https://bllngdsojrgewnouxkot.supabase.co'
 let imageEndpoint
 
 try {
   imageEndpoint = new URL(imageEndpointRaw)
 } catch {
-  imageEndpoint = new URL('https://bucket-production-d421.up.railway.app')
+  imageEndpoint = new URL('https://bllngdsojrgewnouxkot.supabase.co')
 }
 
 const apiPathPrefix =

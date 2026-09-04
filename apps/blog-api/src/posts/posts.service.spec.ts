@@ -657,9 +657,11 @@ describe('PostsService', () => {
         id: 'post-1',
         title: 'Title',
         slug: 'title',
-        content: '#',
+        content:
+          '![본문](https://cdn.example.com/development/posts/post-1/content/body.png)',
         excerpt: null,
-        coverImage: null,
+        coverImage:
+          'https://cdn.example.com/development/posts/post-1/thumbnail/cover.png',
         published: true,
         viewCount: 0,
         categoryId: 'cat-1',
@@ -675,6 +677,15 @@ describe('PostsService', () => {
       await service.remove('title', 'user-1')
 
       expect(postsRepository.delete).toHaveBeenCalledWith('post-1')
+      expect(uploadsService.deleteObjectByUrl).toHaveBeenCalledWith(
+        'https://cdn.example.com/development/posts/post-1/thumbnail/cover.png',
+      )
+      expect(uploadsService.cleanupRemovedPostContentImages).toHaveBeenCalledWith({
+        postId: 'post-1',
+        previousContent:
+          '![본문](https://cdn.example.com/development/posts/post-1/content/body.png)',
+        nextContent: '',
+      })
       expect(categoriesService.updatePostCount).toHaveBeenCalledWith('cat-1')
       expect(tagsService.updateMultiplePostCounts).toHaveBeenCalledWith(['tag-1', 'tag-2'])
     })

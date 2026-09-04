@@ -29,9 +29,9 @@ export class ObjectStorageService {
     @Inject(S3_CLIENT_TOKEN) private readonly s3Client: S3Client,
     private readonly configService: ConfigService,
   ) {
-    this.bucket = this.getRequiredConfig('MINIO_BUCKET');
+    this.bucket = this.getRequiredConfig('S3_BUCKET');
     this.assertSupportedBucketName(this.bucket);
-    this.publicEndpoint = this.getRequiredConfig('MINIO_PUBLIC_ENDPOINT').replace(
+    this.publicEndpoint = this.getRequiredConfig('S3_PUBLIC_ENDPOINT').replace(
       /\/$/,
       '',
     );
@@ -88,7 +88,7 @@ export class ObjectStorageService {
         }),
       );
     } catch (error) {
-      this.logger.error('MinIO 객체 복사에 실패했어요.', error as Error, {
+      this.logger.error('오브젝트 스토리지 객체 복사에 실패했어요.', error as Error, {
         sourceKey,
         destinationKey,
       });
@@ -110,7 +110,7 @@ export class ObjectStorageService {
         }),
       );
     } catch (error) {
-      this.logger.warn('MinIO 객체 삭제에 실패했어요.', {
+      this.logger.warn('오브젝트 스토리지 객체 삭제에 실패했어요.', {
         key,
         context,
         error,
@@ -189,7 +189,7 @@ export class ObjectStorageService {
     const normalized = bucket.trim().toLowerCase();
     if (normalized !== 'development' && normalized !== 'production') {
       throw new Error(
-        'MINIO_BUCKET 값이 올바르지 않습니다. development 또는 production만 사용할 수 있습니다.',
+        'S3_BUCKET 값이 올바르지 않습니다. development 또는 production만 사용할 수 있습니다.',
       );
     }
   }

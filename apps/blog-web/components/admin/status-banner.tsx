@@ -76,8 +76,7 @@ export function AdminStatusBanner({ status, message, dismissAfter = 3500 }: Admi
     >
       <Icon className="h-4 w-4" aria-hidden />
       <div className="flex-1">
-        <p className="font-semibold">{config.label}</p>
-        {message ? <p className="text-xs opacity-80">{message}</p> : null}
+        <p className="font-semibold">{message ?? config.label}</p>
       </div>
     </div>
   )
