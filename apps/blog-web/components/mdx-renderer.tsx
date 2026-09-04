@@ -268,9 +268,9 @@ const mdxComponents = {
     children: React.ReactNode;
     [key: string]: unknown;
   }) => (
-    <h1 className="scroll-mt-16" {...props}>
+    <h2 className="scroll-mt-16" {...props}>
       {children}
-    </h1>
+    </h2>
   ),
   h2: ({
     children,
