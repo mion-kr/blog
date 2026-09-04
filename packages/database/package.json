@@ -28,13 +28,11 @@
     "doppler-setup": "doppler setup --no-interactive"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.9.5",
     "@repo/shared": "workspace:*",
-    "@types/ws": "^8.18.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
-    "uuidv7": "^1.0.2",
-    "ws": "^8.18.3"
+    "postgres": "^3.4.7",
+    "uuidv7": "^1.0.2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

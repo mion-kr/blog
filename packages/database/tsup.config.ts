@@ -32,8 +32,7 @@ export default defineConfig({
     'drizzle-kit',
     
     // Database drivers
-    '@neondatabase/serverless',
-    'ws',
+    'postgres',
     
     // Node.js built-ins
     'fs',

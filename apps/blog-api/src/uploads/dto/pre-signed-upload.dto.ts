@@ -67,22 +67,23 @@ export class PreSignedUploadResponseDto
   implements SharedPreSignedUploadResponseDto
 {
   @ApiProperty({
-    description: 'MinIO에 PUT 요청을 보낼 수 있는 pre-signed URL',
+    description:
+      'S3 호환 오브젝트 스토리지에 PUT 요청을 보낼 수 있는 pre-signed URL',
     example:
-      'https://bucket-production-d421.up.railway.app:443/development/draft/018f1aeb/thumbnail/1728361923-cover.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&....',
+      'https://bllngdsojrgewnouxkot.storage.supabase.co/storage/v1/s3/development/draft/018f1aeb/thumbnail/1728361923-cover.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&....',
   })
   uploadUrl!: string;
 
   @ApiProperty({
-    description: 'MinIO 객체 키 (S3 object key)',
+    description: '오브젝트 스토리지 객체 키 (S3 object key)',
     example: 'development/draft/018f1aeb/thumbnail/1728361923-cover.png',
   })
   objectKey!: string;
 
   @ApiProperty({
-    description: '공개 접근 가능한 URL (MinIO public endpoint 기준)',
+    description: '공개 접근 가능한 URL (Supabase Storage public endpoint 기준)',
     example:
-      'https://bucket-production-d421.up.railway.app:443/development/draft/018f1aeb/thumbnail/1728361923-cover.png',
+      'https://bllngdsojrgewnouxkot.supabase.co/storage/v1/object/public/development/draft/018f1aeb/thumbnail/1728361923-cover.png',
   })
   publicUrl!: string;
 

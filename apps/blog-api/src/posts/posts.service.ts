@@ -467,6 +467,15 @@ export class PostsService {
 
     await this.postsRepository.delete(existingPost.id);
 
+    await Promise.all([
+      this.uploadsService.deleteObjectByUrl(existingPost.coverImage),
+      this.uploadsService.cleanupRemovedPostContentImages({
+        postId: existingPost.id,
+        previousContent: existingPost.content,
+        nextContent: '',
+      }),
+    ]);
+
     await this.categoriesService.updatePostCount(existingPost.categoryId);
     if (existingTagIds.length > 0) {
       await this.tagsService.updateMultiplePostCounts(existingTagIds);

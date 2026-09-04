@@ -16,7 +16,7 @@ export class UploadsController {
   @Post('pre-signed')
   @ApiAdminAction(
     PreSignedUploadResponseDto,
-    'MinIO에 파일 업로드를 위한 pre-signed URL 발급',
+    '오브젝트 스토리지에 파일 업로드를 위한 pre-signed URL 발급',
     'ADMIN 권한으로 업로드용 pre-signed URL을 발급합니다.',
     'pre-signed URL이 발급되었습니다.',
     201,

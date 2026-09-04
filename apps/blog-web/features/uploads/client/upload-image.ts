@@ -84,6 +84,6 @@ async function uploadFileToSignedUrl(uploadUrl: string, file: File): Promise<voi
   })
 
   if (!result.ok) {
-    throw new Error("MinIO에 파일을 업로드하지 못했어요.")
+    throw new Error("오브젝트 스토리지에 파일을 업로드하지 못했어요.")
   }
 }

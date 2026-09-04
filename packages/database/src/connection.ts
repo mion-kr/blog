@@ -1,15 +1,11 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from 'ws';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "./schemas/index";
 import { 
   loadEnvironmentVariables, 
   validateRequiredEnvironmentVariables,
   getEnvironmentVariable 
 } from "./config/env-loader";
-
-// WebSocket 구성 설정
-neonConfig.webSocketConstructor = ws;
 
 // 확장 가능한 환경변수 로딩
 loadEnvironmentVariables();
@@ -24,8 +20,6 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is required but not found in environment variables');
 }
 
-const pool = new Pool({
-  connectionString,
-});
+const client = postgres(connectionString, { prepare: false });
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(client, { schema });

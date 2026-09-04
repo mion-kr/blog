@@ -189,10 +189,10 @@ export default async function AboutPage() {
           <h2 className="section-title">이 사이트는</h2>
           <div className="contact-card" style={{ textAlign: 'left' }}>
             <p>
-              이 블로그는 Next.js 15(App Router)와 NestJS 11 위에서 동작하며, Turborepo + PNPM
-              모노레포로 관리됩니다. 콘텐츠는 MDX로 작성하고, 이미지 업로드는 Railway의 MinIO에
-              pre-signed URL 흐름을 사용합니다. 테스트는 Playwright와 Jest가 담당하고, Doppler가
-              모든 환경 변수를 제공합니다.
+              이 블로그는 Next.js 16(App Router)와 NestJS 11 위에서 동작하며, Turborepo + PNPM
+              모노레포로 관리됩니다. Vercel에 배포하고, PostgreSQL과 이미지 저장소는 Supabase를
+              사용합니다. 이미지 업로드는 S3 호환 pre-signed URL 흐름을 사용하며, Doppler가 모든
+              환경 변수를 제공합니다.
             </p>
           </div>
         </section>
