@@ -762,6 +762,7 @@ async function verifyRuntime() {
   assertIncludes(detail.html, COVER_URL, '상세 cover metadata')
   assertIncludes(detail.html, '2026.08.24', '상세 한국 시간 날짜')
   assertIncludes(detail.html, '<div class="mdx-content">', '상세 SSR 본문 container')
+  assert.equal((detail.html.match(/<h1\b/g) ?? []).length, 1, '상세 h1 개수')
   const brandLink = detail.html.match(/<a\b[^>]*class="brand"[^>]*>/)?.[0]
   assert.ok(brandLink, '상세 브랜드 링크가 없습니다.')
   assertExcludes(brandLink, 'aria-label=', '상세 브랜드 링크 접근성 이름')
