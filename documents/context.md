@@ -258,8 +258,6 @@ pnpm --filter=blog-api dev  # http://localhost:3001
 # API 문서 확인
 http://localhost:3001/api-docs
 
-# 헬스 체크
-GET http://localhost:3001/api/database/health
 ```
 
 ## ✅ **Phase 1 테스트 시스템 완전 구현 완료** (2025-09-15)
@@ -1021,23 +1019,12 @@ Phase 1 완료 후 즉시 시작할 수 있는 작업들:
 - 타입 안전성: TypeScript로 안전한 환경변수 처리
 ```
 
-#### 3. 데이터베이스 헬스 체크 시스템
+#### 3. 데이터베이스 지원 서비스
 
-**엔드포인트**: `GET /api/database/health`
-**파일들**:
+DB 상태 조회 HTTP 엔드포인트는 제거되었습니다. DB 지원 서비스와 연결 기능은 유지합니다.
 
-- `apps/blog-api/src/database/database.service.ts`: 헬스 체크 로직
-- `apps/blog-api/src/database/database.controller.ts`: HTTP 엔드포인트
-- `apps/blog-api/src/database/database.module.ts`: NestJS 모듈 설정
-
-**응답 형식**:
-
-```json
-{
-  "success": true,
-  "message": "Database is healthy"
-}
-```
+- `apps/blog-api/src/database/database.service.ts`: 내부 연결 상태 확인 로직
+- `apps/blog-api/src/database/database.module.ts`: 서비스 등록
 
 #### 4. 모듈 시스템 최적화
 
@@ -1076,9 +1063,7 @@ Phase 1 완료 후 즉시 시작할 수 있는 작업들:
 
 #### API 테스트 가능
 
-- **헬스 체크**: `GET http://localhost:3001/api/database/health`
 - **Swagger 문서**: `http://localhost:3001/api-docs`
-- **실시간 상태**: 데이터베이스 연결 상태 실시간 확인 가능
 
 ### 📁 변경된 파일들
 
