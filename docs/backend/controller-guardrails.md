@@ -15,6 +15,7 @@
 
 - MUST `@Body`, `@Param`, `@Query`, 사용자 컨텍스트를 수집한 뒤 use-case 계층에 위임합니다.
 - MUST 공개 API와 관리자 API에 필요한 Guard와 문서화를 명시합니다.
+- MUST 포스트 공개/관리자 컨트롤러에는 `ServerCallerGuard`를 먼저 적용하고 기존 관리자 검증을 유지합니다. 공개는 방문자 로그인 불필요를 뜻하며 서버 호출자 인증 면제가 아닙니다. 설정 계약은 `server-caller-auth.md`를 따릅니다.
 - MUST 클래스 선언에는 아래 preset 중 하나를 사용합니다.
 - MUST 공개 전용 컨트롤러는 `ApiPublicController(tag, ...models)`를 사용합니다.
 - MUST 공개/관리자 엔드포인트가 함께 있는 feature 컨트롤러는 `ApiFeatureController(tag, ...models)`를 사용합니다.

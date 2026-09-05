@@ -11,6 +11,7 @@
 
 | 질문 | 읽을 문서 |
 | --- | --- |
+| 포스트 서버 호출자 인증과 운영 설정은? | `server-caller-auth.md` |
 | 이 로직이 어느 레이어에 있어야 하는가? | `boundary-and-dependency-rules.md` |
 | DTO에 어디까지 허용되는가? | `dto-guardrails.md` |
 | Controller가 어디까지 해야 하는가? | `controller-guardrails.md` |
