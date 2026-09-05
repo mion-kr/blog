@@ -11,6 +11,7 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 
 import { CodeBlock, MermaidChart } from "@/components/mdx-client-components";
+import { XEmbed } from "@/components/XEmbed";
 import remarkMermaid from "@/lib/mdx/remark-mermaid";
 import { cn } from "@/lib/utils";
 
@@ -260,6 +261,7 @@ const mdxComponents = {
   Image: CustomImage,
   Link: CustomLink,
   MermaidChart,
+  XEmbed,
   AlertBox,
   h1: ({
     children,
