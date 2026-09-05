@@ -74,7 +74,7 @@ function XPost({ id, href }: { id: string; href: string }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 underline hover:text-blue-800"
+          className="text-[var(--color-text-primary)] underline underline-offset-4 hover:decoration-2"
         >
           X에서 원문 보기
         </a>

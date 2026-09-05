@@ -64,3 +64,9 @@ lib/api/feature.ts
 6. 파일 업로드가 있으면 inline fetch 대신 공용 client helper를 둡니다.
 7. 공통 UI와 route-local UI를 구분합니다.
 8. 회귀 가능성이 큰 사용자 흐름은 자동화된 회귀 검증 후보로 표시합니다.
+
+## MDX 본문에 X 게시물 추가
+
+- 서버의 `MDXRenderer`에 전달할 본문에 `<XEmbed url="https://x.com/skirano/status/2095648379455861054" />`를 넣습니다. 별도의 스크립트나 클라이언트 페이지 전환은 필요하지 않습니다.
+- 주소 검증·비동기 정리·원문 링크 대체 표시 기준은 [컴포넌트 규칙의 MDX의 X 게시물](components-and-hooks-guardrails.md#mdx의-x-게시물)을 따릅니다.
+- [점검 체크리스트](review-checklist.md)의 외부 위젯 항목과 밝은·어두운 테마의 원문 링크 가독성을 확인합니다.
