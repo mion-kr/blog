@@ -51,6 +51,7 @@
 - `'use client'`가 정말 필요한가?
 - presentation 계층이 fetch나 mutation orchestration을 하지 않는가?
 - hook 추출이 재사용성과 가독성 모두에 도움이 되는가?
+- MDX 외부 위젯은 주소 검증, 스크립트 중복 방지, 효과 정리, 원문 링크 대체 표시를 확인했는가?
 
 ### Styling / Theme
 
