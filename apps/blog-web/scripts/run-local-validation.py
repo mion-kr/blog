@@ -3,6 +3,7 @@
 운영 DB를 사용하지 않으며 종료 시 이 스크립트가 만든 서버와 DB만 정리합니다.
 """
 import json
+import argparse
 import os
 from pathlib import Path
 import secrets
@@ -15,6 +16,10 @@ CONTAINER = 'mion-blog-web-validation'
 LOG_ROOT = Path.home() / '.cache' / 'mion-blog-web-validation'
 processes = []
 created = False
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--config-prefix', choices=['local', 'dev'], default='local')
+parser.add_argument('--use-config-caller', action='store_true')
+args = parser.parse_args()
 
 
 def local_config(name):
@@ -36,10 +41,14 @@ try:
     for port in [3120, 3121, 55432]:
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', port))
-    api_env = local_config('local_api')
-    web_env = local_config('local_web')
+    api_env = local_config(args.config_prefix + '_api')
+    web_env = local_config(args.config_prefix + '_web')
     password = secrets.token_hex(32)
     caller_secret = secrets.token_hex(32)
+    if args.use_config_caller:
+        caller_secret = api_env.get('BLOG_API_LOCAL_SECRET', '')
+        if not caller_secret.strip() or caller_secret != web_env.get('BLOG_API_LOCAL_SECRET'):
+            raise RuntimeError('Doppler 개발 호출자 비밀이 미설정이거나 쌍이 일치하지 않습니다.')
     docker_env = {**os.environ, 'POSTGRES_PASSWORD': password}
     subprocess.run(['docker', 'run', '--rm', '-d', '--name', CONTAINER,
                     '-e', 'POSTGRES_PASSWORD', '-p', '127.0.0.1:55432:5432',

@@ -40,7 +40,7 @@ API 독립 HTTP/Jest 실행에는 같은 전용 컨테이너 안에 `caller_auth
 - Next MCP `get_compilation_issues`는 `issues: []`, 홈 브라우저를 연결한 마지막 `get_errors`는 `configErrors: [], sessionErrors: []`였습니다. Vercel 확인을 위해 브라우저가 로컬에서 벗어난 중간 조회의 세션 미연결 결과는 통과로 세지 않았습니다.
 - next-dev-loop의 브라우저 부분은 사용자 지시에 따라 외부 Chrome/CUA로 수행했습니다. agent-browser의 React 내부 상태 검사는 실행하지 않았습니다.
 
-## 운영 준비: 병합 차단
+## 운영 설정 확인과 승인된 적용
 
 개인 Chrome의 [Doppler prd_web](https://dashboard.doppler.com/workplace/a8eb24ae4f0a20586859/projects/mion-blog/configs/prd_web)에서 활성 설정 8개 중 `BLOG_API_URL`이 없고 기존 `NEXT_PUBLIC_API_URL`만 있었습니다. [prd_api](https://dashboard.doppler.com/workplace/a8eb24ae4f0a20586859/projects/mion-blog/configs/prd_api)의 활성 14개에도 `BLOG_API_CALLER_ISSUER`, `BLOG_API_CALLER_AUDIENCE`, `BLOG_API_CALLER_SUBJECT`가 모두 없었습니다. 설정 이름만 확인했고 비밀값은 열거나 출력하지 않았습니다.
 
@@ -52,17 +52,28 @@ API 독립 HTTP/Jest 실행에는 같은 전용 컨테이너 안에 `caller_auth
 | `BLOG_API_CALLER_AUDIENCE` | `https://vercel.com/whddbs311-8943s-projects` |
 | `BLOG_API_CALLER_SUBJECT` | `owner:whddbs311-8943s-projects:project:blog-web:environment:production` |
 
-Vercel 프로젝트 목록에서 API 프로젝트의 연결 도메인은 `blog-api-gules-beta.vercel.app`으로 확인했습니다. Doppler 기존 백엔드 URL 값과 동일한지까지는 확인하지 않았으므로 `BLOG_API_URL`의 적용 값으로 임의 저장하지 않았습니다.
+초기 누락을 보고해 병합을 보류한 뒤 사용자가 Doppler 설정 반영과 main 병합을 명시 승인했습니다. Vercel에서 확인한 API 도메인과 Doppler 기존 백엔드 URL이 일치하는지 메모리에서 비교하고 기존 값을 `BLOG_API_URL`로 복사했습니다. 기존 `NEXT_PUBLIC_API_URL`은 보존했습니다.
+
+| 환경 | 적용 설정과 대상 | 실제 확인 |
+| --- | --- | --- |
+| `prd_web` | `BLOG_API_URL` 추가 | 기존 URL과 일치. blog-web / Production / Sensitive 동기화가 In Sync |
+| `prd_api` | 위 OIDC 신뢰 설정 3개 추가 | blog-api / Production / Sensitive 동기화가 In Sync |
+| `local_web`, `local_api` | 웹 `BLOG_API_URL`, 양쪽 동일 `BLOG_API_LOCAL_SECRET` 추가 | 기존 URL localhost:3001, API NODE_ENV development·PORT 3001. 기본 apps/*/doppler.yaml이 이 쌍을 선택 |
+| `dev_web`, `dev_api` | 웹 `BLOG_API_URL`, 양쪽 동일 `BLOG_API_LOCAL_SECRET` 추가 | 기존 URL localhost:3001, API NODE_ENV development·PORT 3001. 두 config에 외부 동기화 없음. Vercel preview 설정으로 취급하지 않음 |
+
+개발 비밀은 Chrome 메모리에서 안전한 난수 32바이트를 환경 쌍별로 생성해 UI에만 입력했습니다. 기존 비밀 항목은 없었고 local/dev 쌍은 서로 다른 값을 사용합니다. 값 출력·파일 저장은 하지 않았습니다. 저장한 값을 Doppler에서 읽어 쌍의 일치를 검사한 `run-local-validation.py --use-config-caller`로 공개 31개 요청과 관리자 서버 액션 검증이 다시 통과했습니다. `--use-config-caller --config-prefix dev`로도 공개 31개 요청이 통과했습니다. 두 실행 모두 DB는 새 임시 컨테이너로 강제 교체하고 포트만 3120/3121로 격리했습니다.
+
+저장 후 Vercel 두 프로젝트의 배포 목록에는 설정 저장 전 main 배포와 이번 PR 배포만 있었고 새 운영 배포는 관찰되지 않았습니다. 동기화 완료를 기존 함수에 설정이 적용된 것으로 해석하지 않았습니다. 새 main 배포 후 실제 요청을 별도로 확인해야 합니다.
 
 [Vercel 공식 OIDC 문서](https://vercel.com/docs/oidc)는 빌드 환경변수와 Function 요청에서 토큰을 공급한다고 설명합니다. 현재 화면의 issuer 설정과 공식 설명만으로 실제 배포 함수에서 토큰 전달·JWKS 검증까지 성공한다고 판단하지 않습니다.
 
-적용 전 별도 승인과 확인이 필요합니다.
+남은 적용 확인은 다음과 같습니다.
 
-1. 실제 API URL을 확인하여 웹 서버 전용 `BLOG_API_URL`을 추가하고 위 production 신뢰 claim 3개를 API에 반영합니다. 기존 공개 변수는 전환 전 제거하지 않습니다.
-2. Doppler→Vercel 프로젝트/환경 동기화 범위와 새로운 설정의 빌드·런타임 공급을 확인합니다. preview를 production과 같은 API에 허용할지 임의 결정하지 않습니다. 현재 계약은 정확한 단일 subject만 허용합니다.
+1. 저장한 설정이 새 main 배포의 빌드·런타임에 공급되는지 확인합니다. 기존 공개 변수는 전환 전 제거하지 않습니다.
+2. preview를 production과 같은 API에 허용하지 않았습니다. 현재 계약은 정확한 단일 subject만 허용합니다. 별도의 preview 배포 신뢰 정책은 추가 승인 대상입니다.
 3. 실제 Vercel 발급 토큰으로 정상 web→API 공개 읽기, 다른 프로젝트/환경·만료 토큰 거부, JWKS HTTPS 접근, production/VERCEL의 개발 비밀 우회 차단을 확인합니다.
 4. 웹·API의 배포 순서를 조정해야 합니다. API 인증이 먼저 활성화되고 이전 웹이 남아 있는 구간에는 공개 글이 막힐 수 있습니다. 독립 배포를 성공으로 취급하지 않습니다.
-5. 설정 준비와 실제 배포 검증 절차가 승인되기 전에는 main에 병합하지 않습니다. 이번 작업에서 운영 설정 저장·배포는 실행하지 않았습니다.
+5. 설정 적용 후 필수 PR 검사·리뷰를 확인하고 승인된 main 병합 및 새 운영 배포 검증을 진행합니다. 로컬 `next build/start`는 NODE_ENV production이므로 개발 비밀 인증을 허용하지 않습니다. 로컬 실행은 `next dev`를 사용해야 하며 이 제한을 우회하지 않았습니다.
 
 ## 미확인과 실패 이력
 
