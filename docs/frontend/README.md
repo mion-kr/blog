@@ -14,6 +14,7 @@
 | App Router의 page, layout, metadata, route segment 경계는 무엇인가? | `app-router-guardrails.md` |
 | Server Action, 서버 유틸, API client를 어디에 둬야 하는가? | `server-actions-and-data-access-guardrails.md` |
 | Client Component, Hook, presentational component를 어떻게 나누는가? | `components-and-hooks-guardrails.md` |
+| MDX에서 X 게시물을 표시하고 외부 위젯의 실패를 처리하려면? | `components-and-hooks-guardrails.md`의 “MDX의 X 게시물” |
 | 스타일, 테마, 디자인 시스템 경계는 무엇인가? | `styling-and-design-system-guardrails.md` |
 | Route Handler와 에러 응답은 어떻게 유지하는가? | `route-handlers-and-error-guardrails.md` |
 | 테스트와 문서 변경을 어떻게 운영하는가? | `testing-and-change-management.md` |

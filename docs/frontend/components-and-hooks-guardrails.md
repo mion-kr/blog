@@ -42,3 +42,12 @@
 - 다만 상태 전이, 업로드, 검증, optimistic UX가 커지면 helper나 child component로 분리합니다.
 - hook 추출이 오히려 의도를 흐리면 component 내부 helper로 남길 수 있습니다.
 - 파일 업로드는 client component에 남길 수 있지만, endpoint 계약과 signed upload 절차는 공용 helper로 먼저 승격합니다.
+
+## MDX의 X 게시물
+
+- `MDXRenderer`에 등록된 `<XEmbed url="https://x.com/skirano/status/2095648379455861054" />`로 사용합니다.
+- `XEmbed`는 클라이언트 상호작용 계층에서 공식 `widgets.js`를 한 번 로드하고 `twttr.ready` 뒤 `createTweet`를 호출합니다. 게시물의 영상·이미지는 공식 위젯에 맡깁니다.
+- HTTPS의 `x.com`, `www.x.com`, `twitter.com`, `www.twitter.com` 게시물 주소만 허용하며 자격 증명과 별도 포트는 거부합니다. 원문 링크는 검증된 ID로 다시 구성합니다.
+- 효과별 DOM과 정리 함수로 StrictMode, 주소 변경, 언마운트의 이전 비동기 결과를 격리합니다. 15초 내 표시하지 못하면 오류 안내로 전환하고 원문 링크는 항상 제공합니다.
+- 외부 스크립트 차단·게시물 삭제·비공개 여부에 따라 임베드가 실패할 수 있습니다. 잘못된 주소는 외부 링크를 생성하지 않습니다.
+- 근거: [X 임베드 개요](https://docs.x.com/x-for-websites/embedded-posts/overview), [동적 생성 함수](https://docs.x.com/x-for-websites/embedded-posts/guides/embedded-post-javascript-factory-function).

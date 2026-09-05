@@ -66,3 +66,9 @@ lib/api/feature.ts
 8. 회귀 가능성이 큰 사용자 흐름은 자동화된 회귀 검증 후보로 표시합니다.
 9. NestJS 조회는 `server-only` API client를 재사용합니다. 목록 상태는 URL로 변경하고 서버 props를 렌더링하며 오류 재시도는 `router.refresh()`로 처리합니다.
 10. 서버 호출자 인증과 관리자 사용자 인증을 분리하고, 공개 변수·범용 API 프록시·클라이언트 전달 토큰을 추가하지 않습니다.
+
+## MDX 본문에 X 게시물 추가
+
+- 서버의 `MDXRenderer`에 전달할 본문에 `<XEmbed url="https://x.com/skirano/status/2095648379455861054" />`를 넣습니다. 별도의 스크립트나 클라이언트 페이지 전환은 필요하지 않습니다.
+- 주소 검증·비동기 정리·원문 링크 대체 표시 기준은 [컴포넌트 규칙의 MDX의 X 게시물](components-and-hooks-guardrails.md#mdx의-x-게시물)을 따릅니다.
+- [점검 체크리스트](review-checklist.md)의 외부 위젯 항목과 밝은·어두운 테마의 원문 링크 가독성을 확인합니다.

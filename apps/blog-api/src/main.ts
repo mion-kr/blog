@@ -110,7 +110,6 @@ async function bootstrap() {
       .addTag('posts', '블로그 포스트 API')
       .addTag('categories', '카테고리 API')
       .addTag('tags', '태그 API')
-      .addTag('database', '데이터베이스 health check API')
       .build();
 
     const document = SwaggerModule.createDocument(app, config, {
