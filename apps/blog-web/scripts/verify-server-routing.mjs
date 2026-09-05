@@ -14,6 +14,7 @@ async function get(path, expected = 200, options = {}) {
 }
 
 const home = await get('/');
+assert.equal(home.match(/<title>(.*?)<\/title>/)?.[1].replaceAll('&#x27;', "'"), "Mion's Blog");
 assert.ok(home.includes('로컬 경로 검증'));
 const posts = await get('/posts');
 assert.ok(posts.includes('로컬 경로 검증 1'));
