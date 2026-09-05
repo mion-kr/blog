@@ -1,3 +1,6 @@
+import 'server-only';
+
+import { getCallerHeaders, resolveBackendUrl } from './caller-auth';
 import {
   ApiError,
   ReauthenticationRequiredError,
@@ -5,29 +8,6 @@ import {
 } from "../api-errors";
 
 import type { ApiResponse } from "@repo/shared";
-
-const BACKEND_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-const ABSOLUTE_URL_PATTERN = /^https?:\/\//i;
-
-function normalizeEndpoint(endpoint: string): string {
-  return endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-}
-
-function resolveRequestUrl(endpoint: string): string {
-  if (ABSOLUTE_URL_PATTERN.test(endpoint)) {
-    return endpoint;
-  }
-
-  const normalizedEndpoint = normalizeEndpoint(endpoint);
-
-  if (typeof window === "undefined") {
-    return new URL(normalizedEndpoint, BACKEND_API_BASE_URL).toString();
-  }
-
-  return normalizedEndpoint;
-}
 
 export interface ApiRequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -42,11 +22,14 @@ export async function request<T>(
 ): Promise<ApiResponse<T>> {
   const { method = "GET", headers = {}, body, token } = options;
 
-  const url = resolveRequestUrl(endpoint);
+  const url = resolveBackendUrl(endpoint);
 
   const requestHeaders: Record<string, string> = {
     "Content-Type": "application/json",
-    ...headers,
+    ...Object.fromEntries(Object.entries(headers).filter(([name]) =>
+      !['authorization', 'x-mion-caller-oidc', 'x-mion-local-caller'].includes(name.toLowerCase()),
+    )),
+    ...await getCallerHeaders(),
   };
 
   if (token) {
@@ -56,6 +39,8 @@ export async function request<T>(
   const config: RequestInit = {
     method,
     headers: requestHeaders,
+    redirect: 'error',
+    cache: 'no-store',
   };
 
   if (body !== undefined && method !== "GET") {
@@ -130,7 +115,7 @@ export async function request<T>(
     throw new ApiError(
       0,
       "NETWORK_ERROR",
-      error instanceof Error ? error.message : "Network error occurred",
+      "서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
     );
   }
 }

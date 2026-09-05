@@ -1,3 +1,5 @@
+import 'server-only';
+
 import type { ApiResponse } from '@repo/shared';
 
 import {

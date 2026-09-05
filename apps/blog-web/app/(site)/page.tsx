@@ -29,7 +29,7 @@ const TAG_LIMIT = 12;
 const HOME_LOAD_MAX_ATTEMPTS = 4;
 const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
 const HOME_DATA_CACHE_SCOPE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  process.env.BLOG_API_URL ?? "unconfigured";
 const SITE_URL = getSiteUrl();
 const HOME_DESCRIPTION =
   "NestJS를 중심으로 백엔드 설계, 운영, 장애 대응 경험을 정리하는 Mion의 기술 블로그입니다.";
@@ -52,7 +52,7 @@ class HomeDataLoadError extends Error {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Mion's Blog | NestJS 백엔드 아카이브",
+  title: "Mion's Blog",
   description: HOME_DESCRIPTION,
   keywords: ["NestJS", "백엔드", "아키텍처", "운영", "인프라", "보안"],
   alternates: {

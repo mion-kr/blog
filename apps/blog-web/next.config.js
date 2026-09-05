@@ -1,9 +1,5 @@
 import createMDX from '@next/mdx'
 
-const backendApiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-const backendUrl = new URL(backendApiUrl)
-const backendOrigin = backendUrl.origin
-const backendPathname = backendUrl.pathname.replace(/\/$/, '')
 const imageEndpointRaw =
   process.env.NEXT_PUBLIC_IMAGE_ENDPOINT ?? 'https://bllngdsojrgewnouxkot.supabase.co'
 let imageEndpoint
@@ -13,13 +9,6 @@ try {
 } catch {
   imageEndpoint = new URL('https://bllngdsojrgewnouxkot.supabase.co')
 }
-
-const apiPathPrefix =
-  backendPathname === ''
-    ? '/api'
-    : backendPathname.endsWith('/api')
-      ? backendPathname
-      : `${backendPathname}/api`
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -54,16 +43,6 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   },
 
-  async rewrites() {
-    return {
-      fallback: [
-        {
-          source: '/api/:path*',
-          destination: `${backendOrigin}${apiPathPrefix}/:path*`,
-        },
-      ],
-    }
-  },
 }
 
 const withMDX = createMDX({

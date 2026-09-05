@@ -64,3 +64,5 @@ lib/api/feature.ts
 6. 파일 업로드가 있으면 inline fetch 대신 공용 client helper를 둡니다.
 7. 공통 UI와 route-local UI를 구분합니다.
 8. 회귀 가능성이 큰 사용자 흐름은 자동화된 회귀 검증 후보로 표시합니다.
+9. NestJS 조회는 `server-only` API client를 재사용합니다. 목록 상태는 URL로 변경하고 서버 props를 렌더링하며 오류 재시도는 `router.refresh()`로 처리합니다.
+10. 서버 호출자 인증과 관리자 사용자 인증을 분리하고, 공개 변수·범용 API 프록시·클라이언트 전달 토큰을 추가하지 않습니다.
