@@ -1,4 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiHeader } from '@nestjs/swagger';
+import { ServerCallerGuard } from '../auth/guards/serverCallerGuard';
 import { PaginatedData } from '@repo/shared';
 
 import { TagResponseDto } from '../tags/dto/tag-response.dto';
@@ -17,6 +19,12 @@ import {
 import { PostQueryDto } from './dto/post-query.dto';
 import { PostsService } from './posts.service';
 
+@ApiHeader({
+  name: 'X-Mion-Caller-OIDC',
+  required: true,
+  description:
+    '서버 호출자 OIDC 인증과 별도로 관리자 Authorization Bearer 인증이 필요합니다.',
+})
 @ApiAdminController(
   'admin-posts',
   PostResponseDto,
@@ -25,6 +33,7 @@ import { PostsService } from './posts.service';
   TagResponseDto,
 )
 @Controller('admin/posts')
+@UseGuards(ServerCallerGuard)
 export class AdminPostsController {
   constructor(private readonly postsService: PostsService) {}
 

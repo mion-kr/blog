@@ -32,6 +32,7 @@
 
 ## Must
 
+- MUST NestJS 호출은 서버 전용 `lib/api`를 통하고, 서버 호출자 인증과 관리자 사용자 인증을 별개로 전달합니다. 설정·적용 절차는 `server-actions-and-data-access-guardrails.md`를 따릅니다.
 - MUST 세부 규칙을 프론트엔드 문서에만 기록하고, `AGENTS.md`에는 요약만 남깁니다.
 - MUST 중복 규칙이 생기면 `boundary-and-dependency-rules.md`를 기준 문서로 승격합니다.
 - MUST 문서가 코드 현실과 다르면 현재 `app/`, `components/`, `lib/`, `features/` 패턴을 먼저 확인합니다.

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
-import type { ApiResponse, PublicSiteSettings } from '@repo/shared';
+import type { PublicSiteSettings } from '@repo/shared';
+import { settingsApi } from '@/lib/api-client';
 
 import styles from './about-neon-grid.module.css';
 
@@ -12,10 +13,9 @@ import { cn } from '@/lib/utils';
 // 사이트 URL은 중앙 유틸을 통해 일관 관리합니다.
 const siteUrl = getSiteUrl();
 const aboutOgImage = `${siteUrl}/og/about.png`;
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(
-  /\/$/,
-  '',
-);
+
+// 빌드 시 호출자 인증 미설정으로 생긴 기본 소개값을 정적으로 고정하지 않습니다.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "About | Mion's Blog",
@@ -72,31 +72,13 @@ const contactChannels = [
   },
 ];
 
-const PUBLIC_SETTINGS_ENDPOINT = '/api/site/settings';
-
 /**
  * 공개 사이트 설정을 조회합니다.
  */
 async function fetchPublicSettings(): Promise<PublicSiteSettings | null> {
   try {
-    const response = await fetch(`${apiBaseUrl}${PUBLIC_SETTINGS_ENDPOINT}`, {
-      method: 'GET',
-      next: { revalidate: 300 },
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as
-      | PublicSiteSettings
-      | ApiResponse<PublicSiteSettings>;
-
-    if (data && typeof data === 'object' && 'success' in data) {
-      return data.success ? data.data ?? null : null;
-    }
-
-    return data as PublicSiteSettings;
+    const response = await settingsApi.getPublicSettings();
+    return response.success ? response.data : null;
   } catch (error) {
     console.error('Failed to fetch public settings', error);
     return null;

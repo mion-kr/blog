@@ -25,6 +25,8 @@
 
 ## Must
 
+- MUST NestJS data access 진입점에 `server-only` 경계를 유지합니다. 클라이언트는 공용 타입과 서버 액션만 사용하며, 백엔드 URL이나 호출자 인증 헤더를 받지 않습니다.
+- MUST 공개 목록의 검색·정렬·페이지 상태는 URL과 서버 렌더링을 기준으로 하고, 재시도는 `router.refresh()`로 처리합니다.
 - MUST data 흐름을 `Route -> Server 실행 -> Data access -> 외부 API` 또는 `Route -> Presentation -> Client 상호작용`으로 명확히 유지합니다.
 - MUST client와 server 경계는 파일 수준에서 드러나야 합니다.
 - MUST 외부 API 호출은 data access 계층에 모읍니다.

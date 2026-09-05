@@ -1,18 +1,14 @@
 'use client';
 
 import {
-  useEffect,
-  useState,
+  useTransition,
   useCallback,
   useMemo,
-  useRef,
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { postsApi } from '@/lib/api-client';
-import { toPostSummaries } from '@/lib/posts/post-summary';
 import { PostsFilter, SortPreset } from './posts-filter';
 import { PostsPagination } from './posts-pagination';
 
@@ -27,7 +23,6 @@ import {
 } from 'lucide-react';
 import {
   parsePostsSearchParams,
-  buildPostsQueryKey,
   extractPostsSearchParams,
 } from './query-utils';
 import {
@@ -59,24 +54,16 @@ export function PostsContent({
   const router = useRouter();
   const urlSearchParams = useSearchParams();
 
-  // State
-  const [posts, setPosts] = useState<PostSummary[]>(initialPosts);
-  const [pagination, setPagination] = useState(() =>
-    mapPagination(initialMeta, initialQuery, initialPosts.length),
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(initialError ?? null);
+  const posts = initialPosts;
+  const pagination = mapPagination(initialMeta, initialQuery, initialPosts.length);
+  const [loading, startTransition] = useTransition();
+  const error = initialError;
 
   const currentQuery = useMemo(
     () =>
       parsePostsSearchParams(extractPostsSearchParams(urlSearchParams)),
     [urlSearchParams],
   );
-  const currentQueryKey = useMemo(
-    () => buildPostsQueryKey(currentQuery),
-    [currentQuery],
-  );
-  const lastLoadedQueryKeyRef = useRef(buildPostsQueryKey(initialQuery));
 
   const currentSortPreset = useMemo<SortPreset>(() => {
     // URL에 sortPreset가 있으면 UI 상태를 고정합니다.
@@ -117,44 +104,8 @@ export function PostsContent({
       params.set('page', '1');
     }
 
-    router.push(`/posts?${params.toString()}`, { scroll: false });
+    startTransition(() => router.push(`/posts?${params.toString()}`, { scroll: false }));
   }, [router, urlSearchParams]);
-
-  // 데이터 로딩 함수들
-  const loadPosts = useCallback(async (query: PostsQuery) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await postsApi.getPosts(query);
-
-      if (response.success && response.data) {
-        // 목록 상태에는 summary만 저장해 상세 본문이 렌더 경로로 새지 않게 합니다.
-        const summaries = toPostSummaries(response.data);
-        setPosts(summaries);
-        setPagination(
-          mapPagination(response.meta, query, summaries.length),
-        );
-        lastLoadedQueryKeyRef.current = buildPostsQueryKey(query);
-      }
-    } catch (err) {
-      console.error('Failed to load posts:', err);
-      setError('포스트를 불러오는데 실패했습니다. 다시 시도해주세요.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Effects
-  useEffect(() => {
-    // 동일한 쿼리를 이미 로드했다면 중복 요청을 막습니다.
-    // (이전 구현은 초기 쿼리로 돌아갈 때 fetch를 스킵해서 reset이 동작하지 않는 문제가 있었습니다.)
-    if (currentQueryKey === lastLoadedQueryKeyRef.current && !initialError) {
-      return;
-    }
-
-    loadPosts(currentQuery);
-  }, [currentQuery, currentQueryKey, initialError, loadPosts]);
 
   // 핸들러 함수들
   const handleSearch = useCallback((search: string) => {
@@ -178,7 +129,7 @@ export function PostsContent({
   }, [urlSearchParams]);
 
   const handleClearFilters = useCallback(() => {
-    router.push('/posts');
+    startTransition(() => router.push('/posts'));
   }, [router]);
 
   // 활성 필터 확인
@@ -199,7 +150,8 @@ export function PostsContent({
           <button
             type="button"
             className="page-btn"
-            onClick={() => loadPosts(currentQuery)}
+            disabled={loading}
+            onClick={() => startTransition(() => router.refresh())}
           >
             Retry
           </button>

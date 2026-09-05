@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ServerCallerGuard } from '../auth/guards/serverCallerGuard';
 
 import { CategoriesModule } from '../categories/categories.module';
 import { UploadsModule } from '../uploads/uploads.module';
@@ -19,9 +21,10 @@ import { POSTS_REPOSITORY } from './repositories/posts.repository';
  * - 관계 데이터 포함 (카테고리, 태그, 작성자)
  */
 @Module({
-  imports: [CategoriesModule, TagsModule, UploadsModule],
+  imports: [ConfigModule, CategoriesModule, TagsModule, UploadsModule],
   controllers: [PostsController, AdminPostsController],
   providers: [
+    ServerCallerGuard,
     PostsService,
     {
       provide: POSTS_REPOSITORY,

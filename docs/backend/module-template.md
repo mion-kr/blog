@@ -69,6 +69,7 @@ feature-name/
 
 1. use-case 기준으로 엔드포인트와 Service 메서드를 먼저 정합니다.
 2. 컨트롤러가 public/admin/혼합 중 무엇인지 결정하고 preset을 고릅니다.
+   포스트에 진입점을 추가한다면 `server-caller-auth.md`에 따라 호출자 Guard를 유지하며 관리자 Guard도 별도로 적용합니다. 다른 모듈로 정책을 자동 확대하지 않습니다.
 3. 입력 계약과 응답 계약을 DTO로 분리합니다.
 4. persistence contract가 필요하면 repository interface를 먼저 정의합니다.
 5. 응답 변환이 두 군데 이상에서 필요하면 응답 변환 계층을 추가합니다.

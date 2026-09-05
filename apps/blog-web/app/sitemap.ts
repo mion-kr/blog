@@ -6,7 +6,7 @@ import { getSiteUrl } from "@/lib/site";
 
 const SITE_URL = getSiteUrl();
 const SITEMAP_CACHE_SCOPE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  process.env.BLOG_API_URL ?? "unconfigured";
 const MAX_SITEMAP_PAGES = 100;
 
 export const dynamic = "force-dynamic";
@@ -64,7 +64,7 @@ async function fetchAllPosts(): Promise<PostResponseDto[]> {
   const limit = 50;
 
   // published 글만 색인합니다.
-  // postsApi.getPosts는 서버 환경에서 NEXT_PUBLIC_API_URL 기준으로 백엔드를 호출합니다.
+  // postsApi.getPosts는 서버 전용 BLOG_API_URL과 호출자 인증을 사용합니다.
   // pagination 메타를 활용해서 모든 페이지를 순회합니다.
   // 어느 페이지에서든 실패하면 부분 결과를 반환하지 않고 오류를 전파합니다.
   try {

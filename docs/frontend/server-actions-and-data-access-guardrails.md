@@ -13,6 +13,11 @@
 
 ## Must
 
+- MUST 서버 전용 `BLOG_API_URL`로 NestJS를 호출합니다. `NEXT_PUBLIC_API_URL` 및 광범위 `/api/:path*` rewrite는 사용하지 않습니다.
+- MUST Vercel에서는 요청마다 공식 `@vercel/oidc`의 `getVercelOidcToken()`을 호출하여 `X-Mion-Caller-OIDC`에 담습니다. 관리자 JWE `Authorization: Bearer`는 별도로 유지합니다.
+- MUST 개발 대체 인증은 `VERCEL`이 없고 `NODE_ENV`가 `development` 또는 `test`인 경우에만 `BLOG_API_LOCAL_SECRET`을 `X-Mion-Local-Caller`로 전달합니다. 미설정 시 요청을 거부합니다.
+- MUST 클라이언트 입력 헤더를 서버 호출자 인증으로 전달하지 않습니다. 공통 요청은 인증 헤더를 서버에서 생성하고 절대 URL과 리다이렉트를 거부합니다.
+- MUST 이미지 발급은 기존 인증된 Next Route Handler에서 NestJS를 호출하며, 바이너리 PUT은 발급받은 Supabase Storage URL로 직접 전송합니다.
 - MUST 외부 API 호출은 data access 계층에 모읍니다.
 - MUST server action은 인증 확인, payload 준비, redirect/revalidate orchestration을 담당합니다.
 - MUST server action이 사용하는 form parsing은 별도 parser 또는 helper로 분리합니다.
@@ -47,3 +52,14 @@
 - server action이 커지면 parser, auth helper, mutation helper로 쪼개고 action은 진입점으로만 남깁니다.
 - 파일 바이너리 업로드처럼 browser API가 필요한 흐름은 client component에 남길 수 있습니다.
 - 다만 이 경우에도 업로드 endpoint 경로, 요청 body, signed upload 절차는 공용 client helper로 승격합니다.
+
+## 운영 적용 절차
+
+- 웹과 API 인증 변경을 통합 검증한 뒤 함께 적용합니다. 부분 변경을 독립 배포하지 않습니다.
+- Doppler 기준으로 웹의 `BLOG_API_URL`에 HTTPS 백엔드 원점을 설정합니다. 브라우저 공개 변수는 사용하지 않습니다.
+- Vercel OIDC 활성화 및 실제 토큰의 발급자·대상·프로젝트/환경 주체를 확인하고 API의 `BLOG_API_CALLER_ISSUER`, `BLOG_API_CALLER_AUDIENCE`, `BLOG_API_CALLER_SUBJECT`에 정확히 일치시킵니다. 예시값을 운영값으로 사용하지 않습니다.
+- 빌드 중 백엔드 조회에도 OIDC 토큰이 제공되는지 확인합니다. 토큰이 없으면 무인증 요청을 보내지 않습니다.
+- 로컬에서는 양쪽 서버에 동일한 개발 전용 비밀을 공급하며 공유 Doppler 변경은 별도로 적용합니다. Vercel 배포나 production에서는 개발키로 대체할 수 없습니다.
+- 서버 호출자 인증은 Nest 호스트의 네트워크 비공개화를 의미하지 않습니다.
+- Turbo의 `globalEnv`에는 URL·배포 구분을 선언하고, 수명이 짧은 OIDC 토큰과 개발 비밀은 `globalPassThroughEnv`로 전달하여 토큰 갱신만으로 빌드 캐시 키를 바꾸지 않습니다. 인증 성공 여부 자체는 캐시 적중으로 검증되지 않으므로 통합 요청 검증이 별도로 필요합니다.
+- 공식 근거: https://vercel.com/docs/oidc/api , https://vercel.com/docs/oidc/reference

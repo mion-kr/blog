@@ -42,6 +42,7 @@
 - Controller가 use-case 계층 위임 외에 복잡한 정책 분기를 하지 않는가?
 - `ApiPublicController`, `ApiFeatureController`, `ApiAdminController` 중 맞는 preset을 선택했는가?
 - Guard, 상태코드, Swagger 문서가 엔드포인트 계약과 맞는가?
+- 포스트 호출자 인증이 모든 진입점에 적용되며 관리자 인증을 대체하지 않는가? 설정 누락·잘못된 OIDC·운영의 로컬 인증이 거부되는가?
 - 메서드 문서화가 `ApiPublic*` 또는 `ApiAdmin*` 공통 데코레이터 조합만으로 표현되는가?
 - Repository 직접 호출이나 응답 수작업 조립이 없는가?
 - transport parsing 이상으로 로직이 커지지 않았는가?

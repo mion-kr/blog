@@ -11,7 +11,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiHeader, ApiQuery } from '@nestjs/swagger';
+import { ServerCallerGuard } from '../auth/guards/serverCallerGuard';
 
 import { PostsService } from './posts.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -38,6 +39,7 @@ import {
   User,
   CurrentUser,
   ApiFeatureController,
+  ApiAuthErrors,
 } from '../common/decorators';
 
 /**
@@ -58,6 +60,14 @@ import {
   TagResponseDto,
 )
 @Controller('posts')
+@UseGuards(ServerCallerGuard)
+@ApiHeader({
+  name: 'X-Mion-Caller-OIDC',
+  required: true,
+  description:
+    '신뢰하는 Next 서버의 Vercel OIDC 토큰. 로컬 개발에서는 X-Mion-Local-Caller로 대체할 수 있습니다.',
+})
+@ApiAuthErrors()
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
@@ -70,7 +80,7 @@ export class PostsController {
   @ApiPublicList(
     PostResponseDto,
     '포스트 목록 조회',
-    '발행된 포스트들을 페이징과 필터링을 통해 조회합니다. 공개 API이므로 인증이 필요하지 않습니다.',
+    '발행된 포스트들을 조회합니다. 서버 호출자 인증이 필요하며 방문자 로그인은 필요하지 않습니다.',
   )
   async findAll(
     @Query() query: PostQueryDto,
@@ -86,7 +96,7 @@ export class PostsController {
     PostResponseDto,
     '포스트 상세 조회',
     '포스트',
-    '슬러그로 특정 포스트를 조회합니다. trackView=false면 조회수 증가 없이 조회합니다.',
+    '서버 호출자 인증으로 발행된 포스트를 조회합니다. 방문자 로그인은 필요하지 않으며 trackView=false면 조회수를 증가시키지 않습니다.',
   )
   @ApiQuery({
     name: 'trackView',

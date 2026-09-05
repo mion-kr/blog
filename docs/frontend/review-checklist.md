@@ -38,6 +38,9 @@
 
 ### Server Actions / Data Access
 
+- Nest 호출 전체(SSR/metadata/sitemap/feed/빌드/actions/업로드 발급)에 서버 호출자 인증이 적용되는가?
+- 클라이언트 번들에 백엔드 URL·호출자 토큰이 없고, 공개 API rewrite·절대 URL 우회가 제거되었는가?
+- production 및 Vercel 환경에서 개발키 대체가 거부되는가?
 - 외부 API 호출이 data access 계층에 모여 있는가?
 - redirect/revalidate/auth orchestration이 server 실행 계층에 있는가?
 - form parsing과 mutation orchestration이 분리되어 있는가?

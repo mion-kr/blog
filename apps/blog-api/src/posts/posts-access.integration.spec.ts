@@ -7,6 +7,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'node:crypto';
 import { PaginationMeta } from '@repo/shared';
 import request from 'supertest';
 
@@ -17,6 +19,7 @@ import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 
 const TEST_ADMIN_TOKEN = 'test-admin-token';
+const callerSecret = randomBytes(32).toString('hex');
 
 const createMockAdminGuard = (): CanActivate => ({
   canActivate: (context: ExecutionContext) => {
@@ -39,6 +42,13 @@ describe('Posts access boundaries', () => {
     const moduleFixture = await Test.createTestingModule({
       controllers: [PostsController, AdminPostsController],
       providers: [
+        {
+          provide: ConfigService,
+          useValue: new ConfigService({
+            NODE_ENV: 'test',
+            BLOG_API_LOCAL_SECRET: callerSecret,
+          }),
+        },
         {
           provide: PostsService,
           useValue: {
@@ -82,6 +92,7 @@ describe('Posts access boundaries', () => {
 
     await request(app.getHttpServer())
       .get('/api/posts?published=false')
+      .set('X-Mion-Local-Caller', callerSecret)
       .expect(200);
 
     expect(postsService.findAll).toHaveBeenCalledWith(
@@ -97,7 +108,10 @@ describe('Posts access boundaries', () => {
       ),
     );
 
-    await request(app.getHttpServer()).get('/api/posts/draft-post').expect(404);
+    await request(app.getHttpServer())
+      .get('/api/posts/draft-post')
+      .set('X-Mion-Local-Caller', callerSecret)
+      .expect(404);
 
     expect(postsService.findPublishedBySlug).toHaveBeenCalledWith(
       'draft-post',
@@ -107,7 +121,10 @@ describe('Posts access boundaries', () => {
   });
 
   it('인증되지 않은 요청은 관리자 초안 목록을 조회할 수 없어야 함', async () => {
-    await request(app.getHttpServer()).get('/api/admin/posts').expect(401);
+    await request(app.getHttpServer())
+      .get('/api/admin/posts')
+      .set('X-Mion-Local-Caller', callerSecret)
+      .expect(401);
 
     expect(postsService.findAllForAdmin).not.toHaveBeenCalled();
   });
@@ -128,10 +145,12 @@ describe('Posts access boundaries', () => {
 
     const listResponse = await request(app.getHttpServer())
       .get('/api/admin/posts?published=false')
+      .set('X-Mion-Local-Caller', callerSecret)
       .set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`)
       .expect(200);
     const detailResponse = await request(app.getHttpServer())
       .get('/api/admin/posts/draft-post')
+      .set('X-Mion-Local-Caller', callerSecret)
       .set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`)
       .expect(200);
 
@@ -142,4 +161,26 @@ describe('Posts access boundaries', () => {
     );
     expect(postsService.findOneBySlug).toHaveBeenCalledWith('draft-post');
   });
+
+  it.each([
+    ['get', '/api/posts'],
+    ['get', '/api/posts/example'],
+    ['post', '/api/posts'],
+    ['put', '/api/posts/example'],
+    ['delete', '/api/posts/example'],
+    ['get', '/api/admin/posts'],
+    ['get', '/api/admin/posts/example'],
+  ] as const)(
+    '호출자 미인증 %s %s는 관리자 토큰만으로 접근할 수 없음',
+    async (method, path) => {
+      await request(app.getHttpServer())
+        [method](path)
+        .set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`)
+        .expect(401);
+      expect(postsService.findAll).not.toHaveBeenCalled();
+      expect(postsService.findPublishedBySlug).not.toHaveBeenCalled();
+      expect(postsService.findAllForAdmin).not.toHaveBeenCalled();
+      expect(postsService.findOneBySlug).not.toHaveBeenCalled();
+    },
+  );
 });

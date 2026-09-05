@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { categoriesApi, tagsApi } from '@/lib/api-client';
 import type { Category, Tag } from '@repo/shared';
 import { Folder, Tag as TagIcon, Hash } from 'lucide-react';
 
@@ -23,54 +22,12 @@ export function BlogSidebar({
   const currentCategorySlug = searchParams.get('categorySlug') ?? searchParams.get('category');
   const currentTagSlug = searchParams.get('tagSlug') ?? searchParams.get('tag');
 
-  // State
-  const hasInitialCategories = initialCategoriesProp !== undefined;
-  const hasInitialTags = initialTagsProp !== undefined;
-  const [categories, setCategories] = useState<Category[]>(initialCategoriesProp ?? []);
-  const [tags, setTags] = useState<Tag[]>(initialTagsProp ?? []);
-  const [loading, setLoading] = useState(
-    !(hasInitialCategories && hasInitialTags),
-  );
+  const categories = initialCategoriesProp ?? [];
+  const tags = initialTagsProp ?? [];
+  const loading = false;
 
   // 전체 포스트 수 계산
   const totalPostCount = categories.reduce((sum, category) => sum + category.postCount, 0);
-
-  // 데이터 로딩 함수
-  const loadData = useCallback(async () => {
-    if (hasInitialCategories && hasInitialTags) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const [categoriesResponse, tagsResponse] = await Promise.allSettled([
-        categoriesApi.getCategories({ limit: 20, sort: 'name', order: 'asc' }),
-        tagsApi.getTags({ limit: 30, sort: 'name', order: 'asc' })
-      ]);
-
-      if (categoriesResponse.status === 'fulfilled' && categoriesResponse.value.success) {
-        setCategories(categoriesResponse.value.data ?? []);
-      }
-
-      if (tagsResponse.status === 'fulfilled' && tagsResponse.value.success) {
-        setTags(tagsResponse.value.data ?? []);
-      }
-    } catch (error) {
-      console.error('Failed to load sidebar data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [hasInitialCategories, hasInitialTags]);
-
-  useEffect(() => {
-    if (hasInitialCategories && hasInitialTags) {
-      setLoading(false);
-      return;
-    }
-
-    loadData();
-  }, [hasInitialCategories, hasInitialTags, loadData]);
 
   const buildPostsHref = useCallback((updates: { categorySlug?: string | null; tagSlug?: string | null }) => {
     const params = new URLSearchParams(searchParams.toString());

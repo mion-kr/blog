@@ -13,7 +13,11 @@
     "DATABASE_MIGRATION_URL",
     "NEXTAUTH_SECRET",
     "NEXTAUTH_URL",
-    "NEXT_PUBLIC_API_URL",
+    "BLOG_API_URL",
+    "BLOG_API_CALLER_ISSUER",
+    "BLOG_API_CALLER_AUDIENCE",
+    "BLOG_API_CALLER_SUBJECT",
+    "VERCEL",
     "NEXT_PUBLIC_IMAGE_ENDPOINT",
     "NEXT_PUBLIC_SITE_URL",
     "GOOGLE_CLIENT_ID",
@@ -21,6 +25,7 @@
     "ADMIN_EMAIL",
     "RSS_ITEMS_LIMIT"
   ],
+  "globalPassThroughEnv": ["BLOG_API_LOCAL_SECRET", "VERCEL_OIDC_TOKEN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
