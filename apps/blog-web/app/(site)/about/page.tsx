@@ -1,9 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
-import type { PublicSiteSettings } from '@repo/shared';
-import { settingsApi } from '@/lib/api-client';
-
 import styles from './about-neon-grid.module.css';
 
 import { NeonHeader } from '@/components/layout/neon-header';
@@ -14,20 +11,18 @@ import { cn } from '@/lib/utils';
 const siteUrl = getSiteUrl();
 const aboutOgImage = `${siteUrl}/og/about.png`;
 
-// 빌드 시 호출자 인증 미설정으로 생긴 기본 소개값을 정적으로 고정하지 않습니다.
-export const dynamic = 'force-dynamic';
+const aboutDescription =
+  'AI를 활용한 개발 경험과 다양한 도구를 사용하며 얻은 시행착오, 결과물을 공유하는 미온의 블로그입니다.';
 
 export const metadata: Metadata = {
-  title: "About | Mion's Blog",
-  description:
-    'MSA 환경에서의 서비스 개발과 안정적인 시스템 운영에 관심이 많은 백엔드 개발자 미온을 소개합니다.',
+  title: "블로그 소개 | Mion's Blog",
+  description: aboutDescription,
   alternates: {
     canonical: '/about',
   },
   openGraph: {
-    title: "About | Mion's Blog",
-    description:
-      'NestJS·Spring Boot 기반 백엔드 개발과 AWS 운영 경험을 바탕으로, 제품 문제를 기술로 해결합니다.',
+    title: "블로그 소개 | Mion's Blog",
+    description: aboutDescription,
     type: 'website',
     url: `${siteUrl}/about`,
     images: [
@@ -41,9 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "About | Mion's Blog",
-    description:
-      'NestJS·Spring Boot 기반 백엔드 개발과 AWS 운영 경험을 바탕으로, 제품 문제를 기술로 해결합니다.',
+    title: "블로그 소개 | Mion's Blog",
+    description: aboutDescription,
     images: [aboutOgImage],
   },
   robots: {
@@ -59,45 +53,25 @@ export const metadata: Metadata = {
   },
 };
 
-const contactChannels = [
+const topics = [
   {
-    label: 'Email',
-    value: 'whddbs311@gmail.com',
-    href: 'mailto:whddbs311@gmail.com',
+    icon: '🧩',
+    title: 'AI를 활용한 개발',
+    description: 'AI와 함께 개발하는 과정에서 시도한 방법과 배운 점을 기록합니다.',
   },
   {
-    label: 'GitHub',
-    value: 'github.com/mion-kr',
-    href: 'https://github.com/mion-kr',
+    icon: '🛠️',
+    title: '다양한 도구의 활용',
+    description: '개발에 쓰는 도구를 직접 사용하며 마주한 문제와 해결 과정을 나눕니다.',
   },
-];
+  {
+    icon: '💡',
+    title: '시행착오와 결과물',
+    description: '완성된 결과물뿐 아니라 그 과정의 선택과 시행착오도 함께 공유합니다.',
+  },
+] as const;
 
-/**
- * 공개 사이트 설정을 조회합니다.
- */
-async function fetchPublicSettings(): Promise<PublicSiteSettings | null> {
-  try {
-    const response = await settingsApi.getPublicSettings();
-    return response.success ? response.data : null;
-  } catch (error) {
-    console.error('Failed to fetch public settings', error);
-    return null;
-  }
-}
-
-/**
- * About 페이지 (샘플 `about-neon-grid.html` 레이아웃 기반).
- * - About에서도 페이지가 네온 헤더/배경을 직접 렌더링합니다.
- * - 이력/학력은 주인님 제공 PDF/현행 데이터 기준으로만 구성합니다.
- */
-export default async function AboutPage() {
-  const settings = await fetchPublicSettings();
-  const profileImageUrl =
-    settings?.profileImageUrl ?? process.env.NEXT_PUBLIC_PROFILE_IMAGE_URL ?? '';
-
-  const skills = buildCoreSkills();
-  const journey = buildJourneyTimeline();
-
+export default function AboutPage() {
   return (
     <div className={cn(styles.root, 'neon-grid-about')}>
       <div className="neon-grid-bg" aria-hidden="true" />
@@ -105,64 +79,41 @@ export default async function AboutPage() {
       <NeonHeader activePath="/about" />
 
       <section className="hero" aria-label="소개 히어로">
-        <div className="profile-glow" aria-hidden="true">
-          <div className="profile-img" aria-label="프로필 이미지">
-            {profileImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profileImageUrl} alt="Mion 프로필" />
-            ) : (
-              <span aria-hidden="true">👨‍💻</span>
-            )}
-          </div>
-        </div>
-        <h1>I&apos;m Mion</h1>
+        <h1>블로그 소개</h1>
         <p>
-          MSA 환경에서의 서비스 개발과 안정적인 시스템 운영에 관심이 많은 백엔드 엔지니어입니다.
+          미온의 Mion&apos;s Blog는 AI를 활용한 개발 경험을 기록하는 공간입니다.
           <br />
-          NestJS·Spring Boot 기반 개발과 AWS 운영 경험을 바탕으로, 제품 문제를 기술로 해결합니다.
+          다양한 도구를 사용하며 얻은 시행착오와 결과물을 공유합니다.
         </p>
       </section>
 
       <main className="container" id="main">
-        <section className="section" aria-label="핵심 역량">
-          <h2 className="section-title">Core Skills</h2>
+        <section className="section" aria-label="다루는 주제">
+          <h2 className="section-title">다루는 주제</h2>
           <div className="skills-grid">
-            {skills.map((skill) => (
-              <div key={skill.title} className="skill-card">
+            {topics.map((topic) => (
+              <div key={topic.title} className="skill-card">
                 <div className="skill-icon" aria-hidden="true">
-                  {skill.icon}
+                  {topic.icon}
                 </div>
-                <h3>{skill.title}</h3>
-                <p>{skill.description}</p>
+                <h3>{topic.title}</h3>
+                <p>{topic.description}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="section" aria-label="이력">
-          <h2 className="section-title">Journey</h2>
-          <div className="timeline">
-            {journey.map((item) => (
-              <div key={item.date} className="timeline-item">
-                <div className="tm-date">{item.date}</div>
-                <div className="tm-title">{item.title}</div>
-                <div className="tm-company">{item.company}</div>
-                <p className="tm-desc">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="section" aria-label="연락처">
+        <section className="section" aria-label="기록 방식">
+          <h2 className="section-title">과정까지 담는 기록</h2>
           <div className="contact-card">
-            <h2>Let&apos;s connect in the grid</h2>
-            <p>협업 제안이나 기술적인 수다는 언제든 환영입니다.</p>
-            <div className="contact-links" role="group" aria-label="연락 링크">
-              {contactChannels.map((channel) => (
-                <Link key={channel.label} href={channel.href} className="contact-btn">
-                  {channel.label === 'Email' ? '📧' : '🐙'} {channel.label}
-                </Link>
-              ))}
+            <p>
+              무엇을 만들었는지와 함께 어떤 도구를 선택했고, 어디서 막혔으며,
+              어떻게 풀어갔는지를 담습니다. 각 글에서 시도한 방법과 결과를 살펴보세요.
+            </p>
+            <div className="contact-links">
+              <Link href="/posts" className="contact-btn">
+                글 목록 보기 →
+              </Link>
             </div>
           </div>
         </section>
@@ -181,58 +132,4 @@ export default async function AboutPage() {
       </main>
     </div>
   );
-}
-
-/**
- * About 핵심 역량(3카드) 데이터를 구성합니다.
- */
-function buildCoreSkills() {
-  return [
-    {
-      icon: '🧩',
-      title: 'Frontend',
-      description:
-        'Next.js 기반의 블로그/관리자 UX를 구현하며, React·TypeScript·Playwright로 인터랙션과 품질을 함께 챙깁니다.',
-    },
-    {
-      icon: '🛠️',
-      title: 'Backend',
-      description:
-        'NestJS( TypeScript )와 Spring Boot를 기반으로 API를 설계하고, 인증(JWT)·MSA·성능 최적화에 집중합니다.',
-    },
-    {
-      icon: '☁️',
-      title: 'Infra & Ops',
-      description:
-        'AWS(EC2/RDS) 운영과 Docker 기반 배포, CI/CD(GitLab)와 모니터링(Grafana)로 안정적인 서비스를 만듭니다.',
-    },
-  ] as const;
-}
-
-/**
- * About 타임라인(개발 경력/학력)을 구성합니다.
- */
-function buildJourneyTimeline() {
-  return [
-    {
-      date: '2021.12 - Present',
-      title: 'Backend Engineer',
-      company: '주식회사 애쓰지마',
-      description:
-        'NestJS·TypeScript 기반 MSA에서 예약/결제/리워드 등 도메인 API를 설계·운영했고, AWS/Docker/CI-CD와 모니터링으로 안정화를 담당했습니다.',
-    },
-    {
-      date: '2018.05 - 2021.11',
-      title: 'Backend Engineer',
-      company: '(주)씨에스',
-      description:
-        'Spring Boot·MyBatis 기반 웹 백엔드 및 IoT 서버 개발에 참여했고, Elasticsearch/Kibana 등 데이터 검색·관측 환경을 함께 다뤘습니다.',
-    },
-    {
-      date: '2014.03 - 2024.02',
-      title: 'B.S. Computer Science',
-      company: '한국방송통신대학교',
-      description: '컴퓨터과학과를 졸업하며, 실무 중심으로 백엔드/시스템 개발 역량을 확장했습니다.',
-    },
-  ] as const;
 }
