@@ -32,7 +32,7 @@ const HOME_DATA_CACHE_SCOPE =
   process.env.BLOG_API_URL ?? "unconfigured";
 const SITE_URL = getSiteUrl();
 const HOME_DESCRIPTION =
-  "NestJS를 중심으로 백엔드 설계, 운영, 장애 대응 경험을 정리하는 Mion의 기술 블로그입니다.";
+  "AI를 활용해 아이디어를 구현하고, 직접 만들며 배운 경험을 기록합니다. 다양한 도구의 활용 사례부터 개발 과정의 시행착오, 완성한 결과물까지 공유합니다.";
 
 type HomeData = {
   latestResponse: Awaited<ReturnType<typeof postsApi.getPosts>> | null;
@@ -54,13 +54,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Mion's Blog",
   description: HOME_DESCRIPTION,
-  keywords: ["NestJS", "백엔드", "아키텍처", "운영", "인프라", "보안"],
+  keywords: [],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Mion's Blog | NestJS 백엔드 아카이브",
+    title: "Mion's Blog",
     description: HOME_DESCRIPTION,
+    siteName: "Mion's Blog",
     type: "website",
     locale: "ko_KR",
     url: "/",
@@ -75,7 +76,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mion's Blog | NestJS 백엔드 아카이브",
+    title: "Mion's Blog",
     description: HOME_DESCRIPTION,
     images: ["/og/blog.png"],
   },
@@ -315,11 +316,9 @@ export default async function HomePage() {
         <section className="hero" aria-label="홈 히어로">
           <div className="hero-grid">
             <div className="hero-content">
-              <h1>백엔드 개발 기록</h1>
-              <p>
-                NestJS를 중심으로 백엔드 설계/운영 경험을 정리합니다. 이전에는 Spring Boot로 서비스를 개발했어요.
-                실무에서 배운 것과 실험 기록을, 읽기 좋은 형태로 꾸준히 업데이트합니다.
-              </p>
+              <h1>AI와 함께 만드는 개발 기록</h1>
+              <p>{HOME_DESCRIPTION}</p>
+              <p>미온의 AI 개발 경험을 담은 ‘미온 블로그’입니다.</p>
               <div className="hero-actions">
                 <Link
                   href="/posts"
@@ -747,6 +746,7 @@ function buildHomeJsonLd(stats: {
       "@type": "WebSite",
       "@id": `${SITE_URL}#website`,
       name: "Mion's Blog",
+      alternateName: ["미온 블로그", "미온"],
       url: SITE_URL,
       inLanguage: "ko-KR",
       description: HOME_DESCRIPTION,
