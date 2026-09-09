@@ -31,6 +31,8 @@ const HOME_LOAD_RETRY_DELAYS_MS = [0, 400, 900, 1800];
 const HOME_DATA_CACHE_SCOPE =
   process.env.BLOG_API_URL ?? "unconfigured";
 const SITE_URL = getSiteUrl();
+const SITE_NAME = "미온 블로그";
+const HOME_TITLE = `${SITE_NAME} — AI로 만들고 배우기`;
 const HOME_DESCRIPTION =
   "AI를 활용해 아이디어를 구현하고, 직접 만들며 배운 경험을 기록합니다. 다양한 도구의 활용 사례부터 개발 과정의 시행착오, 완성한 결과물까지 공유합니다.";
 
@@ -52,16 +54,16 @@ class HomeDataLoadError extends Error {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Mion's Blog",
+  title: HOME_TITLE,
   description: HOME_DESCRIPTION,
   keywords: [],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Mion's Blog",
+    title: HOME_TITLE,
     description: HOME_DESCRIPTION,
-    siteName: "Mion's Blog",
+    siteName: SITE_NAME,
     type: "website",
     locale: "ko_KR",
     url: "/",
@@ -76,7 +78,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mion's Blog",
+    title: HOME_TITLE,
     description: HOME_DESCRIPTION,
     images: ["/og/blog.png"],
   },
@@ -316,7 +318,7 @@ export default async function HomePage() {
         <section className="hero" aria-label="홈 히어로">
           <div className="hero-grid">
             <div className="hero-content">
-              <h1>AI와 함께 만드는 개발 기록</h1>
+              <h1>AI로 만들고 배우기</h1>
               <p>{HOME_DESCRIPTION}</p>
               <p>미온의 AI 개발 경험을 담은 ‘미온 블로그’입니다.</p>
               <div className="hero-actions">
@@ -745,8 +747,8 @@ function buildHomeJsonLd(stats: {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "@id": `${SITE_URL}#website`,
-      name: "Mion's Blog",
-      alternateName: ["미온 블로그", "미온"],
+      name: SITE_NAME,
+      alternateName: "Mion's Blog",
       url: SITE_URL,
       inLanguage: "ko-KR",
       description: HOME_DESCRIPTION,

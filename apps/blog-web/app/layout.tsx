@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   keywords: ["블로그", "개발", "Next.js", "TypeScript", "프론트엔드"],
   authors: [{ name: "Mion" }],
   creator: "Mion",
-  applicationName: "Mion Blog",
+  applicationName: "미온 블로그",
   icons: {
     icon: "/favicon.ico",
   },
