@@ -141,6 +141,9 @@ export default async function PostPage({ params }: PostPageProps) {
             <h1 className="post-title">{post.title}</h1>
 
             <div className="post-meta" role="group" aria-label="포스트 메타 정보">
+              <Link href="/about" rel="author" className="meta-item underline underline-offset-4">
+                작성자 {post.author.name} · 소개
+              </Link>
               <span className="meta-item">
                 🗓️{" "}
                 <time dateTime={new Date(displayDate).toISOString()}>

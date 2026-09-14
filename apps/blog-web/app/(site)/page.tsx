@@ -289,7 +289,8 @@ export default async function HomePage() {
   const trendingPosts = toPostSummaries(
     (trendingResponse?.data ?? []).slice(0, TRENDING_POSTS_LIMIT),
   );
-  const categories = categoriesResponse?.data ?? [];
+  // 카테고리 목록 API의 postCount는 발행된 글만 집계합니다.
+  const categories = (categoriesResponse?.data ?? []).filter((category) => category.postCount > 0);
   const tags = tagsResponse?.data ?? [];
 
   const featuredPost = latestPosts[0] ?? null;
@@ -297,7 +298,7 @@ export default async function HomePage() {
 
   const stats = {
     posts: latestResponse?.meta?.total ?? latestPosts.length,
-    categories: categoriesResponse?.meta?.total ?? categories.length,
+    categories: categories.length,
     tags: tagsResponse?.meta?.total ?? tags.length,
     lastUpdated: featuredPost ? new Date(featuredPost.publishedAt ?? featuredPost.createdAt) : undefined,
   };
