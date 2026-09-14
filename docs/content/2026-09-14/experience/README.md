@@ -36,7 +36,7 @@ python3 /Users/mion/.codex/skills/create-mermaid-diagrams/scripts/validate_merma
 
 - 기본 `git diff --check`는 기존 MDX의 Markdown 강제 줄바꿈(줄 끝 공백 2개)과 저장한 unified diff의 빈 문맥 행을 공백 오류로 보고했습니다. 원문 표현과 diff 형식을 보존했으며 README·예제·JSON 파일의 별도 공백 검사는 통과했습니다.
 - 실제 앱이 사용하는 `next-mdx-remote/rsc`와 `remark-gfm`으로 MDX 8개 컴파일 통과. 도표 15개 블록과 X 임베드 3개 보존 확인.
-- gRPC 도표 2개 정적 검사 통과: 오류 0, 경고 0. Mermaid를 Node.js에서 직접 파싱하는 초기 시도는 `DOMPurify.addHook is not a function`으로 실패했습니다. 공식 Mermaid CLI는 설치돼 있지 않아 SVG 렌더링을 수행하지 않았습니다. 실제 브라우저 렌더링 완료로 보고하지 않습니다.
+- gRPC 도표 2개 정적 검사 통과: 오류 0, 경고 0. Mermaid를 Node.js에서 직접 파싱하는 초기 시도는 `DOMPurify.addHook is not a function`으로 실패했습니다. 이후 technical 담당자가 준비한 jsdom 환경에서 Mermaid 11.12.0을 동적으로 불러와 `mermaid.parse`로 두 도표 모두 통과했습니다. 실행 스크립트는 `/Users/mion/.codex/tmp/adsense-fix-20260914/technical-validation/validateMermaid.mjs`, 출력은 `experience-evidence/mermaidParser.txt`입니다. SVG 렌더링은 수행하지 않았으며 실제 브라우저 렌더링 완료로 보고하지 않습니다.
 - 제목 검증: 문자열 정상화, 누락·숫자·File·공백 거절. `String(File)`은 `[object File]`로 변환되는 것을 확인했습니다.
 - 별도 네트워크 없는 PostgreSQL 컨테이너에서 SQL 및 두 세션 실험 통과. 데이터와 수치는 재현용이며 운영 데이터가 아닙니다.
 
