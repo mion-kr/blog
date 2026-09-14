@@ -1,0 +1,53 @@
+--- original/awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda.mdx
++++ revised/awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda.mdx
+@@ -12,9 +12,9 @@
+ |---|---|---|
+ | 기능 브랜치 생성·push | Preview Deployment 생성 | 설정에 따라 같은 이름의 Preview Branch 생성 |
+ | PR 생성 | PR 전용 Preview URL 제공 | 브랜치 URL과 키를 Vercel에 동기화 |
+-| 추가 commit push | Preview 재배포 | 마이그레이션을 다시 적용해 Branch 갱신 |
++| 추가 commit push | Preview 재배포 | 미적용 마이그레이션으로 Branch 갱신 |
+ | PR merge 또는 close | Preview는 기록으로 남음 | 일시적 Preview Branch 자동 삭제 |
+-| `main` 반영 | Production 배포 | Production에 마이그레이션 적용 |
++| `main` 반영 | Production 배포 | 운영 배포 설정을 켠 경우 미적용 마이그레이션 반영 |
+ 
+ 중요한 점은 Vercel과 Supabase가 하나의 서비스를 만드는 것이 아니라는 것이다. 둘은 각자 Preview 환경을 만들고, 연동 기능이 같은 Git 브랜치를 기준으로 접속 정보를 맞춘다.
+ 
+@@ -63,7 +63,7 @@
+ 
+ 공용 개발 DB 하나를 사용하면 아직 검토 중인 마이그레이션이 다른 개발자와 다른 기능에 영향을 줄 수 있다. 롤백도 까다롭다. 기능별 Supabase Branch에서는 해당 기능의 스키마와 테스트 데이터만 독립적으로 검증할 수 있다.
+ 
+-Supabase Preview Branch에는 Production 데이터가 복사되지 않는다. 저장소의 마이그레이션이 적용되고, 필요하면 `seed.sql`로 테스트 데이터를 넣는다. PR을 merge한다고 테스트 데이터가 Production으로 이동하는 것도 아니다. Production에 반영되는 것은 마이그레이션으로 기록한 구조 변경이다.
++Supabase Preview Branch에는 Production 데이터가 복사되지 않는다. 저장소의 마이그레이션이 적용되고, 필요하면 `seed.sql`로 테스트 데이터를 넣는다. PR을 merge한다고 테스트 데이터가 Production으로 이동하는 것도 아니다. DB의 구조 변경은 마이그레이션으로 반영한다. 연동 설정에 따라 Edge Functions와 선언된 Storage buckets도 배포되므로, 운영 반영 범위를 DB에만 한정해서 이해해서는 안 된다.
+ 
+ 이 때문에 DB 변경은 대시보드에서만 고치기보다 마이그레이션 파일로 관리해야 한다.
+ 
+@@ -145,6 +145,23 @@
+ - `develop` 같은 장기 환경은 Vercel 환경변수 범위를 직접 맞춰야 한다.
+ - Vercel Function의 실행 시간·용량·파일 시스템 제약은 별도로 검토해야 한다.
+ 
++## 내 PR에 적용한다면 무엇으로 연결 성공을 판단할까?
++
++이 글의 Vercel·Supabase 흐름은 공식 기능을 읽고 정리한 설계 관점이다. 이 블로그에 해당 조합의 PR 환경을 구축하고 배포까지 검증했다는 기록은 아니다. 아래는 실제로 도입할 때 내가 사용할 확인 순서다.
++
++웹 주소가 열렸다는 사실만으로 DB까지 격리됐다고 판단하지 않겠다. 먼저 배포 화면의 Git 브랜치와 커밋을 확인하고, Supabase의 해당 브랜치에서 마이그레이션 적용 상태를 확인한다. 그다음 서버가 참조하는 프로젝트 식별자가 그 브랜치의 것인지 대조한다. 연결 문자열이나 비밀 키 전체를 로그에 남길 필요는 없다.
++
++| 관찰 | 다음 판단 |
++| --- | --- |
++| 웹은 최신인데 새 컬럼이 없음 | 다른 DB를 보는지, 해당 브랜치의 마이그레이션이 실패했는지부터 구분한다 |
++| PR을 열기 전과 후의 동작이 다름 | 환경변수 동기화와 재배포가 완료됐는지 확인한다 |
++| 미리보기에서 로그인 후 다른 환경으로 이동 | 인증 서비스의 Redirect URL과 앱의 기준 URL을 함께 점검한다 |
++| PR을 닫았는데 자원이 남음 | 일시적 브랜치인지 Persistent Branch인지 구분하고 삭제 상태를 확인한다 |
++
++[Supabase 연동 문서](https://supabase.com/docs/guides/deployment/branching/integrations)는 PR을 열 때 환경변수를 동기화하고 배포 순서 문제를 줄이기 위해 최신 Vercel 배포를 다시 실행한다고 설명한다. 따라서 첫 배포 성공과 연결 완료를 같은 사건으로 취급하면 원인을 잘못 찾을 수 있다.
++
++또한 [GitHub 연동 문서](https://supabase.com/docs/guides/deployment/branching/github-integration)에 따르면 후속 커밋은 이미 실행한 마이그레이션 전체가 아니라 **아직 적용하지 않은 마이그레이션**을 실행한다. 파일을 수정했다고 기존 마이그레이션이 다시 실행될 것이라고 기대하지 말아야 한다. 운영 배포 자동화도 별도 설정이므로, 웹과 DB의 확인 항목을 모두 PR 병합 조건에 포함할지 결정해야 한다.
++
+ ## 내가 이해한 핵심
+ 
+ Vercel Preview는 Git 브랜치의 **코드 실행 환경**을 만들고, Supabase Branching은 같은 브랜치의 **데이터 환경**을 만든다. PR은 두 환경을 연결하고 검토하는 기준점이 된다.
+@@ -163,3 +180,5 @@
+ - [Supabase GitHub Integration](https://supabase.com/docs/guides/deployment/branching/github-integration)
+ - [Supabase Branching Integrations](https://supabase.com/docs/guides/deployment/branching/integrations)
+ - [Supabase Vercel 환경변수 설명](https://supabase.com/docs/guides/troubleshooting/vercel-integration-environment-variables-not-syncing-for-persistent-git-branches-b9191e)
++
++2026-09-14 보완: PR 환경의 연결 확인 기준과 미적용 마이그레이션의 동작을 보완했다.

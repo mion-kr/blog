@@ -1,0 +1,66 @@
+[
+  {
+    "key": "lock",
+    "removedUrls": [],
+    "preservedOriginalUrls": 6,
+    "diagrams": 4,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "aws",
+    "removedUrls": [],
+    "preservedOriginalUrls": 8,
+    "diagrams": 2,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "design",
+    "removedUrls": [],
+    "preservedOriginalUrls": 0,
+    "diagrams": 0,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "astra",
+    "removedUrls": [],
+    "preservedOriginalUrls": 8,
+    "diagrams": 0,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 3
+  },
+  {
+    "key": "timezone",
+    "removedUrls": [],
+    "preservedOriginalUrls": 5,
+    "diagrams": 0,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "grpc",
+    "removedUrls": [],
+    "preservedOriginalUrls": 0,
+    "diagrams": 2,
+    "changedDiagrams": 1,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "action",
+    "removedUrls": [],
+    "preservedOriginalUrls": 5,
+    "diagrams": 7,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  },
+  {
+    "key": "openai",
+    "removedUrls": [],
+    "preservedOriginalUrls": 0,
+    "diagrams": 0,
+    "changedDiagrams": 0,
+    "preservedXEmbeds": 0
+  }
+]

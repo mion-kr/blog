@@ -1,0 +1,112 @@
+{
+  "status": "운영 반영 대기",
+  "source": "코디네이터/technical 담당자가 Doppler 운영 설정으로 BEGIN READ ONLY 조회한 공개 글 원문 JSON",
+  "contentFormat": "전체 MDX 본문, frontmatter 없음, 개정본 줄바꿈 LF",
+  "preserve": "본문 외 제목·slug·요약·커버·발행일·작성일·작성자·카테고리·태그·공개 상태 보존; updatedAt은 실제 저장 시각, viewCount는 자연 증가 가능",
+  "posts": [
+    {
+      "key": "lock",
+      "slug": "aiga-mandeun-bigwanjeok-jamgeumi-bulanhaessda",
+      "title": "AI가 만든 비관적 잠금이 불안했다",
+      "url": "https://mion-space.dev/posts/aiga-mandeun-bigwanjeok-jamgeumi-bulanhaessda",
+      "publishedAt": "2026-08-11T02:11:02.562",
+      "originalContentSha256": "f9270461011cef953f54aaeeffafe2fbaf9b95f7a9f20edad01198c5bbeb7de4",
+      "revisedContentSha256": "31ed62d29aec1433f147f786522b897db24d48d4f1e2cb301a1e949736bdd5c5",
+      "revisedFile": "aiga-mandeun-bigwanjeok-jamgeumi-bulanhaessda.mdx",
+      "diffFile": "diffs/aiga-mandeun-bigwanjeok-jamgeumi-bulanhaessda.diff",
+      "originalCharacters": 15103,
+      "revisedCharacters": 16197
+    },
+    {
+      "key": "aws",
+      "slug": "awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda",
+      "title": "AWS에서 직접 만들던 테스트 환경이 PR 하나로 생겼다",
+      "url": "https://mion-space.dev/posts/awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda",
+      "publishedAt": "2026-08-23T17:51:58.424",
+      "originalContentSha256": "21d70a3ba3683445787e2768992c56219a1a2ed9f282dad65e142cb11978152e",
+      "revisedContentSha256": "8dfb3883d895d2aa90540a7ae58a37fa0fa4b5de018a4e522885f9825d706c29",
+      "revisedFile": "awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda.mdx",
+      "diffFile": "diffs/awseseo-jikjeop-mandeuldeon-teseuteu-hwangyeongi-pr-hanaro-saenggyeossda.diff",
+      "originalCharacters": 7448,
+      "revisedCharacters": 8503
+    },
+    {
+      "key": "design",
+      "slug": "bokjapseongeul-eopaeneun-euntanhwaneun-eopda-geuraeseo-seolgyeeneun-iyuga-pilyohada",
+      "title": "복잡성을 없애는 은탄환은 없다: 그래서 설계에는 ‘이유’가 필요하다.",
+      "url": "https://mion-space.dev/posts/bokjapseongeul-eopaeneun-euntanhwaneun-eopda-geuraeseo-seolgyeeneun-iyuga-pilyohada",
+      "publishedAt": "2026-01-12T06:12:07.885",
+      "originalContentSha256": "8ab59e75824379918fe1812948e80869ae34a8ecb38349517bae0cd9f8f01bb9",
+      "revisedContentSha256": "f0add2bc6561bea2803e3335a5e05aab8eb754f3c5b02f514b63d0f64562f2de",
+      "revisedFile": "bokjapseongeul-eopaeneun-euntanhwaneun-eopda-geuraeseo-seolgyeeneun-iyuga-pilyohada.mdx",
+      "diffFile": "diffs/bokjapseongeul-eopaeneun-euntanhwaneun-eopda-geuraeseo-seolgyeeneun-iyuga-pilyohada.diff",
+      "originalCharacters": 2222,
+      "revisedCharacters": 3178
+    },
+    {
+      "key": "astra",
+      "slug": "gpt-6-astraro-eodikkaji-mandeulkka-blenderbuteo-mac-aepkkaji-se-saramui-gyeolgwamul",
+      "title": "GPT-6 Astra로 어디까지 만들까? Blender부터 Mac 앱까지, 세 사람의 결과물",
+      "url": "https://mion-space.dev/posts/gpt-6-astraro-eodikkaji-mandeulkka-blenderbuteo-mac-aepkkaji-se-saramui-gyeolgwamul",
+      "publishedAt": "2026-09-05T01:35:19.007",
+      "originalContentSha256": "238a26dfad743ea418c4175bf985cc8d754ff654bbd35cfb46bf35ed38ad8f2d",
+      "revisedContentSha256": "4fdf2c701477d0d5dcc89a6d026193647dbe30d2c629c045ca3c542ab3e76ad7",
+      "revisedFile": "gpt-6-astraro-eodikkaji-mandeulkka-blenderbuteo-mac-aepkkaji-se-saramui-gyeolgwamul.mdx",
+      "diffFile": "diffs/gpt-6-astraro-eodikkaji-mandeulkka-blenderbuteo-mac-aepkkaji-se-saramui-gyeolgwamul.diff",
+      "originalCharacters": 3304,
+      "revisedCharacters": 4303
+    },
+    {
+      "key": "timezone",
+      "slug": "haeoe-yeyakui-sigandae-seolgye-utc-jeojangbuteo-hyeonji-sigak-bojonkkaji",
+      "title": "해외 예약의 시간대 설계: UTC 저장부터 현지 시각 보존까지",
+      "url": "https://mion-space.dev/posts/haeoe-yeyakui-sigandae-seolgye-utc-jeojangbuteo-hyeonji-sigak-bojonkkaji",
+      "publishedAt": "2026-09-09T21:24:16.837",
+      "originalContentSha256": "342cbefde1dcba98b0111124c3ce1e3780d252269cc086fa42e416edc4728af4",
+      "revisedContentSha256": "adcf83d0d0ba497b9d68ed8f04416e6a88593b50952eb243867aae109df29ed1",
+      "revisedFile": "haeoe-yeyakui-sigandae-seolgye-utc-jeojangbuteo-hyeonji-sigak-bojonkkaji.mdx",
+      "diffFile": "diffs/haeoe-yeyakui-sigandae-seolgye-utc-jeojangbuteo-hyeonji-sigak-bojonkkaji.diff",
+      "originalCharacters": 6426,
+      "revisedCharacters": 8001
+    },
+    {
+      "key": "grpc",
+      "slug": "isyu-grpcro-guseongdoen-maikeuroseobiseuui-teuraepik-pyeonhyang-balsaeng",
+      "title": "[이슈] Grpc로 구성된 마이크로서비스의 트래픽 편향 발생",
+      "url": "https://mion-space.dev/posts/isyu-grpcro-guseongdoen-maikeuroseobiseuui-teuraepik-pyeonhyang-balsaeng",
+      "publishedAt": "2025-10-27T04:24:40.204",
+      "originalContentSha256": "7ff5bc2f4a4eeb7b4d45e61c1955679c65cc7737367b43dc14905c3cf26b7fd5",
+      "revisedContentSha256": "a6956d39ff73bd2d3b665b71a718a23245a38d1e70fee1d9295b40cea027496f",
+      "revisedFile": "isyu-grpcro-guseongdoen-maikeuroseobiseuui-teuraepik-pyeonhyang-balsaeng.mdx",
+      "diffFile": "diffs/isyu-grpcro-guseongdoen-maikeuroseobiseuui-teuraepik-pyeonhyang-balsaeng.diff",
+      "originalCharacters": 3662,
+      "revisedCharacters": 4754
+    },
+    {
+      "key": "action",
+      "slug": "nextjs-server-actioneun-apiwa-mueosi-dareulkka",
+      "title": "Next.js Server Action은 API와 무엇이 다를까?",
+      "url": "https://mion-space.dev/posts/nextjs-server-actioneun-apiwa-mueosi-dareulkka",
+      "publishedAt": "2026-08-23T15:32:33.302",
+      "originalContentSha256": "ee195387f0bdbd56125e05152d67edda0b1888d39ff28faee792afd9d049c310",
+      "revisedContentSha256": "2679d0720f432ba0469e2b61629fb5dae3c43eb0d896afbc68e94e45ec029a04",
+      "revisedFile": "nextjs-server-actioneun-apiwa-mueosi-dareulkka.mdx",
+      "diffFile": "diffs/nextjs-server-actioneun-apiwa-mueosi-dareulkka.diff",
+      "originalCharacters": 11084,
+      "revisedCharacters": 12562
+    },
+    {
+      "key": "openai",
+      "slug": "openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna",
+      "title": "OpenAI는 어떻게 PostgreSQL 하나로 8억 명을 감당했나",
+      "url": "https://mion-space.dev/posts/openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna",
+      "publishedAt": "2026-03-04T09:33:07.296",
+      "originalContentSha256": "41d0b09ecad49b2dcd26bf1af3c1b387e2e929700276bcab50cbf56cf7eb835b",
+      "revisedContentSha256": "e2c8cdb78f0501faaa202f751ae9612a8bfdc8b31501e875d95a863aaa40823d",
+      "revisedFile": "openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna.mdx",
+      "diffFile": "diffs/openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna.diff",
+      "originalCharacters": 5650,
+      "revisedCharacters": 8338
+    }
+  ]
+}
