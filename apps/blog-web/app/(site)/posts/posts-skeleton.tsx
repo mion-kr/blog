@@ -16,7 +16,7 @@ export function PostsPageSkeleton() {
       <div className="page-hero">
         <div className="page-hero-content">
           <h1>All Technical Stories</h1>
-          <p>실무에서 쌓아온 개발 경험과 기술적 깨달음을 정리한 모든 글들을 여기에 있습니다.</p>
+          <p>개발 과정에서 배운 점과 기술 자료를 정리한 글을 모았습니다.</p>
         </div>
       </div>
 

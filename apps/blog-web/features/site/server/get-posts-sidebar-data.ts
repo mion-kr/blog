@@ -18,7 +18,7 @@ export async function getPostsSidebarData(): Promise<PostsSidebarData> {
 
   const categories =
     categoriesResult.status === "fulfilled" && isSuccessResponse(categoriesResult.value)
-      ? categoriesResult.value.data ?? []
+      ? (categoriesResult.value.data ?? []).filter((category) => category.postCount > 0)
       : []
   const tags =
     tagsResult.status === "fulfilled" && isSuccessResponse(tagsResult.value)
