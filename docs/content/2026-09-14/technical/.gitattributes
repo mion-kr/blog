@@ -1,0 +1,2 @@
+# 운영 원문 스냅샷의 줄바꿈과 공백을 그대로 보존합니다.
+*.original.mdx -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
