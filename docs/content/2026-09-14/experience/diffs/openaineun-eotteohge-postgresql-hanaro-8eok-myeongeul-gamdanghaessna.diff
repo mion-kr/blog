@@ -1,0 +1,117 @@
+--- original/openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna.mdx
++++ revised/openaineun-eotteohge-postgresql-hanaro-8eok-myeongeul-gamdanghaessna.mdx
+@@ -1,14 +1,16 @@
+ ## 개요
+ 
+-ChatGPT 출시 이후 OpenAI의 PostgreSQL 부하는 1년 만에 10배 이상 증가했습니다. 일반적인 상식대로라면 이 규모에서는 데이터베이스를 샤딩하거나 분산 DB로 이전해야 합니다. OpenAI는 다른 길을 택했습니다.
+-
+-단일 Azure PostgreSQL Flexible Server Primary + 전 세계 여러 리전에 분산된 약 50개의 Read Replica만으로, 초당 수백만 QPS를 처리하며 8억 명의 사용자를 지원하고 있습니다. 이 글은 그 과정에서 겪은 문제들과 해결책, 그리고 PostgreSQL의 고질적인 약점인 MVCC까지 함께 다룹니다.
++이 글은 Bohan Zhang이 2026년 1월 22일 공개한 [OpenAI의 PostgreSQL 확장 사례](https://openai.com/index/scaling-postgresql/)를 읽고 정리한 글입니다. 사용자 수·처리량·장애·지연 수치는 원문의 발표 시점과 측정 범위에 속하며, 제가 해당 인프라를 운영하거나 같은 규모를 재현한 결과는 아닙니다. 아래의 ‘현재’와 ‘개발 중’도 그 발표 시점을 가리킵니다.
++
++ChatGPT 출시 이후 OpenAI의 PostgreSQL 부하는 1년 만에 10배 이상 증가했습니다. 사용자 수만으로 샤딩 필요성을 결정할 수는 없습니다. OpenAI는 읽기 중심의 기존 부하를 최적화하면서 쓰기 중심 부하 일부를 다른 시스템으로 옮겼다고 설명합니다.
++
++단일 Azure PostgreSQL Flexible Server Primary + 전 세계 여러 리전에 분산된 약 50개의 Read Replica를 중심으로, 초당 수백만 QPS를 처리하며 8억 명의 사용자를 지원하고 있습니다. 이 글은 그 과정에서 겪은 문제들과 해결책, 그리고 PostgreSQL의 고질적인 약점인 MVCC까지 함께 다룹니다.
+ 
+ ---
+ 
+ ## 왜 샤딩을 안 했나?
+ 
+-현재 PostgreSQL은 샤딩되지 않은 상태이며, 단일 Primary가 PostgreSQL로 들어오는 모든 쓰기를 처리합니다. 이는 전략적 선택이 아니라 현실적 제약입니다.
++현재 PostgreSQL은 샤딩되지 않은 상태이며, 단일 Primary가 PostgreSQL로 들어오는 모든 쓰기를 처리합니다. 원문이 든 이유는 기존 애플리케이션을 바꾸는 비용과 읽기 중심 부하에서 아직 확보한 여유입니다. 단일 DB 인스턴스 하나가 OpenAI의 모든 데이터 처리를 담당한다는 의미는 아닙니다.
+ 
+ 기존 워크로드를 샤딩하려면 수백 개의 애플리케이션 엔드포인트 변경이 필요하고 수개월~수년이 걸릴 수 있습니다. 다만:
+ 
+@@ -21,39 +23,41 @@
+ 
+ ## PostgreSQL의 고질적 약점 — MVCC
+ 
+-OpenAI가 겪은 많은 문제의 근본 원인 중 하나는 PostgreSQL의 MVCC(Multi-Version Concurrency Control) 구현 방식입니다. Bohan Zhang과 CMU Andy Pavlo 교수가 공동 작성한 글에서 이를 상세히 다룹니다.
++OpenAI가 겪은 많은 문제의 근본 원인 중 하나는 PostgreSQL의 MVCC(Multi-Version Concurrency Control) 구현 방식입니다. Bohan Zhang과 CMU Andy Pavlo 교수가 공동 작성한 [The Part of PostgreSQL We Hate the Most](https://www.cs.cmu.edu/~pavlo/blog/2023/04/the-part-of-postgresql-we-hate-the-most.html)는 이 비용을 비판적으로 분석합니다. 이 절은 해당 글과 PostgreSQL 문서의 설명을 함께 정리한 것입니다.
+ 
+ ### MVCC란?
+ 
+-MVCC의 핵심 아이디어는 간단합니다. 데이터를 수정할 때 기존 행을 덮어쓰지 않고 새로운 버전을 복사해서 만드는 것입니다. 덕분에 읽기 쿼리가 쓰기 쿼리에 의해 블로킹되지 않습니다. 하지만 PostgreSQL의 구현 방식은 다른 DBMS와 비교했을 때 몇 가지 심각한 문제를 안고 있습니다.
++MVCC의 핵심 아이디어는 간단합니다. 데이터를 수정할 때 기존 행을 덮어쓰지 않고 새로운 버전을 복사해서 만드는 것입니다. 덕분에 일반적인 조회와 행 갱신의 경합을 줄일 수 있습니다. 명시적으로 행을 잠그는 조회나 강한 테이블 잠금까지 대기하지 않는다는 뜻은 아닙니다. 하지만 PostgreSQL의 구현 방식은 다른 DBMS와 비교했을 때 몇 가지 심각한 문제를 안고 있습니다.
+ 
+ ### 문제 1: 버전 전체 복사 (Version Copying)
+ 
+-단 1개 컬럼만 수정해도 행 전체를 복사해서 새 버전을 만듭니다. 1,000개 컬럼이 있는 테이블에서 컬럼 하나를 바꿔도 1,000개 컬럼이 모두 새 버전으로 복사됩니다.
+-
+-반면 MySQL과 Oracle은 변경된 부분만 저장하는 델타(diff) 방식을 사용합니다. 훨씬 효율적입니다.
++일부 컬럼만 바꾸더라도 새 행 버전을 만들기 때문에 쓰기 비용이 커질 수 있습니다. 다만 변경하지 않은 외부 TOAST 값은 재사용할 수 있으므로, 모든 컬럼의 큰 데이터까지 항상 복사한다고 해석하면 안 됩니다. [PostgreSQL TOAST 문서](https://www.postgresql.org/docs/current/storage-toast.html)가 이 동작을 설명합니다.
++
++CMU 글은 MySQL·Oracle의 이전 버전 보관 방식을 비교합니다. 이 차이가 특정 쓰기의 비용을 줄일 수는 있지만 전체 성능의 우열은 부하와 인덱스 구성에 따라 별도로 측정해야 합니다.
+ 
+ ### 문제 2: 테이블 비대화 (Table Bloat)
+ 
+-삭제된 구버전(Dead Tuple)이 테이블에 그대로 쌓입니다. Live 튜플 10GB + Dead 튜플 40GB라면 Full Scan 시 50GB 전체를 읽어야 합니다.
+-
+-일반 `VACUUM`으로는 Dead Tuple을 제거해도 디스크 공간이 반환되지 않습니다. 공간 반환을 위해서는 `VACUUM FULL` 또는 `pg_repack`이 필요한데, 이는 테이블 전체를 재작성하는 매우 부담스러운 작업입니다.
++회수할 수 있는 구버전(Dead Tuple)이 쌓이면 테이블이 커지고 스캔 비용도 증가할 수 있습니다. 기존의 ‘유효 데이터 10GB와 구버전 40GB’는 비대화 설명을 위한 가정이며 실제 측정값이 아닙니다. 실제 읽기량은 저장 페이지, 실행 계획과 캐시 상태를 함께 확인해야 합니다.
++
++일반 `VACUUM`은 회수한 공간을 주로 테이블 내부에서 재사용하게 합니다. 테이블 끝의 빈 페이지를 반환하는 예외가 있으므로 OS에 공간을 전혀 반환하지 않는다고 단정할 수는 없습니다. 테이블을 축소하는 `VACUUM FULL`은 재작성과 강한 잠금이 필요합니다. `pg_repack` 같은 재구성 도구도 별도 실행 조건을 검토해야 합니다. [PostgreSQL VACUUM 문서](https://www.postgresql.org/docs/current/routine-vacuuming.html)를 기준으로 구분할 수 있습니다.
+ 
+ ### 문제 3: 인덱스 유지 비용 (Secondary Index Maintenance)
+ 
+-행 하나를 업데이트하면 해당 테이블의 모든 인덱스를 다 갱신해야 합니다. HOT(Heap-Only Tuple) 최적화로 약 46%의 업데이트는 이 비용을 피할 수 있지만, 나머지 54%는 그대로 부담합니다.
+-
+-이것이 바로 Uber가 2016년 PostgreSQL에서 MySQL로 전환한 이유입니다. 쓰기가 많고 인덱스가 많은 테이블에서 성능 문제가 심각했기 때문입니다.
++새 행 버전에 맞춘 인덱스 유지 비용은 HOT(Heap-Only Tuple) 조건이 맞을 때 줄어듭니다. 약 46%는 CMU 글이 분석한 OtterTune 고객 데이터베이스의 평균이며, 모든 PostgreSQL 설치나 OpenAI의 비율이 아닙니다. 나머지 약 54%라는 값도 같은 표본에 한정됩니다. [공식 HOT 문서](https://www.postgresql.org/docs/current/storage-hot.html)의 조건과 내 테이블의 통계를 먼저 확인해야 합니다.
++
++[Uber의 2016년 전환 기록](https://www.uber.com/blog/postgres-to-mysql-migration/)도 쓰기와 인덱스 비용을 설명합니다. 그 당시 부하와 버전의 사례이므로 오늘의 모든 서비스가 같은 결정을 해야 한다는 근거로 사용하지는 않겠습니다.
+ 
+ ### 문제 4: Autovacuum 관리 어려움
+ 
+-Autovacuum 기본 설정은 테이블의 20%가 업데이트된 후에야 작동합니다. 1억 개 행 테이블이라면 2,000만 개가 변경될 때까지 Dead Tuple이 쌓입니다.
++기본 비율 설정인 `autovacuum_vacuum_scale_factor`는 0.2이지만 이것만으로 실행 시점을 설명할 수는 없습니다. 기본 임계값, 테이블별 설정, 버전에 따른 최대 임계값, 삽입·트랜잭션 ID 순환 방지 조건 등을 함께 봐야 합니다. 기존의 ‘1억 행에서 약 2,000만 변경’은 비율을 설명한 단순 계산이지 모든 환경의 실행 시점이 아닙니다. [PostgreSQL 자동 VACUUM 설정](https://www.postgresql.org/docs/current/runtime-config-vacuum.html)을 사용 버전에 맞춰 확인해야 합니다.
+ 
+ 오래 실행되는 트랜잭션이 Autovacuum을 차단하면 Dead Tuple이 계속 쌓이고, 이는 더 느린 쿼리를 만들어 다시 Autovacuum을 막는 악순환이 발생합니다.
+ 
+ ---
+ 
+ ## OpenAI가 직면한 문제들과 해결책
++
++이하 아홉 항목은 [OpenAI 원문의 최적화 과정](https://openai.com/index/scaling-postgresql/) 요약입니다. 설정값과 정책을 일반 권장값으로 옮기지 않도록 주의해야 합니다.
+ 
+ ### 1. Primary 부하 집중
+ 
+@@ -156,6 +160,8 @@
+ ---
+ 
+ ## 결과
++
++아래 표는 [OpenAI가 발표한 결과](https://openai.com/index/scaling-postgresql/)입니다. 약 50개 복제본을 운영한 해당 구성의 관측치이며, 단일 인스턴스의 보장 성능이나 제 서비스의 측정 결과가 아닙니다.
+ 
+ | 지표 | 수치 |
+ |------|------|
+@@ -168,6 +174,23 @@
+ 
+ ---
+ 
++## 내 서비스에 가져올 것과 그대로 따라 하지 않을 것
++
++이 사례에서 내가 먼저 가져오고 싶은 것은 복제본의 개수보다 **어떤 부하를 주 서버에서 덜어냈는지 확인하는 순서**입니다. 읽기 비중이 높다는 말도 API 요청 횟수만으로 판단하기 어렵습니다. 한 요청이 실행하는 SQL 수와 비용, 쓰기 트랜잭션 안의 조회, 재시도까지 함께 봐야 합니다.
++
++예약 서비스를 검토한다면 다음처럼 기능별 요구를 나누겠습니다. 이는 OpenAI의 설정이 아니라 이 사례를 읽고 세운 적용 기준입니다.
++
++| 기능의 요구 | 먼저 검토할 것 | 그대로 복제하면 생길 수 있는 문제 |
++| --- | --- | --- |
++| 공개 상품 목록 조회 | 허용 가능한 데이터 지연과 캐시 만료 | 갱신 직후에도 예전 가격이나 재고가 보일 수 있음 |
++| 방금 만든 예약 확인 | 쓰기 직후 읽기에서 최신 결과가 필요한지 | 복제 지연 때문에 예약이 없는 것처럼 보일 수 있음 |
++| 마지막 좌석 확정 | 쓰기 트랜잭션·조건부 갱신·제약 조건 | 읽기 복제본을 늘려도 동일 좌석의 쓰기 경쟁은 해결되지 않음 |
++| 일괄 데이터 보정 | 요청 지연과 DB 부하를 보며 작업 속도 제한 | 평소 빠른 작업이 피크 시간의 쓰기 여유를 소진할 수 있음 |
++
++조인이 많다는 이유만으로 애플리케이션으로 옮기지는 않겠습니다. 먼저 생성된 SQL과 실행 계획을 확인하고, 나눴을 때 쿼리 횟수·전송량·일관성 비용이 늘어나는지 비교해야 합니다. 커넥션 풀링도 트랜잭션 단위로 연결이 바뀌어도 안전한지 확인한 뒤 선택할 문제입니다. [PgBouncer 기능 호환 표](https://www.pgbouncer.org/features.html)는 풀링 모드별 세션 기능의 제약을 구분합니다.
++
++따라서 이 글의 숫자를 용량 산정표로 사용하기보다는, 내 서비스에서 비싼 쿼리와 중복 쓰기를 먼저 찾는 질문 목록으로 쓰는 편이 낫겠습니다. 복제 지연·쓰기 지연·연결 대기·캐시 실패 시 부하를 측정하지 않은 상태에서는 “사용자가 몇 명까지면 샤딩이 필요 없다”는 기준을 정할 수 없습니다.
++
+ ## 핵심 교훈
+ 
+ 1. **읽기 집약적 워크로드라면** 단일 Primary PostgreSQL은 생각보다 훨씬 멀리 갈 수 있다.
+@@ -178,4 +201,6 @@
+ 
+ ---
+ 
+-*참고: OpenAI 공식 블로그 "8억 명의 ChatGPT 사용자를 지원하기 위한 PostgreSQL 확장" (Bohan Zhang), CMU Andy Pavlo & Bohan Zhang "The Part of PostgreSQL We Hate the Most"*+*참고: [OpenAI의 PostgreSQL 확장 사례](https://openai.com/index/scaling-postgresql/) (Bohan Zhang), [The Part of PostgreSQL We Hate the Most](https://www.cs.cmu.edu/~pavlo/blog/2023/04/the-part-of-postgresql-we-hate-the-most.html) (Andy Pavlo & Bohan Zhang)*
++
++2026-09-14 보완: 원문 링크와 수치의 범위, PostgreSQL 동작의 조건과 자체 적용 기준을 보완했습니다.

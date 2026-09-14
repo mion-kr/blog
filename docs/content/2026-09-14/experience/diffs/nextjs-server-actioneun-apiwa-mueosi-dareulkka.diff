@@ -1,0 +1,90 @@
+--- original/nextjs-server-actioneun-apiwa-mueosi-dareulkka.mdx
++++ revised/nextjs-server-actioneun-apiwa-mueosi-dareulkka.mdx
+@@ -154,7 +154,9 @@
+ 
+ Server Action은 서버에서 실행되는 비동기 함수다.
+ 
+-함수 내부나 파일 상단에 `"use server"`를 선언한다.
++함수 내부나 파일 상단에 `"use server"`를 선언한다. [Next.js 변경 작업 문서](https://nextjs.org/docs/app/getting-started/mutating-data)는 이 서버 함수를 폼이나 이벤트에 연결하는 방식을 설명한다.
++
++아래 DB 예제는 호출 구조에 집중하기 위해 인증과 권한 구현을 생략했다. 실제 공개 쓰기 기능에서는 서버가 현재 사용자를 확인한 뒤 실행해야 한다.
+ 
+ ```ts
+ // app/posts/actions.ts
+@@ -164,7 +166,11 @@
+ import { db } from "@/lib/db";
+ 
+ export async function createPost(formData: FormData) {
+-  const title = String(formData.get("title") ?? "").trim();
++  const rawTitle = formData.get("title");
++  if (typeof rawTitle !== "string") {
++    throw new TypeError("제목은 문자열이어야 합니다.");
++  }
++  const title = rawTitle.trim();
+ 
+   if (!title) {
+     throw new Error("제목을 입력해주세요.");
+@@ -258,8 +264,16 @@
+ import { db } from "@/lib/db";
+ 
+ export async function POST(request: Request) {
+-  const body = await request.json();
+-  const title = String(body.title ?? "").trim();
++  let body;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ message: "올바른 JSON이 필요합니다." }, { status: 400 });
++  }
++  if (typeof body !== "object" || body === null || Array.isArray(body) || typeof body.title !== "string") {
++    return NextResponse.json({ message: "제목은 문자열이어야 합니다." }, { status: 400 });
++  }
++  const title = body.title.trim();
+ 
+   if (!title) {
+     return NextResponse.json(
+@@ -439,6 +453,37 @@
+ 
+ 클라이언트가 전달한 사용자 식별자나 권한 값을 그대로 믿어서는 안 된다. 서버가 현재 세션과 데이터베이스를 기준으로 다시 확인해야 한다.
+ 
++## 입력 검증은 호출 방식보다 먼저: 문자열 변환의 함정
++
++앞의 글 작성 코드는 호출 경로를 보여주기 위해 DB 연결과 인증 구현을 생략한 예제다. 그대로 공개 쓰기 기능에 붙이기 전에 현재 세션의 권한과 입력을 검사해야 한다. [Next.js 데이터 보안 문서](https://nextjs.org/docs/app/guides/data-security)도 Server Action을 공개 HTTP 진입점처럼 취급하고 각 함수에서 권한을 확인하라고 설명한다.
++
++여기서 작은 차이 하나를 직접 확인했다. `String(formData.get("title"))`는 파일도 문자열로 바꾸므로 “비어 있지 않다”는 검사만으로 제목을 검증할 수 없다. JSON으로 받는 API도 숫자를 문자열로 자동 변환하면 의도하지 않은 입력을 허용할 수 있다.
++
++이번 수정에서는 Node.js v24.9.0의 실제 `FormData`와 `File`을 사용해 다음 함수를 실행했다. 별도 패키지는 필요 없다.
++
++```js
++function parseTitle(value) {
++  if (typeof value !== 'string') {
++    throw new TypeError('제목은 문자열이어야 합니다.');
++  }
++  const title = value.trim();
++  if (!title) throw new Error('제목을 입력해주세요.');
++  return title;
++}
++
++const form = new FormData();
++form.set('title', '  검증 예제  ');
++console.log(parseTitle(form.get('title'))); // 검증 예제
++
++form.set('title', new File(['본문'], 'title.txt'));
++console.log(String(form.get('title'))); // [object File]
++parseTitle(form.get('title')); // TypeError
++```
++
++문자열은 공백 제거 후 반환됐고, 누락값·숫자·파일·공백 문자열은 검사에서 거절됐다. Server Action에서는 `formData.get('title')`, JSON API에서는 파싱한 객체의 `title`을 같은 규칙으로 검증할 수 있다. API 쪽은 잘못된 JSON과 객체가 아닌 본문도 별도로 처리해야 한다.
++
++이 실행은 **입력 검증 함수의 결과**를 확인한 것이다. Next.js의 실제 Action 요청, 로그인, DB 저장, 캐시 갱신까지 검증한 결과는 아니다. 기능을 통합할 때는 로그아웃 상태의 호출과 다른 사용자의 데이터 변경이 각각 거절되는지 확인해야 한다. 호출 코드를 줄여도 그 책임은 줄어들지 않는다.
++
+ ## 큰 파일을 Server Action으로 업로드해야 할까?
+ 
+ 이미지처럼 큰 파일을 업로드할 때는 Server Action을 무조건 거치는 구조가 적합하지 않을 수 있다.
+@@ -489,4 +534,6 @@
+ - [Next.js Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers)
+ - [Next.js Data Fetching](https://nextjs.org/docs/app/getting-started/fetching-data)
+ - [Next.js Backend for Frontend](https://nextjs.org/docs/app/guides/backend-for-frontend)
+-- [Next.js Data Security](https://nextjs.org/docs/app/guides/data-security)+- [Next.js Data Security](https://nextjs.org/docs/app/guides/data-security)
++
++2026-09-14 보완: 입력 자료형 검증 예제와 실제 실행 범위를 보완했다.
