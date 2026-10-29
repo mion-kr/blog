@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "../components/providers";
@@ -14,6 +15,30 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   display: "swap",
 });
+// 페이퍼로지(SIL OFL 1.1, github.com/Freesentation/paperlogy). 라이선스: ./fonts/paperlogy/OFL license.txt
+const paperlogy = localFont({
+  src: [
+    { path: "./fonts/paperlogy/Paperlogy-1Thin.woff2", weight: "100", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-2ExtraLight.woff2", weight: "200", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-3Light.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-4Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-5Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-6SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-7Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-8ExtraBold.woff2", weight: "800", style: "normal" },
+    { path: "./fonts/paperlogy/Paperlogy-9Black.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-paperlogy",
+  display: "swap",
+  // 굵기 9개(한글 전체, 각 약 430KB)를 모두 preload하면 첫 화면에 약 4MB를 받으므로, 쓰는 굵기만 브라우저가 받게 둡니다.
+  preload: false,
+});
+const plexMono = IBM_Plex_Mono({
+  weight: "500",
+  subsets: ["latin"],
+  variable: "--font-plex-mono",
+  display: "swap",
+});
 
 const SITE_URL = getSiteUrl();
 export const metadata: Metadata = {
@@ -24,9 +49,6 @@ export const metadata: Metadata = {
   authors: [{ name: "Mion" }],
   creator: "Mion",
   applicationName: "미온 블로그",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({
@@ -41,7 +63,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${paperlogy.variable} ${plexMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <Providers>

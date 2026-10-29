@@ -6,11 +6,9 @@ import { PostsContent } from './posts-content';
 import { postsApi } from '@/lib/api-client';
 import { toPostSummaries } from '@/lib/posts/post-summary';
 import { buildPostsQueryKey, parsePostsSearchParams } from './query-utils';
-import { PostsNeonSidebar } from './posts-neon-sidebar';
+import { PostsSidebar } from './posts-sidebar';
 import { getPostsSidebarData } from '@/features/site/server/get-posts-sidebar-data';
-import styles from './posts-neon-grid.module.css';
-import { cn } from '@/lib/utils';
-import { NeonHeader } from '@/components/layout/neon-header';
+import styles from './posts.module.css';
 import { NOT_FOUND_METADATA } from '@/lib/notFoundMetadata';
 import type {
   ApiPaginationMeta,
@@ -123,7 +121,7 @@ export async function generateMetadata({
 }
 
 /**
- * Posts 목록 페이지(네온 그리드 테마)입니다.
+ * Posts 목록 페이지(Editorial 테마, MID-238 캔버스 `Posts`)입니다.
  */
 export default async function PostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = await searchParams;
@@ -158,35 +156,28 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   }
 
   return (
-    <div className={cn(styles.root, 'neon-grid-posts')}>
-      <div className="neon-grid-bg" aria-hidden="true" />
-
-      <NeonHeader activePath="/posts" />
-
-      <div className="page-hero">
-        <div className="page-hero-content">
-          <h1>All Technical Stories</h1>
-          <p>개발 과정에서 배운 점과 기술 자료를 정리한 글을 모았습니다.</p>
+    <main id="main" className={styles.root}>
+      <div className="page-head">
+        <div className="container">
+          <h1>포스트</h1>
         </div>
       </div>
 
-      <main id="main" className="container">
-        <div className="main-layout">
-          <div className="content-area">
-            <PostsContent
-              initialPosts={initialPosts}
-              initialMeta={initialMeta}
-              initialQuery={initialQuery}
-              initialError={initialError}
-            />
-          </div>
-          <PostsNeonSidebar
-            initialCategories={sidebarData.categories}
-            initialTags={sidebarData.tags}
+      <div className="container list-layout">
+        <div className="list-main">
+          <PostsContent
+            initialPosts={initialPosts}
+            initialMeta={initialMeta}
+            initialQuery={initialQuery}
+            initialError={initialError}
           />
         </div>
-      </main>
-    </div>
+        <PostsSidebar
+          initialCategories={sidebarData.categories}
+          initialTags={sidebarData.tags}
+        />
+      </div>
+    </main>
   );
 }
 

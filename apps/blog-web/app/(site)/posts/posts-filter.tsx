@@ -12,7 +12,7 @@ interface PostsFilterProps {
 }
 
 /**
- * 네온 posts 화면 전용 필터 바.
+ * posts 화면 필터 바.
  * - 검색 + 정렬만 제공하고, 카테고리/태그는 사이드바에서 필터링합니다.
  */
 export function PostsFilter({
@@ -52,39 +52,37 @@ export function PostsFilter({
   }, []);
 
   return (
-    <div className="filter-bar" role="group" aria-label="포스트 필터">
-      <div className="filter-row">
-        <div className="search-box">
-          <span className="search-icon" aria-hidden="true">
-            🔍
-          </span>
+    <>
+      <div className="filter" role="group" aria-label="포스트 필터">
+        <div className="field">
+          <label htmlFor="q">포스트 검색</label>
           <input
+            id="q"
             type="text"
-            className="search-input"
             value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="관심 있는 기술 키워드를 입력해보세요..."
-            aria-label="포스트 검색"
+            placeholder="관심 있는 기술 키워드를 입력해보세요…"
           />
         </div>
-
-        <select
-          className="filter-select"
-          value={currentSortPreset}
-          onChange={(e) => onSortPresetChange(e.target.value as SortPreset)}
-          aria-label="정렬"
-        >
-          <option value="latest">Latest Updates</option>
-          <option value="viewed">Most Viewed</option>
-          <option value="liked">Most Liked</option>
-        </select>
+        <div className="field">
+          <label htmlFor="sort">정렬</label>
+          <select
+            id="sort"
+            value={currentSortPreset}
+            onChange={(e) => onSortPresetChange(e.target.value as SortPreset)}
+          >
+            <option value="latest">Latest Updates</option>
+            <option value="viewed">Most Viewed</option>
+            <option value="liked">Most Liked</option>
+          </select>
+        </div>
       </div>
 
       {currentSortPreset === 'liked' && (
-        <div className="filter-note" role="status">
+        <p className="note" role="status">
           Most Liked는 준비 중이에요. 최신순으로 표시합니다.
-        </div>
+        </p>
       )}
-    </div>
+    </>
   );
 }

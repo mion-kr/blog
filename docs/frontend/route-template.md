@@ -19,6 +19,7 @@
 - MUST 브라우저 상호작용이 큰 UI는 client component로 분리합니다.
 - MUST 공통 UI는 `components/` 또는 `@repo/ui` 재사용 가능 형태로 둡니다.
 - MUST 새 기능 추가 시 테스트 추가 위치를 함께 결정합니다.
+- MUST 공개 `(site)` 페이지는 제목 영역을 포함한 본문을 `<main id="main">` 하나로 감쌉니다. 헤더·푸터는 `SiteChrome`이 렌더링하고, 화면 스타일은 route 가까운 CSS module의 `.root`에 둡니다.
 
 ## Must Not
 
