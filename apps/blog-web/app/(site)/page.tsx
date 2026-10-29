@@ -2,27 +2,25 @@ import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
-import { cva } from "class-variance-authority";
 
-import styles from "./home-neon-grid.module.css";
+import styles from "./home.module.css";
 
-import { NeonHeader } from "@/components/layout/neon-header";
 import { ApiError } from "@/lib/api-errors";
 import { categoriesApi, postsApi, tagsApi } from "@/lib/api-client";
 import { serializeJsonLd } from "@/lib/json-ld";
 import {
-  formatKoreanLongDate,
   formatKoreanMonthDay,
   formatKoreanNumericDate,
 } from "@/lib/date-format";
 import { toPostSummaries } from "@/lib/posts/post-summary";
 import { getSiteUrl } from "@/lib/site";
-import { cn } from "@/lib/utils";
 
 import type { PostSummary } from "@repo/shared";
 
 // 데이터 로딩 설정
-const LATEST_POSTS_LIMIT = 9;
+const RECENT_POSTS_LIMIT = 6;
+// 대표 글 1편 + 최근 글 목록
+const LATEST_POSTS_LIMIT = 1 + RECENT_POSTS_LIMIT;
 const TRENDING_POSTS_LIMIT = 5;
 const CATEGORY_LIMIT = 8;
 const TAG_LIMIT = 12;
@@ -35,6 +33,21 @@ const SITE_NAME = "미온 블로그";
 const HOME_TITLE = `${SITE_NAME} — AI로 만들고 배우기`;
 const HOME_DESCRIPTION =
   "AI를 활용해 아이디어를 구현하고, 직접 만들며 배운 경험을 기록합니다. 다양한 도구의 활용 사례부터 개발 과정의 시행착오, 완성한 결과물까지 공유합니다.";
+
+const TOPICS = [
+  {
+    title: "AI와 함께 만들기",
+    description: "코딩 에이전트에게 일을 나누고, 결과를 테스트와 리뷰로 확인하는 방법을 정리합니다.",
+  },
+  {
+    title: "설계와 인프라",
+    description: "AI로 아이디어를 구현하며 사용했던 설계와 인프라를 기록 합니다.",
+  },
+  {
+    title: "장애 기록",
+    description: "운영 중에 부딪힌 문제의 원인과 대응을 기록합니다.",
+  },
+] as const;
 
 type HomeData = {
   latestResponse: Awaited<ReturnType<typeof postsApi.getPosts>> | null;
@@ -94,18 +107,6 @@ export const metadata: Metadata = {
     },
   },
 };
-
-const neonButtonVariants = cva("btn", {
-  variants: {
-    variant: {
-      default: "",
-      primary: "btn-primary",
-    },
-  },
-  defaultVariants: {
-    variant: "default",
-  },
-});
 
 /**
  * 홈 데이터 로딩 에러가 재시도 가능한지 판별합니다.
@@ -258,8 +259,8 @@ const getCachedHomeData = unstable_cache(
 );
 
 /**
- * 홈 페이지(샘플 `sample-neon-grid.html` 1:1 포팅).
- * - 홈에서만 sample header/footer/배경을 직접 렌더링합니다.
+ * 홈 페이지(Editorial 테마, MID-238 캔버스 `Main`).
+ * - 헤더/푸터는 (site) SiteChrome이 렌더링합니다.
  * - 데이터(포스트/카테고리/태그)는 기존 API를 그대로 사용합니다.
  */
 export default async function HomePage() {
@@ -294,436 +295,217 @@ export default async function HomePage() {
   const tags = tagsResponse?.data ?? [];
 
   const featuredPost = latestPosts[0] ?? null;
-  const recentPosts = latestPosts.slice(1, 5);
+  const recentPosts = latestPosts.slice(1, 1 + RECENT_POSTS_LIMIT);
 
   const stats = {
     posts: latestResponse?.meta?.total ?? latestPosts.length,
     categories: categories.length,
     tags: tagsResponse?.meta?.total ?? tags.length,
-    lastUpdated: featuredPost ? new Date(featuredPost.publishedAt ?? featuredPost.createdAt) : undefined,
   };
   const homeJsonLd = buildHomeJsonLd(stats);
 
   return (
-    <div className={cn(styles.root, "neon-grid-home")}>
-      <div className="neon-grid-bg" aria-hidden="true" />
+    <main id="main" className={styles.root}>
       <script
         type="application/ld+json"
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(homeJsonLd) }}
       />
 
-      <NeonHeader activePath="/" />
+      <section className="masthead" aria-label="홈 히어로">
+        <div className="container masthead-in">
+          <h1>
+            백엔드에서
+            <br />
+            AI 빌더로
+          </h1>
+        </div>
+      </section>
 
-      <div className="container">
-        <section className="hero" aria-label="홈 히어로">
-          <div className="hero-grid">
-            <div className="hero-content">
-              <h1>AI로 만들고 배우기</h1>
-              <p>{HOME_DESCRIPTION}</p>
-              <p>미온의 AI 개발 경험을 담은 ‘미온 블로그’입니다.</p>
-              <div className="hero-actions">
-                <Link
-                  href="/posts"
-                  className={neonButtonVariants({ variant: "primary" })}
-                >
-                  포스트 보러가기 <span className="icon-arrow" aria-hidden="true" />
-                </Link>
-                <Link href="/about" className={neonButtonVariants({ variant: "default" })}>
-                  소개 보기
-                </Link>
-              </div>
-            </div>
+      <section className="front" aria-label="최근 글">
+        <div className="container front-in">
+          {featuredPost ? (
+            <LeadStory post={featuredPost} />
+          ) : (
+            <article className="lead-story">
+              <figure className="fig cover" data-slot="featured" />
+              <h2>아직 추천할 글이 없어요</h2>
+              <p>첫 글이 발행되면 여기에서 바로 확인할 수 있어요.</p>
+            </article>
+          )}
 
-            <div className="hero-stats" role="group" aria-label="블로그 통계">
-              <HeroStatCard value={formatNumber(stats.posts)} label="총 포스트" />
-              <HeroStatCard value={formatNumber(stats.categories)} label="카테고리" />
-              <HeroStatCard value={formatNumber(stats.tags)} label="태그" />
-              <HeroStatCard value={stats.lastUpdated ? formatKoreanNumericDate(stats.lastUpdated) : "작성 예정"} label="마지막 업데이트" />
+          <div className="latest">
+            <div className="latest-head">
+              <h2>최근 글</h2>
+              <Link className="edge-link" href="/posts">
+                최근 포스트 더 보기
+              </Link>
             </div>
+            <ol className="latest-list">
+              {recentPosts.map((post) => (
+                <LatestItem key={post.id} post={post} />
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {trendingPosts.length > 0 ? (
+        <section className="section" aria-labelledby="popular-h">
+          <div className="container">
+            <div className="head">
+              <h2 id="popular-h">인기 글</h2>
+            </div>
+            <table className="register">
+              <thead>
+                <tr>
+                  <th scope="col">순위</th>
+                  <th scope="col">제목</th>
+                  <th scope="col" className="views">
+                    조회
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {trendingPosts.map((post, index) => (
+                  <tr key={post.id}>
+                    <td className="rank num">{String(index + 1).padStart(2, "0")}</td>
+                    <td className="title">
+                      <Link href={`/posts/${post.slug}`}>{post.title}</Link>
+                    </td>
+                    <td className="views num">{formatNumber(post.viewCount)}회</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
+      ) : null}
 
-        <section className="landing-notes" aria-label="블로그 소개">
-          <SectionHeader
-            eyebrow="Overview"
-            title="이 블로그에서 다루는 것"
-            actionHref="/about"
-            actionLabel="운영 의도 보기"
-          />
-
-          <div className="landing-grid">
-            <LandingGuideCard
-              badge="01"
-              title="설계와 운영의 선택"
-              description="NestJS 기반 서비스 설계, API 구조, 데이터 흐름, 운영 중의 트레이드오프를 실무 맥락으로 정리합니다."
-            />
-            <LandingGuideCard
-              badge="02"
-              title="장애와 이슈 기록"
-              description="보안 이슈, 트래픽 편향, 배포 후 문제처럼 실제로 부딪힌 사례를 복기하고 대응 과정을 남깁니다."
-            />
-            <article className="landing-card">
-              <div className="landing-badge">03</div>
-              <h3>주제별로 바로 탐색하기</h3>
-              <p>
-                홈에서는 대표 글을 먼저 보고, 더 필요한 내용은 카테고리와 태그를 기준으로 바로 이어서 읽을 수 있어요.
-              </p>
-              {categories.length > 0 || tags.length > 0 ? (
-                <div className="landing-chips" role="group" aria-label="핵심 탐색 주제">
-                  {categories.slice(0, 3).map((category) => (
+      <section className="section" aria-labelledby="topics-h">
+        <div className="container topics">
+          <div>
+            <div className="head head--stack">
+              <h2 id="topics-h">이 블로그에서 다루는 것</h2>
+            </div>
+            <ul className="rows">
+              {TOPICS.map((topic) => (
+                <li key={topic.title}>
+                  <h3>{topic.title}</h3>
+                  <p>{topic.description}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <aside className="explore" aria-labelledby="explore-h">
+            <div className="head head--stack">
+              <h2 id="explore-h">주제로 찾기</h2>
+            </div>
+            <p className="explore-span">
+              지금까지 쓴 글 <span className="num">{formatNumber(stats.posts)}</span>편을
+              카테고리와 태그로 묶었습니다.
+            </p>
+            {categories.length > 0 ? (
+              <>
+                <h3>카테고리</h3>
+                <div className="chips">
+                  {categories.map((category) => (
                     <Link
                       key={category.id}
+                      className="chip"
                       href={`/posts?categorySlug=${category.slug}`}
-                      className="landing-chip"
                     >
                       {category.name}
-                    </Link>
-                  ))}
-                  {tags.slice(0, 3).map((tag) => (
-                    <Link
-                      key={tag.id}
-                      href={`/posts?tagSlug=${tag.slug}`}
-                      className="landing-chip landing-chip-tag"
-                    >
-                      #{tag.name}
+                      <span className="num">{formatNumber(category.postCount)}</span>
                     </Link>
                   ))}
                 </div>
-              ) : null}
-            </article>
-          </div>
-        </section>
-
-        <div className="main-grid">
-          <main id="main">
-            <section aria-label="추천 글">
-              <SectionHeader
-                eyebrow="Featured"
-                title="오늘의 추천"
-                actionHref="/posts"
-                actionLabel="전체 포스트 보기"
-              />
-
-              {featuredPost ? (
-                <FeaturedPost post={featuredPost} />
-              ) : (
-                <article className="featured-post">
-                  <div className="featured-cover">
-                    <div className="featured-cover-placeholder">Cover Image</div>
-                  </div>
-                  <div className="featured-meta">
-                    <span className="category-badge">
-                      <span className="dot" aria-hidden="true" />
-                      준비중
-                    </span>
-                    <span className="meta-item">
-                      <span className="icon-calendar" aria-hidden="true" /> 작성 예정
-                    </span>
-                    <span className="meta-item">
-                      <span className="icon-eye" aria-hidden="true" /> 0회
-                    </span>
-                  </div>
-                  <h3 className="featured-title">아직 추천할 글이 없어요</h3>
-                  <p className="featured-excerpt">첫 글이 발행되면 여기에서 바로 확인할 수 있어요.</p>
-                </article>
-              )}
-            </section>
-
-            <section aria-label="최근 글">
-              <SectionHeader eyebrow="Latest" title="최근 글" actionHref="/posts" actionLabel="최근 포스트 더 보기" />
-
-              <div className="posts-grid">
-                {recentPosts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-              </div>
-            </section>
-          </main>
-
-          <aside className="sidebar" aria-label="사이드바">
-            <div className="sidebar-card">
-              <h3 className="sidebar-title">
-                <span className="sidebar-title-icon icon-flame" aria-hidden="true" />
-                인기 글
-              </h3>
-              <div className="trending-list">
-                {trendingPosts.map((post, index) => (
-                  <TrendingItem key={post.id} post={post} rank={index + 1} />
-                ))}
-              </div>
-            </div>
-
-            <div className="sidebar-card">
-              <h3 className="sidebar-title">
-                <span className="sidebar-title-icon icon-compass" aria-hidden="true" />
-                탐색하기
-              </h3>
-              <div className="explore-section">
-                {categories.length > 0 && (
-                  <div className="explore-group">
-                    <div className="explore-label">
-                      <span className="icon-folder" aria-hidden="true" />
-                      카테고리
-                    </div>
-                    <div className="explore-chips">
-                      {categories.slice(0, 8).map((c) => (
-                        <Link
-                          key={c.id}
-                          href={`/posts?categorySlug=${c.slug}`}
-                          className="explore-chip explore-chip-category"
-                        >
-                          {c.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {tags.length > 0 && (
-                  <div className="explore-group">
-                    <div className="explore-label">
-                      <span className="icon-hash" aria-hidden="true" />
-                      태그
-                    </div>
-                    <div className="explore-chips">
-                      {tags.slice(0, 10).map((t) => (
-                        <Link
-                          key={t.id}
-                          href={`/posts?tagSlug=${t.slug}`}
-                          className="explore-chip explore-chip-tag"
-                        >
-                          #{t.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="sidebar-card">
-              <h3 className="sidebar-title">
-                <span className="sidebar-title-icon icon-chart" aria-hidden="true" />
-                블로그 현황
-              </h3>
-              <div className="quick-stats">
-                <div className="quick-stat">
-                  <div className="quick-stat-value">{formatNumber(stats.posts)}</div>
-                  <div className="quick-stat-label">글</div>
+              </>
+            ) : null}
+            {tags.length > 0 ? (
+              <>
+                <h3>태그</h3>
+                <div className="chips">
+                  {tags.slice(0, 10).map((tag) => (
+                    <Link key={tag.id} className="chip" href={`/posts?tagSlug=${tag.slug}`}>
+                      {tag.name}
+                    </Link>
+                  ))}
                 </div>
-                <div className="quick-stat">
-                  <div className="quick-stat-value">{formatNumber(stats.categories)}</div>
-                  <div className="quick-stat-label">분류</div>
-                </div>
-                <div className="quick-stat">
-                  <div className="quick-stat-value">{formatNumber(stats.tags)}</div>
-                  <div className="quick-stat-label">태그</div>
-                </div>
-              </div>
-              <div className="sidebar-divider" />
-              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                마지막 업데이트:{" "}
-                <span style={{ color: "var(--neon-cyan)" }}>
-                  {stats.lastUpdated ? formatKoreanLongDate(stats.lastUpdated) : "작성 예정"}
-                </span>
-              </div>
-            </div>
+              </>
+            ) : null}
           </aside>
         </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
 
 /**
- * 히어로 통계 카드.
+ * 가장 최근 글을 대표 글로 보여 줍니다.
  */
-function HeroStatCard({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="stat-card">
-      <div className="stat-value">{value}</div>
-      <div className="stat-label">{label}</div>
-    </div>
-  );
-}
-
-/**
- * 홈 랜딩 신호를 보강하는 안내 카드입니다.
- */
-function LandingGuideCard({
-  badge,
-  title,
-  description,
-}: {
-  badge: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <article className="landing-card">
-      <div className="landing-badge">{badge}</div>
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </article>
-  );
-}
-
-/**
- * 섹션 헤더(샘플 구조).
- */
-function SectionHeader({
-  eyebrow,
-  title,
-  actionHref,
-  actionLabel,
-}: {
-  eyebrow: string;
-  title: string;
-  actionHref: string;
-  actionLabel: string;
-}) {
-  return (
-    <div className="section-header">
-      <div className="section-title">
-        <div>
-          <div className="section-eyebrow">{eyebrow}</div>
-          <h2>{title}</h2>
-        </div>
-      </div>
-      <Link href={actionHref} className={neonButtonVariants({ variant: "default" })}>
-        {actionLabel} <span className="icon-arrow" aria-hidden="true" />
-      </Link>
-    </div>
-  );
-}
-
-/**
- * 추천(Featured) 포스트.
- */
-function FeaturedPost({ post }: { post: PostSummary }) {
+function LeadStory({ post }: { post: PostSummary }) {
   const href = `/posts/${post.slug}`;
-  const displayDate = post.publishedAt ?? post.createdAt;
 
   return (
-    <article className="featured-post">
-      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
-      <div className="featured-cover">
+    <article className="lead-story">
+      <figure className="fig cover" data-slot="featured">
         {post.coverImage ? (
           <Image
             src={post.coverImage}
-            alt={post.title}
+            alt=""
             fill
-            sizes="(max-width: 1024px) 100vw, 980px"
-            className="featured-cover-img"
+            sizes="(max-width: 960px) 100vw, 760px"
             priority
           />
-        ) : (
-          <div className="featured-cover-placeholder">Cover Image</div>
-        )}
-      </div>
-
-      <div className="featured-meta">
-        <Link
-          href={`/posts?categorySlug=${post.category.slug}`}
-          className="category-badge relative z-20"
-        >
-          <span className="dot" aria-hidden="true" />
+        ) : null}
+      </figure>
+      <div className="meta">
+        <Link className="tag" href={`/posts?categorySlug=${post.category.slug}`}>
           {post.category.name}
         </Link>
-        <span className="meta-item">
-          <span className="icon-calendar" aria-hidden="true" /> {formatKoreanLongDate(displayDate)}
-        </span>
-        <span className="meta-item">
-          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
-        </span>
+        <span className="num">{formatKoreanNumericDate(post.publishedAt ?? post.createdAt)}</span>
+        <span className="num">조회 {formatNumber(post.viewCount)}회</span>
       </div>
-
-      <h3 className="featured-title">
-        <Link href={href} className="relative z-20">{post.title}</Link>
-      </h3>
-
-      <p className="featured-excerpt">{post.excerpt}</p>
-
-      <div className="featured-footer">
-        <div className="tags">
+      <h2>
+        <Link href={href}>{post.title}</Link>
+      </h2>
+      {post.excerpt ? <p>{post.excerpt}</p> : null}
+      {post.tags.length > 0 ? (
+        <div className="chips">
           {post.tags.slice(0, 3).map((tag) => (
-            <Link
-              key={tag.id}
-              href={`/posts?tagSlug=${tag.slug}`}
-              className="tag relative z-20"
-            >
-              #{tag.name}
+            <Link key={tag.id} className="chip" href={`/posts?tagSlug=${tag.slug}`}>
+              {tag.name}
             </Link>
           ))}
         </div>
-        <Link
-          href={href}
-          className="read-more relative z-20"
-          aria-label={`${post.title} 읽기`}
-        >
-          읽기 <span className="icon-arrow" aria-hidden="true" />
-        </Link>
-      </div>
+      ) : null}
     </article>
   );
 }
 
 /**
- * 최근 글 카드.
+ * 최근 글 목록의 한 줄입니다. 제목 링크가 줄 전체를 덮습니다.
  */
-function PostCard({ post }: { post: PostSummary }) {
-  const href = `/posts/${post.slug}`;
-  const displayDate = post.publishedAt ?? post.createdAt;
-
+function LatestItem({ post }: { post: PostSummary }) {
   return (
-    <article className="post-card">
-      <Link href={href} className="absolute inset-0 z-10" aria-label={`${post.title} 상세 보기`} />
-      <div className="post-card-meta">
-        <Link
-          href={`/posts?categorySlug=${post.category.slug}`}
-          className="category-badge relative z-20"
-        >
-          <span className="dot" aria-hidden="true" />
-          {post.category.name}
-        </Link>
-        <span className="meta-item">{formatKoreanMonthDay(displayDate)}</span>
-      </div>
-      <h3 className="post-card-title">
-        <Link href={href} className="relative z-20">{post.title}</Link>
-      </h3>
-      <p className="post-card-excerpt">{post.excerpt}</p>
-      <div className="post-card-footer">
-        <span className="view-count">
-          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
-        </span>
-        <Link
-          href={href}
-          className="read-more relative z-20"
-          aria-label={`${post.title} 읽기`}
-        >
-          읽기 <span className="icon-arrow" aria-hidden="true" />
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-/**
- * 인기 글 행.
- */
-function TrendingItem({ post, rank }: { post: PostSummary; rank: number }) {
-  return (
-    <Link href={`/posts/${post.slug}`} className="trending-item">
-      <div className="trending-rank">{String(rank).padStart(2, "0")}</div>
-      <div className="trending-content">
-        <div className="trending-title">{post.title}</div>
-        <div className="trending-views">
-          <span className="icon-eye" aria-hidden="true" /> {formatNumber(post.viewCount)}회
+    <li>
+      <figure className="fig cover" data-slot="latest">
+        {post.coverImage ? (
+          <Image src={post.coverImage} alt="" fill sizes="136px" />
+        ) : null}
+      </figure>
+      <div>
+        <h3>
+          <Link href={`/posts/${post.slug}`}>{post.title}</Link>
+        </h3>
+        <div className="meta">
+          <span>{post.category.name}</span>
+          <span className="num">{formatKoreanMonthDay(post.publishedAt ?? post.createdAt)}</span>
+          <span className="num">조회 {formatNumber(post.viewCount)}회</span>
         </div>
       </div>
-    </Link>
+    </li>
   );
 }
 

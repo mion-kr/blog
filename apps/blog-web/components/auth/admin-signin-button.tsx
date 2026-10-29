@@ -38,7 +38,7 @@ export function AdminSignInButton({ callbackUrl }: AdminSignInButtonProps) {
       type="button"
       onClick={handleSignIn}
       disabled={loading}
-      className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 py-3 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
+      className="btn btn--primary"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LogIn className="h-4 w-4" aria-hidden />}
       {loading ? '로그인 진행 중...' : 'Google 계정으로 로그인'}

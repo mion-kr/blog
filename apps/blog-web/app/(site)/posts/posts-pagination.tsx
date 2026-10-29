@@ -13,8 +13,8 @@ interface PostsPaginationProps {
 }
 
 /**
- * 네온 posts 화면 전용 페이지네이션.
- * - 샘플 HTML의 시각 스타일을 유지하면서 실제 링크로 이동합니다.
+ * posts 화면 페이지네이션.
+ * - 이전/다음과 페이지 번호를 실제 링크로 이동합니다.
  */
 export function PostsPagination({
   currentPage,
@@ -71,44 +71,36 @@ export function PostsPagination({
   }
 
   return (
-    <nav className="pagination" aria-label="페이지네이션">
+    <nav className="pager" aria-label="페이지네이션">
       {hasPrev ? (
         <Link
           href={getPageHref(currentPage - 1)}
           prefetch={false}
           scroll={false}
-          className="page-btn"
-          aria-label="이전 페이지"
+          className="btn"
         >
-          ‹
+          이전
         </Link>
       ) : (
-        <span className="page-btn disabled" aria-disabled="true">
-          <span aria-hidden="true">‹</span>
-          <span className="sr-only">이전 페이지 없음</span>
+        <span className="btn" aria-disabled="true">
+          이전
         </span>
       )}
 
       {pageNumbers.map((page, index) => {
         if (page === 'ellipsis') {
           return (
-            <span key={`ellipsis-${index}`} className="page-btn disabled" aria-hidden="true">
+            <span key={`ellipsis-${index}`} className="btn" aria-disabled="true" aria-hidden="true">
               …
             </span>
           );
         }
 
-        const isCurrentPage = page === currentPage;
-
-        if (isCurrentPage) {
+        if (page === currentPage) {
           return (
-            <span
-              key={page}
-              className="page-btn active"
-              aria-current="page"
-            >
-              <span aria-hidden="true">{page}</span>
-              <span className="sr-only">페이지 {page}, 현재 페이지</span>
+            <span key={page} className="btn num" aria-current="page">
+              {page}
+              <span className="visually-hidden">, 현재 페이지</span>
             </span>
           );
         }
@@ -119,7 +111,7 @@ export function PostsPagination({
             href={getPageHref(page)}
             prefetch={false}
             scroll={false}
-            className="page-btn"
+            className="btn num"
             aria-label={`페이지 ${page}`}
           >
             {page}
@@ -132,15 +124,13 @@ export function PostsPagination({
           href={getPageHref(currentPage + 1)}
           prefetch={false}
           scroll={false}
-          className="page-btn"
-          aria-label="다음 페이지"
+          className="btn"
         >
-          ›
+          다음
         </Link>
       ) : (
-        <span className="page-btn disabled" aria-disabled="true">
-          <span aria-hidden="true">›</span>
-          <span className="sr-only">다음 페이지 없음</span>
+        <span className="btn" aria-disabled="true">
+          다음
         </span>
       )}
     </nav>

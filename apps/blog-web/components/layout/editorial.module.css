@@ -1,0 +1,494 @@
+/*
+ * Editorial 테마(Hallmark): 홈·포스트 목록·포스트 상세가 함께 쓰는 토큰, 기본 요소, 헤더·푸터, 공용 부품입니다.
+ * 기준: Claude Design 캔버스(MID-238)의 tokens.css·base.css·site.css. 페이지 전용 규칙은 각 route의 CSS module에 둡니다.
+ * 공용 규칙은 :where(.root)로 감싸 페이지 module 규칙이 항상 우선하게 합니다.
+ */
+.root {
+  color-scheme: light;
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 144px;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --text-display-s: clamp(2.25rem, 4vw + 0.5rem, 3.75rem);
+  --text-display: clamp(2.75rem, 5vw + 1rem, 5.25rem);
+  --text-section: clamp(2rem, 2.5vw + 1rem, 3.5rem);
+  --text-title: clamp(1.25rem, 0.75vw + 0.875rem, 1.625rem);
+  --text-lead: clamp(1.125rem, 0.35vw + 1rem, 1.375rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --color-error: oklch(52% 0.19 27);
+  --color-success: oklch(50% 0.12 150);
+  --container: 1440px;
+  --gutter: 64px;
+  --gap-columns: 32px;
+  --section-gap-s: 120px;
+  --section-gap: 144px;
+  --section-gap-l: 176px;
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-sticky-nav: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  --color-paper: oklch(97% 0.007 86);
+  --color-paper-2: oklch(94% 0.010 86);
+  --color-paper-3: oklch(91% 0.012 84);
+  --color-ink: oklch(16% 0.012 280);
+  --color-ink-2: oklch(29% 0.011 280);
+  --color-muted: oklch(48% 0.010 75);
+  --color-rule: oklch(85% 0.009 85);
+  --color-rule-2: oklch(64% 0.010 80);
+  --color-accent: oklch(49% 0.130 152);
+  --color-accent-ink: oklch(98% 0.005 88);
+  --color-focus: oklch(52% 0.135 152);
+  --font-display: var(--font-paperlogy), ui-sans-serif, sans-serif;
+  --font-body: var(--font-paperlogy), ui-sans-serif, sans-serif;
+  --font-code: var(--font-plex-mono), ui-monospace, monospace;
+  --color-warning: oklch(58% 0.13 70);
+  --color-danger: oklch(52% 0.19 27);
+  --font-head: var(--font-paperlogy), ui-sans-serif, sans-serif;
+  --radius-card: 0;
+  --radius-pill: 0;
+  --rule-hair: 1px;
+  --rule-heavy: 4px;
+  --shadow-card: none;
+  --tracking-display: -0.012em;
+  --display-weight: 800;
+}
+.root {
+  overflow-x: clip;
+}
+.root {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-accent);
+}
+:where(.root) :global(::selection) {
+  background: color-mix(in oklab, var(--color-accent) 22%, transparent);
+}
+:where(.root) :global(:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+:where(.root) :global(a) {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+:where(.root) :global(h1),
+:where(.root) :global(h2),
+:where(.root) :global(h3) {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight, 700);
+  font-synthesis: none;
+  letter-spacing: var(--tracking-display);
+  line-height: 1.05;
+  overflow-wrap: break-word;
+  min-width: 0;
+  text-wrap: balance;
+}
+:where(.root) :global(h1) {
+  max-width: 20ch;
+  font-size: var(--text-display);
+}
+:where(.root) :global(h2) {
+  max-width: 30ch;
+  font-size: var(--text-section);
+}
+:where(.root) :global(h3) {
+  max-width: 40ch;
+  font-size: var(--text-title);
+  line-height: 1.2;
+}
+:where(.root) :global(.lead) {
+  font-size: var(--text-lead);
+  line-height: 1.45;
+  max-width: 52ch;
+}
+:where(.root) :global(p) {
+  margin: 0;
+  text-wrap: pretty;
+}
+:where(.root) :global(p:not([class])) {
+  max-width: 65ch;
+}
+:where(.root) :global(img),
+:where(.root) :global(video) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+:where(.root) :global(svg) {
+  display: block;
+}
+:where(.root) :global([hidden]) {
+  display: none !important;
+}
+:where(.root) :global(button),
+:where(.root) :global(input),
+:where(.root) :global(select),
+:where(.root) :global(textarea) {
+  font: inherit;
+}
+:where(.root) :global(.container) {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  box-sizing: border-box;
+}
+:where(.root) :global(.num),
+:where(.root) :global(.figure),
+:where(.root) :global(td.num) {
+  font-variant-numeric: tabular-nums;
+}
+:where(.root) :global(.visually-hidden) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+:where(.root) :global([data-slot]) {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--color-paper-2, var(--color-paper)), var(--color-paper-3, var(--color-paper)));
+}
+:where(.root) :global([data-slot] > img) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+:where(.root) :global([data-slot]:has(> img) > :not(img):not([data-keep])) {
+  display: none !important;
+}
+@media (max-width: 60rem) {
+  .root {
+    --gutter: 24px;
+    --section-gap-s: 80px;
+    --section-gap: 96px;
+    --section-gap-l: 120px;
+  }
+}
+@media (max-width: 40rem) {
+  .root {
+    --gutter: 16px;
+    --section-gap-s: 56px;
+    --section-gap: 72px;
+    --section-gap-l: 96px;
+    --gap-columns: 16px;
+  }
+}
+:where(.root) :global([data-slot] > img) {
+  filter: saturate(0.9) contrast(1.04);
+}
+.root {
+  --measure: 68ch;
+  --nav-h: 72px;
+}
+.root {
+  word-break: keep-all;
+  color: var(--color-ink-2);
+  font-size: 1.125rem;
+  font-optical-sizing: auto;
+}
+:where(.root) :global(h1),
+:where(.root) :global(h2),
+:where(.root) :global(h3) {
+  font-family: var(--font-head);
+  letter-spacing: -0.02em;
+  font-weight: var(--display-weight);
+  font-variation-settings: "wdth" 75, "opsz" 96;
+  color: var(--color-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.08;
+}
+:where(.root) :global(h3) {
+  line-height: 1.3;
+}
+:where(.root) :global(small),
+:where(.root) :global(figcaption),
+:where(.root) :global(th),
+:where(.root) :global(nav),
+:where(.root) :global(label),
+:where(.root) :global(.btn),
+:where(.root) :global(.chip),
+:where(.root) :global(.meta) {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
+  font-size: var(--text-sm);
+}
+:where(.root) :global(small),
+:where(.root) :global(.meta) {
+  color: var(--color-muted);
+}
+:where(.root) :global(.num) {
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+:where(.root) :global(a) {
+  color: var(--color-ink);
+  text-decoration-color: var(--color-rule-2);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--dur-short) var(--ease-out);
+}
+:where(.root) :global(a:hover) {
+  text-decoration-color: var(--color-accent);
+}
+:where(.root) :global(.btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--space-lg);
+  border: var(--rule-hair) solid var(--color-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+}
+:where(.root) :global(.btn:hover) {
+  background: var(--color-paper-2);
+}
+:where(.root) :global(.btn:active) {
+  background: var(--color-paper-3);
+}
+:where(.root) :global(.btn--primary) {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+:where(.root) :global(.btn--primary:hover) {
+  background: var(--color-ink-2);
+}
+:where(.root) :global(.btn--primary:active) {
+  background: var(--color-muted);
+}
+:where(.root) :global(.btn[disabled]),
+:where(.root) :global(.btn[aria-disabled="true"]) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+:where(.root) :global(.btn:focus-visible),
+:where(.root) :global(a:focus-visible),
+:where(.root) :global(input:focus-visible),
+:where(.root) :global(select:focus-visible),
+:where(.root) :global(button:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  transition: none;
+}
+:where(.root) :global(.chip) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 36px;
+  padding: 0 var(--space-sm);
+  border: var(--rule-hair) solid var(--color-rule-2);
+  text-decoration: none;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+}
+:where(.root) :global(.chip:hover) {
+  border-color: var(--color-ink);
+  background: var(--color-paper-2);
+}
+:where(.root) :global(.chip[aria-current="true"]) {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-paper);
+}
+:where(.root) :global(.chip .num) {
+  color: var(--color-muted);
+}
+:where(.root) :global(.tag) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-xs);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  text-decoration: none;
+}
+:where(.root) :global(a.tag:hover) {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+:where(.root) :global(.nav) {
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper);
+}
+:where(.root) :global(.nav-in) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  min-height: var(--nav-h);
+}
+:where(.root) :global(.wordmark) {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variation-settings: "wdth" 75, "opsz" 96;
+  font-size: 1.75rem;
+  letter-spacing: var(--tracking-display);
+  text-decoration: none;
+  white-space: nowrap;
+}
+:where(.root) :global(.nav-links) {
+  display: flex;
+  gap: var(--space-xs);
+}
+:where(.root) :global(.nav-links a),
+:where(.root) :global(.nav-links button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  font-size: var(--text-md);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+:where(.root) :global(.nav-links a:hover),
+:where(.root) :global(.nav-links button:hover) {
+  border-bottom-color: var(--color-accent);
+}
+:where(.root) :global(.nav-links a[aria-current="page"]) {
+  border-bottom-color: var(--color-ink);
+}
+:where(.root) :global(.foot) {
+  border-top: var(--rule-heavy) solid var(--color-ink);
+  padding-block: var(--space-lg) var(--space-xl);
+}
+:where(.root) :global(.foot-row) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+:where(.root) :global(.foot-row:first-child) {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+:where(.root) :global(.foot-links) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+:where(.root) :global(.fig) {
+  position: relative;
+  margin: 0;
+}
+:where(.root) :global(.fig > img) {
+  outline: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+  outline-offset: -1px;
+}
+:where(.root) :global(.cover) {
+  aspect-ratio: 16 / 9;
+}
+:where(.root) :global(.meta) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+}
+:where(.root) :global(.chips) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+@media (max-width: 40rem) {
+  :where(.root) :global(.wordmark) {
+    font-size: 1.25rem;
+  }
+  :where(.root) :global(.nav-in) {
+    gap: var(--space-sm);
+  }
+  :where(.root) :global(.nav-links) {
+    gap: 0;
+  }
+  :where(.root) :global(.nav-links a),
+  :where(.root) :global(.nav-links button) {
+    padding: 0 var(--space-xs);
+    font-size: var(--text-sm);
+  }
+}
+
+/* 앱 셸: 푸터를 화면 아래에 두고, 전역 다크 테마 대신 종이 바탕을 씁니다. */
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+:where(.root) :global(.chrome-body) {
+  flex: 1;
+}
+:global(html):has(.root) {
+  background-color: oklch(97% 0.007 86);
+  color-scheme: light;
+  scrollbar-color: oklch(48% 0.010 75) oklch(97% 0.007 86);
+  scroll-padding-top: 96px;
+}
+/* Tailwind preflight가 지운 기본 밑줄을 되살립니다. */
+:where(.root) :global(a) {
+  text-decoration-line: underline;
+}
+
+/* 화면 제목 영역(포스트 목록·소개·약관·로그인·404)과 버튼 묶음 */
+:where(.root) :global(.page-head) {
+  padding-block: var(--space-3xl) var(--space-2xl);
+}
+:where(.root) :global(.page-head h1) {
+  font-size: var(--text-display);
+  line-height: 0.98;
+  max-width: none;
+}
+:where(.root) :global(.page-head .meta) {
+  margin-bottom: var(--space-md);
+}
+:where(.root) :global(.page-head .lead) {
+  margin-top: var(--space-md);
+  font-size: var(--text-lead);
+  color: var(--color-ink);
+}
+:where(.root) :global(.actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}

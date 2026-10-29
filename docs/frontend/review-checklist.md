@@ -61,6 +61,7 @@
 - 이 스타일은 전역, shared, route-local 중 어디에 있어야 하는가?
 - provider/theme 계층이 feature 정책을 들고 있지 않은가?
 - 반복되는 패턴을 shared UI로 올려야 하지 않는가?
+- 공개 `(site)` 페이지가 제목 영역을 포함해 `<main id="main">`을 한 번만 렌더링하고, Editorial 공용 규칙을 다시 만들지 않았는가?
 
 ### Route Handlers / Error
 

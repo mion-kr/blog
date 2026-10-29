@@ -10,14 +10,18 @@ interface LegalDocumentProps {
 
 export function LegalDocument({ children, intro, title }: LegalDocumentProps) {
   return (
-    <article className={styles.document}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Legal</p>
-        <h1>{title}</h1>
-        <p className={styles.intro}>{intro}</p>
+    <main id="main" className={styles.document}>
+      <header className="page-head">
+        <div className="container">
+          <p className="meta">Legal</p>
+          <h1>{title}</h1>
+          <p className="lead">{intro}</p>
+        </div>
       </header>
 
-      <div className={styles.content}>{children}</div>
-    </article>
+      <div className="container">
+        <div className={styles.content}>{children}</div>
+      </div>
+    </main>
   );
 }

@@ -1,0 +1,59 @@
+/* 소개 전용 Editorial 규칙. 공용 토큰·제목 영역은 components/layout/editorial.module.css. */
+.root :global(.about) {
+  padding-block: 0 var(--space-3xl);
+}
+.root :global(.about-row) {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--gap-columns);
+  padding-block: var(--space-xl);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+.root :global(.about-row:first-child) {
+  border-top: var(--rule-heavy) solid var(--color-ink);
+}
+.root :global(.about-row h2) {
+  font-size: var(--text-title);
+}
+.root :global(.about-body) {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 46rem;
+}
+.root :global(.about-body p) {
+  font-size: var(--text-md);
+  line-height: 1.8;
+  color: var(--color-ink-2);
+}
+.root :global(.about-body .actions) {
+  margin-top: var(--space-xs);
+}
+.root :global(.rows) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.root :global(.rows li) {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--gap-columns);
+  padding-block: var(--space-md);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+.root :global(.rows li:first-child) {
+  padding-top: 0;
+}
+.root :global(.rows li:last-child) {
+  border-bottom: 0;
+}
+.root :global(.rows h3) {
+  font-size: var(--text-md);
+}
+@media (max-width: 60rem) {
+  .root :global(.about-row),
+  .root :global(.rows li) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-sm);
+  }
+}

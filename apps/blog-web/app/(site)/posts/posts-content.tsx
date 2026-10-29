@@ -18,10 +18,6 @@ import type {
   ApiPaginationMeta,
 } from '@repo/shared';
 import {
-  AlertCircle,
-  Search,
-} from 'lucide-react';
-import {
   parsePostsSearchParams,
   extractPostsSearchParams,
 } from './query-utils';
@@ -43,7 +39,7 @@ type PostsURLParams = Partial<PostsQuery> & {
 
 /**
  * posts 목록 페이지 콘텐츠(필터/목록/페이지네이션).
- * - 네온 posts 전용 UI는 여기에서 렌더링합니다.
+ * - Editorial 목록·상태 UI는 여기에서 렌더링합니다.
  */
 export function PostsContent({
   initialPosts,
@@ -141,22 +137,17 @@ export function PostsContent({
 
   if (error) {
     return (
-      <div className="filter-bar" role="alert">
-        <div className="filter-row" style={{ justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertCircle className="h-5 w-5" aria-hidden="true" />
-            <strong>포스트를 불러올 수 없습니다</strong>
-          </div>
-          <button
-            type="button"
-            className="page-btn"
-            disabled={loading}
-            onClick={() => startTransition(() => router.refresh())}
-          >
-            Retry
-          </button>
-        </div>
-        <div className="filter-note">{error}</div>
+      <div className="state state--error" role="alert">
+        <h3>포스트를 불러올 수 없습니다</h3>
+        <p>{error}</p>
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={loading}
+          onClick={() => startTransition(() => router.refresh())}
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -170,58 +161,48 @@ export function PostsContent({
         onSortPresetChange={handleSortPresetChange}
       />
 
-      {hasActiveFilters && !loading && (
-        <div className="filter-note" style={{ marginBottom: 16 }}>
-          필터 적용됨 ·{' '}
-          <button
-            type="button"
-            className="tag-item"
-            onClick={handleClearFilters}
-          >
-            Reset
-          </button>
-        </div>
-      )}
-
-      {loading && posts.length > 0 && (
-        <div className="filter-note" role="status" style={{ marginBottom: 16 }}>
-          Updating…
+      {(hasActiveFilters || (loading && posts.length > 0)) && (
+        <div className="note">
+          {hasActiveFilters && !loading && (
+            <>
+              <span role="status">필터 적용됨</span>
+              <button type="button" className="btn" onClick={handleClearFilters}>
+                Reset
+              </button>
+            </>
+          )}
+          {loading && posts.length > 0 && <span role="status">Updating…</span>}
         </div>
       )}
 
       {/* 포스트 목록 */}
       {posts.length > 0 ? (
-        <div className={`posts-list ${loading ? 'is-updating' : ''}`} aria-busy={loading}>
+        <ol className="entries" aria-busy={loading}>
           {posts.map((post) => (
-            <PostsNeonPostCard
+            <PostEntry
               key={post.id}
               post={post}
               readingTimeMinutes={post.readingTimeMinutes}
             />
           ))}
-        </div>
+        </ol>
       ) : loading ? (
-        <div className="posts-list" aria-busy="true">
+        <ol className="entries" aria-busy="true">
           {Array.from({ length: 10 }, (_, i) => (
-            <PostsNeonPostSkeleton key={i} />
+            <PostEntrySkeleton key={i} />
           ))}
-        </div>
+        </ol>
       ) : (
-        <div className="filter-bar">
-          <div className="filter-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Search className="h-5 w-5" aria-hidden="true" />
-              <strong>{hasActiveFilters ? '검색 결과가 없습니다' : '등록된 포스트가 없습니다'}</strong>
-            </div>
-            {hasActiveFilters && (
-              <button type="button" className="page-btn" onClick={handleClearFilters}>
-                Reset
-              </button>
-            )}
-          </div>
-          <div className="filter-note">
+        <div className="state">
+          <h3>{hasActiveFilters ? '검색 결과가 없습니다' : '등록된 포스트가 없습니다'}</h3>
+          <p>
             {hasActiveFilters ? '다른 검색어/정렬을 시도해보세요.' : '새로운 포스트가 등록되면 이곳에 표시됩니다.'}
-          </div>
+          </p>
+          {hasActiveFilters && (
+            <button type="button" className="btn" onClick={handleClearFilters}>
+              Reset
+            </button>
+          )}
         </div>
       )}
 
@@ -271,9 +252,9 @@ function formatCompactNumber(value: number): string {
 }
 
 /**
- * 목록 카드 한 개를 렌더링합니다.
+ * 목록 한 줄을 렌더링합니다. 제목 링크가 줄 전체를 덮습니다.
  */
-function PostsNeonPostCard({
+function PostEntry({
   post,
   readingTimeMinutes,
 }: {
@@ -281,109 +262,59 @@ function PostsNeonPostCard({
   readingTimeMinutes: number;
 }) {
   const displayDate = post.publishedAt ?? post.createdAt;
-  const readingTimeLabel = formatReadingTimeMinutes(readingTimeMinutes);
   const postHref = `/posts/${post.slug}`;
 
   return (
-    <article className="post-card-neon">
-      <Link
-        href={postHref}
-        prefetch={false}
-        className="absolute inset-0 z-10"
-        aria-label={`${post.title} 상세 보기`}
-      />
-      <div className="neon-side-border" aria-hidden="true" />
-
-      <div className="post-thumbnail">
+    <li className="entry">
+      <figure className="fig cover" data-slot="entry">
         {post.coverImage ? (
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            fill
-            className="object-cover"
-            sizes="240px"
-          />
-        ) : (
-          <span className="post-thumbnail-placeholder" aria-hidden="true">
-            🖼️
-          </span>
-        )}
-      </div>
-
-      <div className="post-content">
-        <div className="post-content-meta">
-          <Link
-            href={`/posts?categorySlug=${post.category.slug}`}
-            className="category-tag relative z-20"
-          >
-            {post.category.name}
-          </Link>
-          <time className="post-date" dateTime={new Date(displayDate).toISOString()}>
+          <Image src={post.coverImage} alt="" fill sizes="(max-width: 640px) 100vw, 240px" />
+        ) : null}
+      </figure>
+      <div className="entry-body">
+        <div className="entry-meta">
+          <Link href={`/posts?categorySlug=${post.category.slug}`}>{post.category.name}</Link>
+          <time className="num" dateTime={new Date(displayDate).toISOString()}>
             {formatKoreanNumericDate(displayDate)}
           </time>
         </div>
-
-        <Link href={postHref} prefetch={false} className="post-title-link relative z-20">
-          {post.title}
-        </Link>
-
-        {post.excerpt && <p className="post-excerpt">{post.excerpt}</p>}
-
-        <div className="post-card-footer">
-          <div className="tag-list" role="group" aria-label="태그">
+        <h2>
+          <Link href={postHref} prefetch={false}>
+            {post.title}
+          </Link>
+        </h2>
+        {post.excerpt && <p>{post.excerpt}</p>}
+        <div className="entry-foot">
+          <div className="chips">
             {post.tags.slice(0, 3).map((tag) => (
-              <Link
-                key={tag.id}
-                href={`/posts?tagSlug=${tag.slug}`}
-                className="tag-item relative z-20"
-              >
-                #{tag.name}
+              <Link key={tag.id} className="chip" href={`/posts?tagSlug=${tag.slug}`}>
+                {tag.name}
               </Link>
             ))}
           </div>
-          <div className="read-stats" role="group" aria-label="읽기/조회수">
-            <span>👁️ {formatCompactNumber(post.viewCount)}</span>
-            <span>⏱️ {readingTimeLabel}</span>
+          <div className="stats">
+            <span className="num">조회 {formatCompactNumber(post.viewCount)}</span>
+            <span className="num">{formatReadingTimeMinutes(readingTimeMinutes)}</span>
           </div>
         </div>
       </div>
-    </article>
+    </li>
   );
 }
 
 /**
- * 목록 로딩 중 스켈레톤 카드를 렌더링합니다.
+ * 목록 로딩 중 스켈레톤 줄을 렌더링합니다.
  */
-function PostsNeonPostSkeleton() {
+function PostEntrySkeleton() {
   return (
-    <article className="post-card-neon" aria-hidden="true">
-      <div className="neon-side-border" />
-      <div className="post-thumbnail">
-        <span className="post-thumbnail-placeholder">…</span>
+    <li className="entry entry--skeleton" aria-hidden="true">
+      <span className="skeleton cover" />
+      <div className="entry-body">
+        <span className="skeleton line" style={{ width: '30%' }} />
+        <span className="skeleton line" style={{ width: '80%', height: 24 }} />
+        <span className="skeleton line" style={{ width: '95%' }} />
+        <span className="skeleton line" style={{ width: '60%' }} />
       </div>
-      <div className="post-content">
-        <div className="post-content-meta">
-          <span className="category-tag">Loading</span>
-          <span className="post-date">0000.00.00</span>
-        </div>
-        <div className="post-title-link" style={{ opacity: 0.6 }}>
-          Loading title…
-        </div>
-        <div className="post-excerpt" style={{ opacity: 0.5 }}>
-          Loading excerpt…
-        </div>
-        <div className="post-card-footer">
-          <div className="tag-list">
-            <span className="tag-item">#…</span>
-            <span className="tag-item">#…</span>
-            <span className="tag-item">#…</span>
-          </div>
-          <div className="read-stats">
-            <span>👁️ …</span>
-            <span>⏱️ …</span>
-          </div>
-        </div>
-      </div>
-    </article>
+    </li>
   );
 }

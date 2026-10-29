@@ -10,6 +10,9 @@
 - `app/globals.css`는 전역 토큰과 공통 베이스 스타일을 담당합니다.
 - provider/theme 설정은 Shared UI/Theme 계층에서 관리합니다.
 - feature/route 전용 스타일은 route 가까운 CSS module 또는 component 수준 스타일에서 관리합니다.
+- 공개 화면의 Editorial 테마(MID-238)는 `components/layout/editorial.module.css`가 토큰·기본 요소·헤더·푸터·제목 영역(`.page-head`)을, `app/(site)/home.module.css`·`posts/posts.module.css`·`posts/[slug]/post.module.css`·`about/about.module.css`·`auth/signin/signin.module.css`·`components/legal-document.module.css`가 화면별 규칙을 담당합니다. `SiteChrome`이 `(site)` 전체를 공용 `.root`로 감싸고, 루트 404(`GlobalNotFound`)는 같은 헤더·푸터를 직접 렌더링합니다. 각 페이지가 `<main id="main">`을 렌더링합니다.
+- 공용 규칙은 `:where(.root)`로 감싸 화면 module 규칙이 항상 이기게 합니다. 화면 module의 MDX 본문 컨테이너는 전역 `.prose`와 겹치지 않도록 지역 클래스(`styles.prose`)를 씁니다.
+- 글꼴은 루트 layout의 `next/font` 변수(`--font-paperlogy`, `--font-plex-mono`)를 토큰에서 참조합니다. 페이퍼로지 원본과 라이선스는 `app/fonts/paperlogy/`에 있습니다.
 
 ## Must
 

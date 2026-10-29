@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MDXRenderer } from "@/components/mdx-renderer";
-import { NeonHeader } from "@/components/layout/neon-header";
 import {
   calculateReadingTimeMinutesFromMdx,
   formatReadingTimeMinutes,
@@ -13,10 +12,9 @@ import { serializeJsonLd } from "@/lib/json-ld";
 import { formatKoreanNumericDate } from "@/lib/date-format";
 import { NOT_FOUND_METADATA } from "@/lib/notFoundMetadata";
 import { getSiteUrl } from "@/lib/site";
-import { cn } from "@/lib/utils";
 import { CopyLinkButton } from "./copy-link-button";
 import { getPostForRender, getPostForSeo } from "./post-server-data";
-import styles from "./post-detail-neon-grid.module.css";
+import styles from "./post.module.css";
 
 import type { PostResponseDto } from "@repo/shared";
 
@@ -115,12 +113,8 @@ export default async function PostPage({ params }: PostPageProps) {
     const readingTimeMinutes = calculateReadingTimeMinutesFromMdx(post.content);
 
     return (
-      <div className={cn(styles.root, "neon-grid-post-detail")}>
-        <div className="neon-grid-bg" aria-hidden="true" />
-
-        <NeonHeader activePath="/posts" />
-
-        <article className="article-container">
+      <main id="main" tabIndex={-1} className={styles.root}>
+        <article>
           {/* JSON-LD: BlogPosting */}
           <script
             type="application/ld+json"
@@ -128,78 +122,84 @@ export default async function PostPage({ params }: PostPageProps) {
             dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
           />
 
-          <header className="post-header">
-            {post.category?.slug && post.category?.name && (
-              <Link
-                href={`/posts?categorySlug=${post.category.slug}`}
-                className="post-category"
-              >
-                {post.category.name}
-              </Link>
-            )}
-
-            <h1 className="post-title">{post.title}</h1>
-
-            <div className="post-meta" role="group" aria-label="포스트 메타 정보">
-              <Link href="/about" rel="author" className="meta-item underline underline-offset-4">
-                작성자 {post.author.name} · 소개
-              </Link>
-              <span className="meta-item">
-                🗓️{" "}
-                <time dateTime={new Date(displayDate).toISOString()}>
-                  {formatKoreanNumericDate(displayDate)}
-                </time>
-              </span>
-              <span className="meta-item">👁️ {formatNumber(post.viewCount)} views</span>
-              <span className="meta-item">
-                ⏱️ {formatReadingTimeMinutes(readingTimeMinutes)}
-              </span>
+          <header className="post-head">
+            <div className="container grid12">
+              <div>
+                {post.category?.slug && post.category?.name && (
+                  <Link className="tag" href={`/posts?categorySlug=${post.category.slug}`}>
+                    {post.category.name}
+                  </Link>
+                )}
+                <h1>{post.title}</h1>
+                <dl className="post-meta" aria-label="포스트 메타 정보">
+                  <div>
+                    <dt>발행</dt>
+                    <dd className="num">
+                      <time dateTime={new Date(displayDate).toISOString()}>
+                        {formatKoreanNumericDate(displayDate)}
+                      </time>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>조회</dt>
+                    <dd className="num">{formatNumber(post.viewCount)} views</dd>
+                  </div>
+                  <div>
+                    <dt>읽는 시간</dt>
+                    <dd className="num">{formatReadingTimeMinutes(readingTimeMinutes)}</dd>
+                  </div>
+                  <div>
+                    <dt>작성자</dt>
+                    <dd>
+                      <Link href="/about" rel="author">
+                        {post.author.name}
+                      </Link>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
           </header>
 
           {post.coverImage ? (
-            <div className="cover-wrapper">
-              <div className="cover-image">
-                <Image
-                  src={post.coverImage}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 900px"
-                  priority
-                />
+            <div className="post-cover">
+              <div className="container grid12">
+                <figure className="fig cover" data-slot="cover">
+                  <Image
+                    src={post.coverImage}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 960px) 100vw, 1100px"
+                    priority
+                  />
+                </figure>
               </div>
             </div>
           ) : null}
 
-          <main id="main" tabIndex={-1} className="content-card">
-            <div className="prose">
-              <MDXRenderer content={post.content} />
-            </div>
+          <div className="reading">
+            <div className="container">
+              <MDXRenderer content={post.content} className={styles.prose} />
 
-            {post.tags.length > 0 ? (
-              <footer className="post-footer">
-                <h2 className="post-footer-title">Related Tags</h2>
-                <div className="tag-row" role="group" aria-label="태그">
-                  {post.tags.map((tag) => (
-                    <Link
-                      key={tag.id}
-                      href={`/posts?tagSlug=${tag.slug}`}
-                      className="tag-pill"
-                    >
-                      #{tag.name}
-                    </Link>
-                  ))}
-                </div>
+              <footer className="post-tags">
+                {post.tags.length > 0 ? (
+                  <div>
+                    <h2>Related Tags</h2>
+                    <div className="chips">
+                      {post.tags.map((tag) => (
+                        <Link key={tag.id} className="chip" href={`/posts?tagSlug=${tag.slug}`}>
+                          {tag.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <CopyLinkButton className="btn" />
               </footer>
-            ) : null}
-          </main>
-
-          <section className="share-section" aria-label="공유">
-            <CopyLinkButton className="btn-neon" />
-          </section>
+            </div>
+          </div>
         </article>
-      </div>
+      </main>
     );
   } catch (error) {
     console.error("Error loading post:", error);

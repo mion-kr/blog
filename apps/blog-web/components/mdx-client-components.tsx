@@ -1,6 +1,5 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -38,6 +37,19 @@ function extractMermaidDefinition(children: React.ReactNode): string {
 
   return "";
 }
+
+// Editorial 토큰(oklch)의 hex 값입니다. Mermaid 색 해석기는 oklch를 읽지 못합니다.
+const MERMAID_THEME_VARIABLES = {
+  fontSize: "15px",
+  primaryColor: "#f6f4ef",
+  primaryBorderColor: "#2a2833",
+  primaryTextColor: "#1d1b24",
+  lineColor: "#2a2833",
+  clusterBkg: "transparent",
+  clusterBorder: "#5f5b55",
+  edgeLabelBackground: "#efece5",
+  tertiaryColor: "#efece5",
+};
 
 type MermaidModule =
   Awaited<typeof import("mermaid")> extends {
@@ -100,10 +112,38 @@ export function MermaidChart({ children }: { children: React.ReactNode }) {
         const mermaid = await loadMermaid();
         if (cancelled) return;
 
+        // 웹폰트가 늦게 오면 글자 폭을 대체 글꼴로 재서 상자 안 글자가 잘리므로, 본문 글꼴을 먼저 불러온 뒤 그립니다.
+        const fontFamily = target
+          ? getComputedStyle(target).fontFamily
+          : "sans-serif";
+        try {
+          // Mermaid 라벨은 보통 400, 강조(<b>)는 700으로 그립니다.
+          await Promise.all([
+            document.fonts.load(`400 15px ${fontFamily}`, "다이어그램"),
+            document.fonts.load(`700 15px ${fontFamily}`, "다이어그램"),
+          ]);
+          await document.fonts.ready;
+        } catch {
+          // 글꼴 로딩 실패는 대체 글꼴로 그립니다.
+        }
+        if (cancelled) return;
+
         mermaid.initialize({
           startOnLoad: false,
-          theme: "neutral",
+          theme: "base",
           securityLevel: "loose",
+          // 글 안 %%{init}%%의 fontFamily(예: Pretendard)는 로딩하지 않는 글꼴이라 라벨 폭이 어긋나므로 막습니다. 앞 6개는 Mermaid 기본값입니다.
+          secure: [
+            "secure",
+            "securityLevel",
+            "startOnLoad",
+            "maxTextSize",
+            "suppressErrorRendering",
+            "maxEdges",
+            "fontFamily",
+          ],
+          flowchart: { curve: "linear", padding: 16 },
+          themeVariables: { ...MERMAID_THEME_VARIABLES, fontFamily },
         });
 
         const { svg } = await mermaid.render(chartId, definition);
@@ -155,40 +195,21 @@ export function MermaidChart({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <figure
-      data-mermaid-chart
-      className="my-8 flex flex-col items-center gap-3"
-    >
-      <div className="w-full overflow-x-auto rounded-lg border border-slate-800 bg-white p-4">
-        {error ? (
-          <div className="text-sm text-red-600">{error}</div>
-        ) : (
-          <div
-            ref={chartRef}
-            data-loading={isLoading}
-            className={cn(
-              "flex justify-center",
-              isLoading ? "animate-pulse opacity-70" : "",
-            )}
-          />
-        )}
+    <figure data-mermaid-chart className="diagram">
+      {error ? (
+        <div className="diagram-error">{error}</div>
+      ) : (
+        <div
+          ref={chartRef}
+          data-loading={isLoading}
+          className={cn(isLoading ? "animate-pulse opacity-70" : "")}
+        />
+      )}
+      <div className="diagram-bar">
+        <button type="button" className="btn" onClick={handleCopy}>
+          {copied ? "Copied" : "Copy"}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="inline-flex items-center gap-2 rounded-md bg-slate-800 px-2 py-0.5 text-[9px] text-slate-200 transition hover:bg-slate-700"
-        style={{ fontSize: 9, lineHeight: "1" }}
-      >
-        {copied ? (
-          <>
-            <Check className="h-2.5 w-2.5" /> Copied
-          </>
-        ) : (
-          <>
-            <Copy className="h-2.5 w-2.5" /> Copy
-          </>
-        )}
-      </button>
     </figure>
   );
 }
@@ -220,31 +241,14 @@ export function CodeBlock({
     const language = className.replace("language-", "");
 
     return (
-      <div className="relative my-6 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-5 py-2">
-          <span className="text-[9px] font-medium tracking-widest text-gray-600">
-            {language.toUpperCase()}
-          </span>
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium text-gray-600 hover:bg-gray-200"
-            type="button"
-            style={{ fontSize: 9, lineHeight: "1" }}
-          >
-            {copied ? (
-              <>
-                <Check className="h-2.5 w-2.5" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-2.5 w-2.5" />
-                Copy
-              </>
-            )}
+      <div className="code">
+        <div className="code-bar">
+          <span>{language.toUpperCase()}</span>
+          <button className="btn" type="button" onClick={handleCopy}>
+            {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <pre className="overflow-x-auto p-4">
+        <pre>
           <code className={className} {...props}>
             {children}
           </code>
@@ -254,11 +258,6 @@ export function CodeBlock({
   }
 
   return (
-    <code
-      className="rounded bg-gray-100 px-1.5 py-0.5 text-sm font-mono text-red-600"
-      {...props}
-    >
-      {children}
-    </code>
+    <code {...props}>{children}</code>
   );
 }
