@@ -2,8 +2,10 @@
  * Editorial 테마(Hallmark): 홈·포스트 목록·포스트 상세가 함께 쓰는 토큰, 기본 요소, 헤더·푸터, 공용 부품입니다.
  * 기준: Claude Design 캔버스(MID-238)의 tokens.css·base.css·site.css. 페이지 전용 규칙은 각 route의 CSS module에 둡니다.
  * 공용 규칙은 :where(.root)로 감싸 페이지 module 규칙이 항상 우선하게 합니다.
+ * .tokens는 기본 요소 규칙 없이 토큰만 필요한 화면(관리자)이 씁니다.
  */
-.root {
+.root,
+.tokens {
   color-scheme: light;
   --space-3xs: 2px;
   --space-2xs: 4px;
