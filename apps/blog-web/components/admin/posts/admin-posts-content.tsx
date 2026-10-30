@@ -72,7 +72,7 @@ export function AdminPostsContent({
           type="button"
           onClick={handleRetry}
           disabled={isRefreshing}
-          className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60 hover:text-white"
+          className="inline-flex items-center gap-2 rounded-lg border border-red-400/40 px-4 py-2 text-xs font-medium text-red-100 transition hover:border-red-300/60"
         >
           <RotateCw className="h-3.5 w-3.5" aria-hidden />
           {isRefreshing ? "새로고침 중" : "다시 시도"}

@@ -4,7 +4,10 @@ import type { ReactNode } from "react";
 
 import { AdminMobileNav, AdminSidebar } from "@/components/admin";
 import type { AdminNavItem } from "@/components/admin/admin-sidebar";
+import editorialStyles from "@/components/layout/editorial.module.css";
 import { getJwt, getSession } from "@/lib/auth";
+
+import styles from "./admin.module.css";
 
 export const metadata: Metadata = {
   robots: {
@@ -79,7 +82,7 @@ export default async function AdminLayout({
     remainingMs < 10 * 60 * 1000;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className={`${editorialStyles.tokens} ${styles.root}`}>
       <div className="flex min-h-screen w-full">
         <AdminSidebar items={NAV_ITEMS} user={session.user} />
 

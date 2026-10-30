@@ -11,6 +11,7 @@
 - provider/theme 설정은 Shared UI/Theme 계층에서 관리합니다.
 - feature/route 전용 스타일은 route 가까운 CSS module 또는 component 수준 스타일에서 관리합니다.
 - 공개 화면의 Editorial 테마(MID-238)는 `components/layout/editorial.module.css`가 토큰·기본 요소·헤더·푸터·제목 영역(`.page-head`)을, `app/(site)/home.module.css`·`posts/posts.module.css`·`posts/[slug]/post.module.css`·`about/about.module.css`·`auth/signin/signin.module.css`·`components/legal-document.module.css`가 화면별 규칙을 담당합니다. `SiteChrome`이 `(site)` 전체를 공용 `.root`로 감싸고, 루트 404(`GlobalNotFound`)는 같은 헤더·푸터를 직접 렌더링합니다. 각 페이지가 `<main id="main">`을 렌더링합니다.
+- 관리자 화면(`/admin`)은 `app/admin/admin.module.css`가 Editorial 토큰(`editorial.module.css`의 `.tokens`) 위에서 Tailwind 색(`slate`·`emerald`·`red`·`amber`·`cyan`)과 모서리(`--radius-*`) 변수를 다시 연결합니다. 관리자 컴포넌트는 Tailwind 클래스를 그대로 쓰고, `slate` 단계는 뒤집혀 있습니다(950 = 종이, 50 = 잉크). 관리자 범위에는 Tailwind 유틸리티보다 우선하는 요소 선택자를 두지 않습니다.
 - 공용 규칙은 `:where(.root)`로 감싸 화면 module 규칙이 항상 이기게 합니다. 화면 module의 MDX 본문 컨테이너는 전역 `.prose`와 겹치지 않도록 지역 클래스(`styles.prose`)를 씁니다.
 - 글꼴은 루트 layout의 `next/font` 변수(`--font-paperlogy`, `--font-plex-mono`)를 토큰에서 참조합니다. 페이퍼로지 원본과 라이선스는 `app/fonts/paperlogy/`에 있습니다.
 
