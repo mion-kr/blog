@@ -1,0 +1,40 @@
+---
+import Site from '../../layouts/Site.astro';
+import Seo from '../../components/Seo.astro';
+import styles from '../../styles/signin.module.css';
+import { getSafeCallbackUrl } from '../../server/auth/callback-url';
+
+const callbackUrl = getSafeCallbackUrl(Astro.url.searchParams.get('callbackUrl'));
+const error = Astro.url.searchParams.get('error');
+if (Astro.locals.viewer) return Astro.redirect(callbackUrl, 302);
+const startHref = `/auth/google?${new URLSearchParams({ callbackUrl }).toString()}`;
+---
+<Site>
+  <Seo slot="head" title="관리자 로그인 | Mion's Blog" description="Mion's Blog 관리자 로그인" robots="noindex-nofollow" />
+  <main id="main" class={styles.root}>
+    <header class="page-head">
+      <div class="container">
+        <h1>관리자 로그인</h1>
+        <p class="lead">블로그 콘텐츠 관리를 위해 Google 계정으로 로그인해 주세요.</p>
+      </div>
+    </header>
+    <div class="container signin">
+      {error && (
+        <p class="signin-error" role="alert">{error === 'AccessDenied' ? '접근 권한이 없는 계정입니다. 관리자 계정을 확인해 주세요.' : '로그인 도중 오류가 발생했어요. 다시 시도해 주세요.'}</p>
+      )}
+      <a class="btn btn--primary" href={startHref} data-signin>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in h-4 w-4" aria-hidden="true"><path d="m10 17 5-5-5-5"></path><path d="M15 12H3"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
+        <span>Google 계정으로 로그인</span>
+      </a>
+      <p class="signin-note">로그인에 문제가 있으면 <a href="/">홈으로 돌아가기</a>를 눌러주세요.</p>
+    </div>
+  </main>
+  <script>
+    const link = document.querySelector<HTMLAnchorElement>('[data-signin]');
+    link?.addEventListener('click', () => {
+      const label = link.querySelector('span');
+      if (label) label.textContent = '로그인 진행 중...';
+      link.setAttribute('aria-disabled', 'true');
+    });
+  </script>
+</Site>
