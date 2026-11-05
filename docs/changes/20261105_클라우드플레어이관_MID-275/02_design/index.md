@@ -16,6 +16,7 @@
 | 문서 | 목적 |
 | --- | --- |
 | [design.md](design.md) | 4개 결정, 선택지 비교, 결정 범위 테스트 계획, 작업 순서 개요 |
+| [design-implementation.md](design-implementation.md) | 2단계: 환경별 값, 기존 항목 → 새 라우트 대응표, 엔드포인트 계약, 테스트 목록, 작업 순서 0~50 |
 | [risk-review.md](risk-review.md) | 고위험 검토 결과와 남은 위험 |
 | [변경 명세](../specs/blog-platform/spec.md) | 이관 전후 관찰 가능한 계약과 수용 기준 |
 
@@ -31,15 +32,17 @@
 | DNS | 2026-11-05 `dig` | NS Cloudflare, A 레코드 Vercel |
 | 외부 문서·npm | 2026-11-05, design.md "외부 근거" 표 | 버전, Workers 제약, 라이브러리 유지 상태 |
 | 독립 검토 | 2026-11-05 `mion-reviewer` 1회 | 누락 동작·보안·테스트 지적 25건 중 근거 확인된 것 반영 |
+| 2단계 조사 | 커밋 `75b70c7`, 2026-11-05 23:16 `mion-research` 3명(글, 카테고리·태그·설정, 업로드·인증) + 운영 DB 읽기 전용 조회(`post_tags` 중복 0, `post_count` 일치, 발행 글 `published_at` null 0) + Doppler `UPLOAD_ALLOWED_MIME` 설정 여부(값 미출력) | 엔드포인트 계약·대응표 |
+| 2단계 독립 검토 | 2026-11-05 `mion-reviewer` 1회(필수 8·권장 13) + 운영 DB 이름 정렬 규칙 조회 | 근거 확인된 지적 반영(Google 취소는 1단계 표대로 `OAuthError`, 프로필 사진은 세션 대신 `users` 조회) |
 | 고위험 검토 | 2026-11-05 지지·반박·구현 3관점 + 공식 문서 재확인 | 필수 수정 12건·로그인 보안 9건 반영, 사용자 결정 3건 |
 
 첫 조사 쿼리 1회는 연결 옵션의 읽기 전용 설정이 적용되지 않은 채(`default_transaction_read_only=off`) SELECT만 실행했다. 이후 조회는 모두 `begin read only` 트랜잭션에서 했다. Supabase에 쓴 내용은 없다.
 
 ## 남은 질문
 
-- 사용자 결정 대기 없음(2026-11-05 설계 승인, design.md "사용자 결정 기록").
+- 사용자 결정 대기 없음. 2단계 질문 2건은 2026-11-05 결정(design-implementation.md "사용자 결정").
 - 미확인: `acorn-jsx`·`hangul-romanize`·`oauth4webapi`의 workerd 동작, `__Host-` 쿠키 로컬 동작, 지금 세션의 만료 연장 여부, Workers 렌더 CPU 실측, mermaid 번들 크기, Google OAuth 클라이언트 위치, Google 콘솔 등록 URI, Vercel 빌드 설정.
 
 ## 다음 작업
 
-- 2단계 설계 증분(엔드포인트별 계약·테스트, 기존 항목 대응표) → `mion-4-executor`.
+- `mion-4-executor`로 작업 0부터 실행.

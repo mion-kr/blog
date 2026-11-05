@@ -2,6 +2,7 @@
 
 ## 결론
 
+- 2단계 설계 증분: [design-implementation.md](design-implementation.md)(엔드포인트 계약·대응표·테스트·작업 순서, 이 문서의 사실 정정 포함).
 - 범위: MID-275 진행 순서 1단계. 이슈의 "설계 때 정할 것" 4개 항목과, 그 결정에 딸린 앱 구조만 정한다. 엔드포인트별 API 계약·테스트 표·세부 작업 순서는 이 결정이 승인된 뒤 2단계 설계 증분(`design-implementation.md`)에서 쓴다.
 - 작업 크기: 고위험. DB 이관(Postgres → D1), 인증 교체, 운영 도메인 전환이 함께 있다. 2026-11-05 `mion-3-risk-review`를 거쳤고 필수 수정을 이 문서에 반영했다([risk-review.md](risk-review.md)).
 - 결정(아래 표 전체 `사용자 결정`, 2026-11-05 채택):
@@ -44,7 +45,7 @@
   - 공개 URL: `/`, `/posts`, `/posts/{slug}`, `/about`, `/privacy-policy`, `/terms`, `/feed.xml`, `/sitemap.xml`, `/robots.txt`, `/auth/signin`, `/admin/*`.
   - 정적 파일: `/ads.txt`(AdSense), `/og/blog.png`, `/og/about.png`, `/icon.svg`, `/apple-icon.png`, `/favicon.ico`.
   - 본문 표시: GFM 표·목록, 코드 블록(언어 라벨·복사 버튼, 하이라이팅 없음), mermaid 다이어그램(클라이언트 렌더, Editorial 색, 복사 버튼·오류 문구), `<XEmbed>`, 마크다운 이미지(`span.body-figure` + alt 캡션), 제목 h1을 h2로 낮춤(`scroll-mt-16`), 외부 링크(`http`·`//`로 시작) 새 탭 + 외부 링크 아이콘, 빈 본문 안내 문구.
-  - 로그인 7일 유지, `ADMIN_EMAIL`만 관리자, 로그인 뒤 원래 주소로 복귀(`callbackUrl`, 바깥 주소 차단), 로그인 화면의 `AccessDenied`·`SessionExpired` 안내, 공개 헤더의 관리자 링크·로그아웃, 관리자 화면의 만료 10분 전 경고와 사용자 이름 표시.
+  - 로그인 7일 유지, `ADMIN_EMAIL`만 관리자, 로그인 뒤 원래 주소로 복귀(`callbackUrl`, 바깥 주소 차단), 로그인 화면의 `AccessDenied` 권한 없음 안내(그 밖의 `error` 값은 `SessionExpired`를 포함해 일반 오류 문구 하나), 공개 헤더의 관리자 링크·로그아웃, 관리자 화면의 만료 10분 전 경고와 사용자 이름 표시.
   - 조회수: 상세 본문을 그릴 때만 증가(메타데이터 생성 때는 증가 안 함), 표시, 조회수순 정렬. 구현은 2단계 설계 증분에서 다룬다.
   - 관리자 업로드 종류: 커버(`thumbnail`), 본문 이미지(`content`, 폼이 커서 위치에 `![설명](URL)` 삽입), 소개 이미지(`about`).
 
@@ -218,6 +219,8 @@
 6. 로그인 OAuth 흐름: `oauth4webapi`에 맡기고 세션 쿠키만 `jose`로 직접 처리한다(고위험 검토 뒤 결정).
 7. 롤백 데이터 처리: 전환 후 7일 관찰 기간 동안 관리자 편집 동결을 유지하고, 롤백 시 그 기간 조회수 유실을 받아들인다. D1 → Postgres 역방향 쓰기는 하지 않는다.
 8. 테스트 도구: `@cloudflare/vitest-pool-workers` + Vitest 4.x 고정. Google 토큰 엔드포인트는 `fetch`를 주입받게 해서 테스트에서 바꿔 끼운다(저장소에 새로 들어오는 목).
+9. 관리자 편집 화면을 열어도 조회수를 올리지 않는다(2단계 검토 뒤 결정).
+10. 설정 폼은 검증 실패 시 칸별 오류 문구를 보여 준다(2단계 검토 뒤 결정).
 
 ## 대안
 
@@ -283,9 +286,9 @@
 | `apps/blog-api/src/uploads/application/upload-policy.service.spec.ts` | 허용 MIME, 크기 상한, 목록이 비면 모두 허용 | `apps/blog/test/upload-policy.test.ts` |
 | `apps/blog-api/src/uploads/application/content-image-finalizer.spec.ts`, `uploads.service.spec.ts`(:102 잘못된 소개 이미지 draft URL 거부) | 본문·소개 이미지 확정 | 2단계 업로드 증분 |
 | `apps/blog-api/src/posts/posts.service.spec.ts` | 조회수 증가 시 `updatedAt` 유지(:208), 조회수 미증가 경로(:222), 미발행 글 404·조회수 미증가(:241), 없는 카테고리·태그 400(:335,:353), 이미지 확정 실패 롤백·보상 삭제(:374,:405,:553,:599), 집계 갱신(:452,:655) | 2단계 글 증분 |
-| `apps/blog-api/src/posts/posts.integration.spec.ts` | 검색(제목·내용·요약), 카테고리·태그 필터, 정렬·조회수순(:217,:238-291), 401·400(:437,:452), 중복 제목 slug(:524) | 2단계 공개 목록·글 증분 |
+| `apps/blog-api/src/posts/posts.integration.spec.ts`(`describe.skip`, 실행된 적 없음. 케이스 목록으로만 사용) | 검색(제목·내용·요약), 카테고리·태그 필터, 정렬·조회수순(:217,:238-291), 401·400(:437,:452), 중복 제목 slug(:524) | 2단계 공개 목록·글 증분 |
 | `apps/blog-api/src/posts/posts-access.integration.spec.ts` | 초안 경계(:104,:123), sitemap·RSS에서 초안 제외 | 2단계 공개 화면 증분 |
-| `apps/blog-api/src/categories/categories.service.spec.ts`, `tags/tags.service.spec.ts` | 중복 Conflict, 글이 연결된 항목 삭제 거부 | 2단계 카테고리·태그 증분 |
+| `apps/blog-api/src/categories/categories.service.spec.ts`, `tags/tags.service.spec.ts`(통합 테스트 2개는 `describe.skip`이라 제외) | 중복 Conflict, 글이 연결된 항목 삭제 거부 | 2단계 카테고리·태그 증분 |
 | `apps/blog-api/src/settings/settings.service.spec.ts` | 행이 없을 때 기본값(:32, 운영 settings 0행이라 실제 운영 경로), 관리자 전용 필드 숨김, 소개 이미지 확정·이전 파일 삭제(:115) | 2단계 설정 증분 |
 | `apps/blog-api/src/auth/strategies/jwt.strategy.spec.ts`(:108) | 로그인 때 프로필 갱신 | `apps/blog/test/oauth-callback.test.ts` |
 | `apps/blog-web/scripts/verify-seo-runtime.mjs` | page 2 canonical, 필터 noindex, 404 메타, KST 날짜, JSON-LD `</script>` escape, og 이미지, sitemap, 로그인 화면 noindex, 조회수 분리 | assertion 목록은 유지하고 실행 틀을 로컬 D1 시드 + `astro preview` 대상으로 다시 쓴다(`next start`·next-auth 쿠키 위조·blog-api mock에 묶여 그대로 실행 불가). 위치는 `apps/blog/scripts/verify-seo-runtime.mjs` |

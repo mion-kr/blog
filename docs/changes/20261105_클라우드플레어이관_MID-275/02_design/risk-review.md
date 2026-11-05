@@ -93,3 +93,7 @@
   8. Supabase 삭제 전 참조 안 하는 png 21개 확인
   9. "4개 결정" 표기 정리(이번 수정에서 "표 전체"로 고쳐 일부 해소)
 - 7일 관찰 기간 중 롤백하면 그 기간의 조회수는 잃는다(사용자 결정 2로 수용).
+
+## 2단계 정정(2026-11-05)
+
+- 반박 표의 "회귀·계약 테스트 누락" 항목이 회귀 근거로 든 기존 blog-api 테스트 중 `posts.integration.spec.ts`, `categories.integration.spec.ts`, `tags.integration.spec.ts`는 `describe.skip`이라 실행된 적이 없다. 2단계 설계 증분([design-implementation.md](design-implementation.md))에서 케이스 목록으로만 쓰고, 실제 기준선은 구현 작업 0의 실행 결과로 정한다.
