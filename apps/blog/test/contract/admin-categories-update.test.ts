@@ -1,0 +1,40 @@
+import { env } from 'cloudflare:workers';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { adminJson } from '../helpers/admin-api';
+import { clearTables } from '../helpers/db';
+import { ids, seedBasic, T0 } from '../helpers/seed';
+
+const update = (id: string, body: unknown) => adminJson('PUT', `/api/admin/categories/${id}`, body);
+
+describe('PUT /api/admin/categories/{id}', () => {
+  beforeEach(async () => {
+    await clearTables();
+    await seedBasic();
+  });
+
+  it('일부 필드만 바꾸고 updated_at 갱신, 200 {success:true}', async () => {
+    const { status, body } = await update(ids.catSkills, { name: '바뀐 이름' });
+    expect(status).toBe(200);
+    expect(body).toEqual({ success: true });
+    const row = await env.DB.prepare('SELECT name, updated_at FROM categories WHERE id=?').bind(ids.catSkills).first<{ name: string; updated_at: number }>();
+    expect(row!.name).toBe('바뀐 이름');
+    expect(row!.updated_at).toBeGreaterThan(T0);
+  });
+
+  it('자기 값 그대로는 중복 아님, 이름·slug 둘 다 겹치면 이름 오류 먼저', async () => {
+    const self = await env.DB.prepare('SELECT name, slug FROM categories WHERE id=?').bind(ids.catSkills).first<{ name: string; slug: string }>();
+    expect((await update(ids.catSkills, self!)).status).toBe(200);
+    const other = await env.DB.prepare('SELECT name, slug FROM categories WHERE id=?').bind(ids.catDev).first<{ name: string; slug: string }>();
+    const res = await update(ids.catSkills, other!);
+    expect(res.status).toBe(409);
+    expect(res.body!.error!.code).toBe('CATEGORY_NAME_TAKEN');
+    expect((await update(ids.catSkills, { slug: other!.slug })).body!.error!.code).toBe('CATEGORY_SLUG_TAKEN');
+  });
+
+  it('없는 id 404, 검증 오류 400', async () => {
+    const missing = await update('01900000-0000-7000-8000-0000000000ee', { name: 'x' });
+    expect(missing.status).toBe(404);
+    expect(missing.body!.error!.code).toBe('CATEGORY_NOT_FOUND');
+    expect((await update(ids.catSkills, { slug: 'Bad Slug' })).status).toBe(400);
+  });
+});
