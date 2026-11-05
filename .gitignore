@@ -39,3 +39,7 @@ yarn-error.log*
 
 .playwright-mcp
 .serena
+# Cloudflare / Astro
+.dev.vars*
+.wrangler/
+.astro/

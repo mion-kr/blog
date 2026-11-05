@@ -486,8 +486,8 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
 
 준비
 
-- [ ] 0. 기준선: `pnpm install --frozen-lockfile`, `pnpm --filter blog-api test`, `parseXPostUrl.test.mjs`, `verify-seo-runtime.mjs`, `run-local-validation.py` 실행 결과(또는 `미실행` 이유) 기록
-- [ ] 1. `apps/blog` 뼈대(design.md 작업 1)와 확인: pool-workers에서 Astro Worker `fetch` 호출, `acorn-jsx`·`hangul-romanize`·`oauth4webapi` workerd 동작, `__Host-` 로컬 쿠키. pool-workers로 Astro Worker를 띄울 수 없으면 여기서 멈추고 묻는다
+- [x] 0. 기준선: `pnpm install --frozen-lockfile`, `pnpm --filter blog-api test`, `parseXPostUrl.test.mjs`, `verify-seo-runtime.mjs`, `run-local-validation.py` 실행 결과(또는 `미실행` 이유) 기록
+- [x] 1. `apps/blog` 뼈대(design.md 작업 1)와 확인: pool-workers에서 Astro Worker `fetch` 호출, `acorn-jsx`·`hangul-romanize`·`oauth4webapi` workerd 동작, `__Host-` 로컬 쿠키. pool-workers로 Astro Worker를 띄울 수 없으면 여기서 멈추고 묻는다
 - [ ] 2. D1 스키마·마이그레이션(로컬 적용)
 
 데이터
@@ -593,3 +593,23 @@ design.md "변경 파일 후보"에 더한다.
 | 정적 파일·소개·약관(변경 명세 유지) | 12 | `public-static` |
 | 이관 전후 개수·전 컬럼 동일(이슈, 변경 명세) | 3~5, 48, 49 | `dump-to-sql`, `rewrite-urls`, 비교 스크립트 |
 | 공개 글 21편 200, 커버 21개 200(변경 명세) | 48, 49 | 미리보기·운영 직접 확인 |
+
+## 실행 기록
+
+### 기준선 결과(작업 0, 2026-11-05)
+
+| 명령 | 결과 |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | 성공 |
+| `pnpm --filter blog-api test` | 처음엔 13개 파일이 `@repo/database` 해석 실패. `pnpm --filter @repo/database --filter @repo/shared build` 뒤 재실행: 파일 19 통과·3 건너뜀(`describe.skip` 3개), 테스트 188 통과·91 건너뜀 |
+| `node apps/blog-web/scripts/parseXPostUrl.test.mjs` | 통과(fail 0) |
+| `pnpm --filter blog-web verify:seo:runtime` | 실패(기존 결함). 첫 확인 `assertPublicFooter`가 `<footer class="neon-footer">`를 찾지만 Editorial 개편(`9a7c3c1`) 뒤 푸터는 `class="foot"`라 `undefined !== 1`. 스크립트가 개편을 따라가지 못했다. 나머지 assertion은 실행되지 않았다. 새 스크립트에는 푸터 선택자만 지금 마크업으로 바꿔 옮긴다 |
+| `python3 apps/blog-web/scripts/run-local-validation.py` | 미실행. 고정 포트 `55432`를 다른 프로젝트 컨테이너(`signalforge-postgres-1`)가 쓰고 있다. 그 컨테이너는 건드리지 않았다. `verify-server-routing.mjs`·`verify-integrated-admin.mjs`도 이 서버가 필요해 미실행, assertion 목록만 가져간다 |
+
+### 작업 1 확인 결과(2026-11-05)
+
+- 테스트 도구: `@cloudflare/vitest-pool-workers`는 npm에서 deprecated이고 "`@cloudflare/vitest-plugin`으로 이름이 바뀌었으며 더 이상 갱신하지 않는다"고 안내한다(0.23.0이 마지막). 같은 도구의 후속 패키지 `@cloudflare/vitest-plugin` 1.6.0 + Vitest 4.1.12로 고정했다(사용자 결정 8의 "workerd 안 Vitest 통합 + Vitest 4.x"는 그대로).
+- `astro build` 산출물 `dist/server/wrangler.json`을 `cloudflareTest({ wrangler: { configPath } })`로 띄우고 `exports.default.fetch`로 호출하는 방식이 동작한다(스모크 테스트 통과). 그래서 `pnpm --filter blog test`는 `astro build && vitest run`이다.
+- workerd 빌드 확인(임시 라우트, 확인 뒤 삭제): `oauth4webapi` 동작, `remark-mdx`(acorn-jsx)가 `<XEmbed />`를 `mdxJsxFlowElement`로 파싱, `remark-gfm` 표 변환 동작. `hangul-romanize`는 패키지의 `module` 진입(`dist-esm`)이 `ReferenceError: module is not defined`로 실패하고, CommonJS 진입 `hangul-romanize/dist/index.js`를 import하면 동작한다. slug 코드는 이 경로를 쓴다.
+- `pnpm` 9.0.0은 새 `esbuild` 0.28.2의 플랫폼 패키지를 잘못 연결해 설치가 실패했다. lockfile 갱신만 `pnpm@9.15.9`로 했고, 그 lockfile로 9.0.0 `--frozen-lockfile` 설치가 통과했다. 깨끗한 설치 확인은 작업 47에서 한다.
+- `__Host-` 쿠키의 로컬 http 동작은 브라우저 동작이라 로그인 작업(작업 20~23)에서 브라우저로 확인한다.
