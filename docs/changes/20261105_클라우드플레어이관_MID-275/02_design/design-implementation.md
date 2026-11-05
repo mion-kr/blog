@@ -488,73 +488,73 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
 
 - [x] 0. 기준선: `pnpm install --frozen-lockfile`, `pnpm --filter blog-api test`, `parseXPostUrl.test.mjs`, `verify-seo-runtime.mjs`, `run-local-validation.py` 실행 결과(또는 `미실행` 이유) 기록
 - [x] 1. `apps/blog` 뼈대(design.md 작업 1)와 확인: pool-workers에서 Astro Worker `fetch` 호출, `acorn-jsx`·`hangul-romanize`·`oauth4webapi` workerd 동작, `__Host-` 로컬 쿠키. pool-workers로 Astro Worker를 띄울 수 없으면 여기서 멈추고 묻는다
-- [ ] 2. D1 스키마·마이그레이션(로컬 적용)
+- [x] 2. D1 스키마·마이그레이션(로컬 적용)
 
 데이터
 
-- [ ] 3. `dump-to-sql` 단위 테스트 → 구현
-- [ ] 4. `rewrite-urls` 단위 테스트 → 구현
-- [ ] 5. 읽기 전용 덤프 → 로컬 D1 적재 → 전 컬럼 비교 스크립트(차이 있으면 종료 코드 1)
-- [ ] 6. 덤프 본문으로 렌더 고정 자료 생성(옛 렌더러, 운영 HTTP 사용 안 함)
+- [x] 3. `dump-to-sql` 단위 테스트 → 구현
+- [x] 4. `rewrite-urls` 단위 테스트 → 구현
+- [x] 5. 읽기 전용 덤프 → 로컬 D1 적재 → 전 컬럼 비교 스크립트(차이 있으면 종료 코드 1)
+- [x] 6. 덤프 본문으로 렌더 고정 자료 생성(옛 렌더러, 운영 HTTP 사용 안 함)
 
 공개 화면
 
-- [ ] 7. `renderPostHtml` 단위·회귀
-- [ ] 8. slug·`post-rules`·`posts-query` 단위
-- [ ] 9. `GET /posts/{slug}`(`public-post-detail.test.ts`, 404 화면 포함)
-- [ ] 10. `GET /posts`(`public-posts-list.test.ts`, 필터 island 포함)
-- [ ] 11. `GET /`(`public-home.test.ts`)
-- [ ] 12. `/about`, `/privacy-policy`, `/terms`, 정적 파일 6개(`public-static.test.ts`, `/ads.txt` 본문 일치 포함)
-- [ ] 13. `GET /feed.xml`
-- [ ] 14. `GET /sitemap.xml`
-- [ ] 15. `GET /robots.txt`
+- [x] 7. `renderPostHtml` 단위·회귀
+- [x] 8. slug·`post-rules`·`posts-query` 단위
+- [x] 9. `GET /posts/{slug}`(`public-post-detail.test.ts`, 404 화면 포함)
+- [x] 10. `GET /posts`(`public-posts-list.test.ts`, 필터 island 포함)
+- [x] 11. `GET /`(`public-home.test.ts`)
+- [x] 12. `/about`, `/privacy-policy`, `/terms`, 정적 파일 6개(`public-static.test.ts`, `/ads.txt` 본문 일치 포함)
+- [x] 13. `GET /feed.xml`
+- [x] 14. `GET /sitemap.xml`
+- [x] 15. `GET /robots.txt`
 
 로그인·보호
 
-- [ ] 16. 세션 쿠키 단위(`session.test.ts`)
-- [ ] 17. middleware 관리자 보호(`admin-guard.test.ts`)
-- [ ] 18. middleware 출처 검사(`origin-check.test.ts`)
-- [ ] 19. middleware 편집 동결(`edit-freeze.test.ts`)
-- [ ] 20. `GET /auth/google`
-- [ ] 21. `GET /api/auth/callback/google`
-- [ ] 22. `POST /auth/signout`
-- [ ] 23. `GET /auth/signin`
-- [ ] 24. 공개 헤더의 관리자 링크·로그아웃 form(`public-header.test.ts`)
-- [ ] 25. 관리자 레이아웃(메뉴, 이름·이메일, 만료 경고, noindex, 상태 배너 island)
+- [x] 16. 세션 쿠키 단위(`session.test.ts`)
+- [x] 17. middleware 관리자 보호(`admin-guard.test.ts`)
+- [x] 18. middleware 출처 검사(`origin-check.test.ts`)
+- [x] 19. middleware 편집 동결(`edit-freeze.test.ts`)
+- [x] 20. `GET /auth/google`
+- [x] 21. `GET /api/auth/callback/google`
+- [x] 22. `POST /auth/signout`
+- [x] 23. `GET /auth/signin`
+- [x] 24. 공개 헤더의 관리자 링크·로그아웃 form(`public-header.test.ts`)
+- [x] 25. 관리자 레이아웃(메뉴, 이름·이메일, 만료 경고, noindex, 상태 배너 island)
 
 업로드
 
-- [ ] 26. `media-key`·`upload-policy` 단위
-- [ ] 27. `POST /api/admin/uploads`
-- [ ] 28. 로컬 전용 `GET /local-media/{key}`(`media-route.test.ts`, `SERVE_MEDIA_FROM_BINDING=false`면 404)
+- [x] 26. `media-key`·`upload-policy` 단위
+- [x] 27. `POST /api/admin/uploads`
+- [x] 28. 로컬 전용 `GET /local-media/{key}`(`media-route.test.ts`, `SERVE_MEDIA_FROM_BINDING=false`면 404)
 
 관리자 글
 
-- [ ] 29. 이미지 확정 공통 함수(`image-finalize.test.ts`)
-- [ ] 30. `POST /api/admin/posts`
-- [ ] 31. `PUT /api/admin/posts/{id}`
-- [ ] 32. `DELETE /api/admin/posts/{id}`
-- [ ] 33. `/admin/posts` 화면
-- [ ] 34. `/admin/posts/new` 화면(글 폼 island, 업로드 연결, 401 이동)
-- [ ] 35. `/admin/posts/[slug]/edit` 화면(조회수 증가 없음)
+- [x] 29. 이미지 확정 공통 함수(`image-finalize.test.ts`)
+- [x] 30. `POST /api/admin/posts`
+- [x] 31. `PUT /api/admin/posts/{id}`
+- [x] 32. `DELETE /api/admin/posts/{id}`
+- [x] 33. `/admin/posts` 화면
+- [x] 34. `/admin/posts/new` 화면(글 폼 island, 업로드 연결, 401 이동)
+- [x] 35. `/admin/posts/[slug]/edit` 화면(조회수 증가 없음)
 
 카테고리·태그·설정·대시보드
 
-- [ ] 36. `POST /api/admin/categories`
-- [ ] 37. `PUT /api/admin/categories/{id}`
-- [ ] 38. `DELETE /api/admin/categories/{id}`
-- [ ] 39. `/admin/categories` 화면(삭제 확인 island)
-- [ ] 40. `POST /api/admin/tags`
-- [ ] 41. `PUT /api/admin/tags/{id}`
-- [ ] 42. `DELETE /api/admin/tags/{id}`
-- [ ] 43. `/admin/tags` 화면
-- [ ] 44. `PATCH /api/admin/settings`(칸별 오류 `fieldErrors`)
-- [ ] 45. `/admin/settings` 화면(프로필 카드는 `users` 조회)
-- [ ] 46. `/admin` 대시보드
+- [x] 36. `POST /api/admin/categories`
+- [x] 37. `PUT /api/admin/categories/{id}`
+- [x] 38. `DELETE /api/admin/categories/{id}`
+- [x] 39. `/admin/categories` 화면(삭제 확인 island)
+- [x] 40. `POST /api/admin/tags`
+- [x] 41. `PUT /api/admin/tags/{id}`
+- [x] 42. `DELETE /api/admin/tags/{id}`
+- [x] 43. `/admin/tags` 화면
+- [x] 44. `PATCH /api/admin/settings`(칸별 오류 `fieldErrors`)
+- [x] 45. `/admin/settings` 화면(프로필 카드는 `users` 조회)
+- [x] 46. `/admin` 대시보드
 
 마무리(로컬)
 
-- [ ] 47. `verify-seo-runtime.mjs`·`verify-admin-flow.mjs` 재작성·실행, `admin-guard`·`origin-check`·`edit-freeze` 전체 재실행(모든 라우트가 생긴 뒤), `pnpm build`, `pnpm check-types`, 옛 앱 build, `pnpm --filter blog-api test`
+- [x] 47. `verify-seo-runtime.mjs`·`verify-admin-flow.mjs` 재작성·실행, `admin-guard`·`origin-check`·`edit-freeze` 전체 재실행(모든 라우트가 생긴 뒤), `pnpm build`, `pnpm check-types`, 옛 앱 build, `pnpm --filter blog-api test`
 
 원격(각각 승인 후)
 
@@ -613,3 +613,21 @@ design.md "변경 파일 후보"에 더한다.
 - workerd 빌드 확인(임시 라우트, 확인 뒤 삭제): `oauth4webapi` 동작, `remark-mdx`(acorn-jsx)가 `<XEmbed />`를 `mdxJsxFlowElement`로 파싱, `remark-gfm` 표 변환 동작. `hangul-romanize`는 패키지의 `module` 진입(`dist-esm`)이 `ReferenceError: module is not defined`로 실패하고, CommonJS 진입 `hangul-romanize/dist/index.js`를 import하면 동작한다. slug 코드는 이 경로를 쓴다.
 - `pnpm` 9.0.0은 새 `esbuild` 0.28.2의 플랫폼 패키지를 잘못 연결해 설치가 실패했다. lockfile 갱신만 `pnpm@9.15.9`로 했고, 그 lockfile로 9.0.0 `--frozen-lockfile` 설치가 통과했다. 깨끗한 설치 확인은 작업 47에서 한다.
 - `__Host-` 쿠키의 로컬 http 동작은 브라우저 동작이라 로그인 작업(작업 20~23)에서 브라우저로 확인한다.
+
+### 로컬 구현 결과(작업 2~47, 2026-11-06)
+
+- 결과: `pnpm --filter blog test` 50개 파일 285개 통과(workerd, 계약·회귀·단위), `pnpm build` 6개 작업 통과(옛 앱 포함), `pnpm check-types` 8개 작업 통과, `pnpm --filter blog-api test` 기준선과 같음(19 통과·3 건너뜀, 188 통과), `git diff --check` 통과. 깨끗한 설치(`node_modules` 삭제 후 pnpm 9.0.0 `--frozen-lockfile`) 통과.
+- 실제 데이터 확인(`apps/blog/scripts/verify-local.mjs`, 운영 덤프를 적재한 로컬 D1 + `astro dev`): 공개 글 21편 200, RSS·sitemap이 운영 응답(2026-11-06 수집)과 글자 단위로 같음, 관리자 주소 307, 관리자 API 401, `/posts?limit=101` 오류 문구.
+- 관리자 화면 확인(Playwright, 로컬): 새 글 작성 → 대표·본문 이미지 업로드 → 발행 저장 → 공개 상세 200·커버 로드 → 발행 글 제목 수정 후 예전 주소 200 → 삭제. 페이지 오류 없음.
+- 설계와 달라진 점
+  - 로컬 이미지 경로는 `/_media/` 대신 `/local-media/`다. Astro는 `_`로 시작하는 라우트 파일·폴더를 무시한다.
+  - Astro 기본 `security.checkOrigin`은 끄고 middleware 출처 검사 하나로 둔다(form 요청이 Astro 검사에서 먼저 막혀 응답 형식이 갈라지는 것을 막기 위해서다. 검사 범위는 설계 D1 ⑥ 그대로).
+  - 로컬 http에서는 세션·임시 쿠키 이름을 `mion-session`·`mion-oauth`(Secure 없음)로 쓴다. 운영·미리보기는 `__Host-` 이름이다. 운영 설정에서 접두사 없는 이름을 읽지 않는 것은 `admin-guard.test.ts`가 확인한다.
+  - 관리자 대시보드(작업 46)는 관리자 레이아웃(작업 25) 테스트 대상이 필요해 함께 했다.
+  - 덤프의 시간 변환을 반올림에서 버림(`floor`)으로 고쳤다. 운영 sitemap과 비교하다 `lastmod`가 1ms 밀리는 것을 찾았다(Postgres 마이크로초 → 이관 전 JS Date는 밀리초 아래 버림). 비교 스크립트에 드라이버로 읽은 값과의 비교를 더해 같은 실수를 다시 잡게 했다.
+  - 새 앱의 React·타입 버전을 옛 앱과 같은 값(react 19.2.8, @types/react 19.2.18)으로 맞췄다. 다른 사본이 생기면 옛 앱 `next build` 타입 검사가 TS2742로 깨진다.
+  - `astro check`는 Astro 7.4.5에서 `@astrojs/check`를 찾지 못하고 `@emnapi/runtime`에서 멈춰 쓸 수 없다. `check-types`는 `tsc --noEmit`이고 `.astro` 템플릿은 계약 테스트 렌더로만 확인한다.
+  - 관리자 목록·대시보드 날짜를 `Asia/Seoul`로 고정했다(서버 UTC·브라우저 KST 렌더 불일치로 생기던 hydration 경고 제거, 화면 값은 같음).
+  - 옛 `verify-seo-runtime.mjs`의 확인 항목은 계약 테스트로 옮겼다(page 2 canonical·필터 noindex: `public-posts-list`, 404 메타: `public-post-detail`·`public-static`, KST 날짜·JSON-LD `</script>` 이스케이프·og 이미지: `public-post-detail`, sitemap: `public-sitemap`, 로그인 noindex: `auth-signin-page`, 조회수 분리: `public-post-detail`·`admin-post-pages`).
+- 테스트를 구현 뒤에 쓴 곳(실패 먼저 확인 못 함): `compare-core`, `buildRobots` 단위, `public-header`(레이아웃을 먼저 만듦), `public-static`(이관 전 렌더 결과를 옮긴 정적 화면), 글 삭제(`PUT`과 같은 파일에 구현). 그 밖의 엔드포인트는 실패를 먼저 확인했다.
+- 테스트 기대값을 고친 곳: mermaid 원문의 `>` 이스케이프 가정과 줄 앞 공백(이관 전과 같은 결과로 맞춤), 로마자 표기 추정값(`jemog` → 이관 전 함수 결과 `jemok`), 덤프 쿼리 문자열(`floor` 수정), 테스트 도우미의 계산·선택자 오류.
