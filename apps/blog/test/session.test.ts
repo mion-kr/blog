@@ -75,3 +75,17 @@ describe('OAuth 임시 쿠키', () => {
     expect(clearOauthCookie(PROD)).toBe('__Host-mion-oauth=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax');
   });
 });
+
+describe('쿠키 이름 판정', () => {
+  it('운영 주소에서는 접두사 없는 mion-session 쿠키를 읽지 않는다', async () => {
+    const { sessionTokenFromRequest } = await import('../src/server/auth/session');
+    const req = (cookie: string) => new Request('https://mion-space.dev/admin', { headers: { cookie } });
+    expect(sessionTokenFromRequest(req('mion-session=abc'), PROD)).toBeUndefined();
+    expect(sessionTokenFromRequest(req('__Host-mion-session=abc'), PROD)).toBe('abc');
+    expect(sessionTokenFromRequest(req('mion-session=abc'), LOCAL)).toBe('abc');
+  });
+  it('http이어도 localhost가 아니면 운영 이름·Secure를 쓴다', () => {
+    expect(sessionCookieName('http://preview.example.com')).toBe('__Host-mion-session');
+    expect(clearSessionCookie('http://preview.example.com')).toContain('; Secure;');
+  });
+});

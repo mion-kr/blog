@@ -14,7 +14,10 @@ export const GOOGLE: oauth.AuthorizationServer = {
 const GOOGLE_LEGACY: oauth.AuthorizationServer = { ...GOOGLE, issuer: 'accounts.google.com' };
 
 const TEMP_MAX_AGE = 600;
-const isLocalHttp = (siteUrl: string) => siteUrl.startsWith('http://');
+const isLocalHttp = (siteUrl: string) => {
+  const url = new URL(siteUrl);
+  return url.protocol === 'http:' && url.hostname === 'localhost';
+};
 export const oauthCookieName = (siteUrl: string) => (isLocalHttp(siteUrl) ? 'mion-oauth' : '__Host-mion-oauth');
 const attrs = (siteUrl: string, maxAge: number) => `Path=/; Max-Age=${maxAge}; HttpOnly${isLocalHttp(siteUrl) ? '' : '; Secure'}; SameSite=Lax`;
 export const clearOauthCookie = (siteUrl: string) => `${oauthCookieName(siteUrl)}=; ${attrs(siteUrl, 0)}`;

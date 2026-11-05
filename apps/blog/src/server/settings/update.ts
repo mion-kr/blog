@@ -21,7 +21,8 @@ function isUrlWithTld(value: string): boolean {
 const isHttpUrl = (v: string) => {
   try {
     const u = new URL(v);
-    return (u.protocol === 'http:' || u.protocol === 'https:') && isUrlWithTld(v) || u.hostname === 'localhost';
+    // 로컬 개발의 업로드 주소(http://localhost:4321/local-media/…)만 최상위 도메인 예외
+    return (u.protocol === 'http:' || u.protocol === 'https:') && (isUrlWithTld(v) || u.hostname === 'localhost');
   } catch {
     return false;
   }

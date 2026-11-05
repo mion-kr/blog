@@ -111,6 +111,17 @@ describe('POST /api/admin/posts', () => {
     expect(await env.DB.prepare('SELECT count(*) AS n FROM posts').first('n')).toBe(3);
   });
 
+  it('D1 쓰기가 실패하면 이번에 복사한 객체를 지우고 draft 원본은 남긴다', async () => {
+    await put(`draft/${D}/thumbnail/1-a.png`);
+    await env.DB.prepare("CREATE TRIGGER fail_create BEFORE INSERT ON post_tags BEGIN SELECT RAISE(ABORT, 'boom'); END").run();
+    const res = await create(valid({ coverImage: `${BASE}draft/${D}/thumbnail/1-a.png`, coverImageKey: `draft/${D}/thumbnail/1-a.png`, draftUuid: D }));
+    await env.DB.prepare('DROP TRIGGER fail_create').run();
+    expect(res.status).toBe(500);
+    expect((await env.MEDIA.list({ prefix: 'posts/' })).objects).toHaveLength(0);
+    expect(await exists(`draft/${D}/thumbnail/1-a.png`)).toBe(true);
+    expect(await env.DB.prepare('SELECT count(*) AS n FROM posts').first('n')).toBe(3);
+  });
+
   it('미인증 401, 다른 출처 403', async () => {
     expect((await create(valid(), { origin: 'http://localhost:4321', 'content-type': 'application/json' })).status).toBe(401);
     expect((await create(valid(), { cookie: await adminCookie(), origin: 'https://evil.test', 'content-type': 'application/json' })).status).toBe(403);

@@ -616,18 +616,25 @@ design.md "변경 파일 후보"에 더한다.
 
 ### 로컬 구현 결과(작업 2~47, 2026-11-06)
 
-- 결과: `pnpm --filter blog test` 50개 파일 285개 통과(workerd, 계약·회귀·단위), `pnpm build` 6개 작업 통과(옛 앱 포함), `pnpm check-types` 8개 작업 통과, `pnpm --filter blog-api test` 기준선과 같음(19 통과·3 건너뜀, 188 통과), `git diff --check` 통과. 깨끗한 설치(`node_modules` 삭제 후 pnpm 9.0.0 `--frozen-lockfile`) 통과.
+- 결과(독립 리뷰 반영 뒤): `pnpm --filter blog test` 51개 파일 297개 통과(workerd, 계약·회귀·단위), `pnpm build` 6개 작업 통과(옛 앱 포함), `pnpm check-types` 8개 작업 통과, `pnpm --filter blog-api test` 기준선과 같음(19 통과·3 건너뜀, 188 통과), `pnpm --filter blog-web build`·`pnpm --filter blog-api build` 다시 통과. `git diff --check 18c2b5c..HEAD`는 옛 앱에서 그대로 복사한 두 파일(`fonts/paperlogy/OFL license.txt`, `styles/globals.css`)의 줄 끝 공백만 남는다(원본과 같게 두려고 고치지 않음). 깨끗한 설치(`node_modules` 삭제 후 pnpm 9.0.0 `--frozen-lockfile`) 통과.
 - 실제 데이터 확인(`apps/blog/scripts/verify-local.mjs`, 운영 덤프를 적재한 로컬 D1 + `astro dev`): 공개 글 21편 200, RSS·sitemap이 운영 응답(2026-11-06 수집)과 글자 단위로 같음, 관리자 주소 307, 관리자 API 401, `/posts?limit=101` 오류 문구.
 - 관리자 화면 확인(Playwright, 로컬): 새 글 작성 → 대표·본문 이미지 업로드 → 발행 저장 → 공개 상세 200·커버 로드 → 발행 글 제목 수정 후 예전 주소 200 → 삭제. 페이지 오류 없음.
 - 설계와 달라진 점
   - 로컬 이미지 경로는 `/_media/` 대신 `/local-media/`다. Astro는 `_`로 시작하는 라우트 파일·폴더를 무시한다.
   - Astro 기본 `security.checkOrigin`은 끄고 middleware 출처 검사 하나로 둔다(form 요청이 Astro 검사에서 먼저 막혀 응답 형식이 갈라지는 것을 막기 위해서다. 검사 범위는 설계 D1 ⑥ 그대로).
-  - 로컬 http에서는 세션·임시 쿠키 이름을 `mion-session`·`mion-oauth`(Secure 없음)로 쓴다. 운영·미리보기는 `__Host-` 이름이다. 운영 설정에서 접두사 없는 이름을 읽지 않는 것은 `admin-guard.test.ts`가 확인한다.
+  - `SITE_URL`이 `http://localhost`일 때만 세션·임시 쿠키 이름을 `mion-session`·`mion-oauth`(Secure 없음)로 쓴다. 그 밖에는 `__Host-` 이름이다. 운영 주소에서 접두사 없는 이름을 읽지 않는 것은 `session.test.ts`가 확인한다.
   - 관리자 대시보드(작업 46)는 관리자 레이아웃(작업 25) 테스트 대상이 필요해 함께 했다.
   - 덤프의 시간 변환을 반올림에서 버림(`floor`)으로 고쳤다. 운영 sitemap과 비교하다 `lastmod`가 1ms 밀리는 것을 찾았다(Postgres 마이크로초 → 이관 전 JS Date는 밀리초 아래 버림). 비교 스크립트에 드라이버로 읽은 값과의 비교를 더해 같은 실수를 다시 잡게 했다.
   - 새 앱의 React·타입 버전을 옛 앱과 같은 값(react 19.2.8, @types/react 19.2.18)으로 맞췄다. 다른 사본이 생기면 옛 앱 `next build` 타입 검사가 TS2742로 깨진다.
   - `astro check`는 Astro 7.4.5에서 `@astrojs/check`를 찾지 못하고 `@emnapi/runtime`에서 멈춰 쓸 수 없다. `check-types`는 `tsc --noEmit`이고 `.astro` 템플릿은 계약 테스트 렌더로만 확인한다.
   - 관리자 목록·대시보드 날짜를 `Asia/Seoul`로 고정했다(서버 UTC·브라우저 KST 렌더 불일치로 생기던 hydration 경고 제거, 화면 값은 같음).
   - 옛 `verify-seo-runtime.mjs`의 확인 항목은 계약 테스트로 옮겼다(page 2 canonical·필터 noindex: `public-posts-list`, 404 메타: `public-post-detail`·`public-static`, KST 날짜·JSON-LD `</script>` 이스케이프·og 이미지: `public-post-detail`, sitemap: `public-sitemap`, 로그인 noindex: `auth-signin-page`, 조회수 분리: `public-post-detail`·`admin-post-pages`).
+- 독립 구현 리뷰(2026-11-06, `mion-reviewer`) 반영
+  - 본문 렌더러가 `javascript:` 주소(마크다운 링크, 소문자 `a`·`img`·`form`)를 이관 전 React와 같은 차단 문자열로 바꾼다(`render.test.ts`). 이관 전에는 React가 막고 있었다.
+  - 설정의 이미지 URL 검증 연산자 우선순위를 고쳤다(`javascript://localhost`·`ftp://localhost` 거부).
+  - 추가 테스트: 임시 쿠키 만료, 편집 동결 중 로그인, 쓰기 11개 전부 423(`test/frozen`), 카테고리·태그 수정·삭제 401·403, 글 생성 D1 실패 시 보상 삭제, 운영 주소에서 접두사 없는 쿠키 이름 무시.
+  - 같은 state 재사용: 콜백이 임시 쿠키를 지우므로 브라우저는 다시 보내지 않는다. 다만 누군가 같은 임시 쿠키를 복사해 다시 보내는 것은 서버가 막지 않고, Google의 일회용 `code`가 막는다(서버 저장소를 두지 않는 설계 D1의 한계).
+  - 옛 `verify-integrated-admin.mjs` 흐름(초안 공개 404 → 발행 200 → 삭제 404)은 `admin-flow.test.ts`, 잘못된 업로드 400은 `admin-uploads.test.ts`, feed 항목 수는 `public-feed.test.ts`로 옮겼다.
+  - 남은 사용자 확인: 테스트 도구 패키지 이름 변경(`@cloudflare/vitest-plugin`), Astro 기본 `checkOrigin` 끄기.
 - 테스트를 구현 뒤에 쓴 곳(실패 먼저 확인 못 함): `compare-core`, `buildRobots` 단위, `public-header`(레이아웃을 먼저 만듦), `public-static`(이관 전 렌더 결과를 옮긴 정적 화면), 글 삭제(`PUT`과 같은 파일에 구현). 그 밖의 엔드포인트는 실패를 먼저 확인했다.
 - 테스트 기대값을 고친 곳: mermaid 원문의 `>` 이스케이프 가정과 줄 앞 공백(이관 전과 같은 결과로 맞춤), 로마자 표기 추정값(`jemog` → 이관 전 함수 결과 `jemok`), 덤프 쿼리 문자열(`floor` 수정), 테스트 도우미의 계산·선택자 오류.

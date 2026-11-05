@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { adminJson } from '../helpers/admin-api';
+import { adminCookie } from '../helpers/auth';
 import { clearTables } from '../helpers/db';
 import { ids, seedBasic, T0 } from '../helpers/seed';
 
@@ -36,5 +37,11 @@ describe('PUT /api/admin/categories/{id}', () => {
     expect(missing.status).toBe(404);
     expect(missing.body!.error!.code).toBe('CATEGORY_NOT_FOUND');
     expect((await update(ids.catSkills, { slug: 'Bad Slug' })).status).toBe(400);
+  });
+
+  it('미인증 401, 다른 출처 403', async () => {
+    const json = { 'content-type': 'application/json' };
+    expect((await adminJson('PUT', `/api/admin/categories/${ids.catSkills}`, { name: 'x' }, { ...json, origin: 'http://localhost:4321' })).status).toBe(401);
+    expect((await adminJson('PUT', `/api/admin/categories/${ids.catSkills}`, { name: 'x' }, { ...json, cookie: await adminCookie(), origin: 'https://evil.test' })).status).toBe(403);
   });
 });

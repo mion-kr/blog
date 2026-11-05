@@ -5,7 +5,10 @@ export const SESSION_MAX_AGE = 604_800; // 7일
 export type Session = { sub: string; email: string; name: string; role: 'ADMIN'; exp: number };
 export type SessionResult = { ok: true; session: Session } | { ok: false; reason: 'expired' | 'invalid' };
 
-const isLocalHttp = (siteUrl: string) => siteUrl.startsWith('http://');
+const isLocalHttp = (siteUrl: string) => {
+  const url = new URL(siteUrl);
+  return url.protocol === 'http:' && url.hostname === 'localhost';
+};
 // 로컬 http에서는 Secure 쿠키를 받지 않는 브라우저가 있어 접두사 없는 이름을 쓴다(운영·미리보기는 __Host-).
 export const sessionCookieName = (siteUrl: string) => (isLocalHttp(siteUrl) ? 'mion-session' : '__Host-mion-session');
 

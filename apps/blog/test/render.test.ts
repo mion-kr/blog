@@ -90,3 +90,17 @@ describe('renderPostHtml', () => {
     expect(await r('<div>닫히지 않음')).toContain('callout callout--error');
   });
 });
+
+describe('renderPostHtml javascript: URL 차단(이관 전 React와 같음)', () => {
+  const BLOCKED = "javascript:throw new Error('React has blocked a javascript: URL as a security precaution.')";
+  it('마크다운 링크·소문자 a·img의 javascript: 주소를 막는다(대소문자·공백·제어문자 변형 포함)', async () => {
+    for (const src of ['[x](javascript:alert(1))', '<a href="javascript:alert(1)">x</a>', '<a href=" JaVaScRiPt:alert(1)">x</a>', '<a href="java\tscript:alert(1)">x</a>', '<img src="javascript:alert(1)" />', '<form action="javascript:alert(1)"></form>']) {
+      const html = await renderPostHtml(src);
+      expect(html, src).not.toMatch(/(href|src|action)="\s*java\s*script:alert/i);
+      expect(html, src).toContain(BLOCKED.replaceAll("'", '&#x27;').slice(0, 20));
+    }
+  });
+  it('일반 주소는 그대로', async () => {
+    expect(await renderPostHtml('[x](https://e.com/javascript:ok)')).toContain('href="https://e.com/javascript:ok"');
+  });
+});

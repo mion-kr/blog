@@ -22,6 +22,12 @@ const t = (value: string): Text => ({ type: 'text', value });
 const callout = (type: 'info' | 'warning' | 'error' | 'success', role: string, children: ElementContent[]) =>
   h('div', { className: `callout callout--${type}`, role }, [icons[type](), ...children]);
 
+// 이관 전 React(19)와 같은 javascript: 주소 차단: 판정 정규식과 대체 문자열을 그대로 쓴다.
+const JAVASCRIPT_URL = /^[\u0000-\u001F ]*j[\r\n\t]*a[\r\n\t]*v[\r\n\t]*a[\r\n\t]*s[\r\n\t]*c[\r\n\t]*r[\r\n\t]*i[\r\n\t]*p[\r\n\t]*t[\r\n\t]*:/i;
+const BLOCKED_URL = "javascript:throw new Error('React has blocked a javascript: URL as a security precaution.')";
+const safeUrl = (v: unknown) => (typeof v === 'string' && JAVASCRIPT_URL.test(v) ? BLOCKED_URL : v);
+const URL_ATTRIBUTES = new Set(['href', 'src', 'action', 'formaction', 'xlink:href']);
+
 const EMPTY = callout('info', 'note', [h('p', {}, [t('표시할 콘텐츠가 없습니다.')])]);
 const FAILED = callout('error', 'alert', [h('div', {}, [h('strong', {}, [t('콘텐츠 로딩 오류')]), h('p', {}, [t('콘텐츠를 렌더링하는 중 오류가 발생했습니다.')])])]);
 
@@ -54,13 +60,14 @@ function textOf(nodes: ElementContent[]): string {
 function figureImage(src: unknown, alt: unknown): Element {
   if (typeof src !== 'string' || !src) return h('span', { className: 'body-figure' }, [h('span', { className: 'caption' }, [t('이미지를 로드할 수 없습니다')])]);
   const altText = typeof alt === 'string' ? alt : '';
-  const children: ElementContent[] = [h('img', { src, alt: altText, width: '800', height: '400', loading: 'lazy' })];
+  const children: ElementContent[] = [h('img', { src: safeUrl(src), alt: altText, width: '800', height: '400', loading: 'lazy' })];
   if (altText) children.push(h('span', { className: 'caption' }, [t(altText)]));
   return h('span', { className: 'body-figure' }, children);
 }
 
 function link(href: unknown, children: ElementContent[]): Element {
   if (typeof href !== 'string' || !href) return h('span', {}, children);
+  if (JAVASCRIPT_URL.test(href)) return h('a', { href: BLOCKED_URL }, children);
   if (href.startsWith('http') || href.startsWith('//')) {
     return h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, [...children, icons.external()]);
   }
@@ -108,6 +115,10 @@ function jsx(state: State, node: JsxNode): ElementContent | ElementContent[] {
   const properties: Properties = {};
   for (const [key, value] of Object.entries(attrs)) {
     if (/^on/i.test(key)) continue;
+    if (URL_ATTRIBUTES.has(key.toLowerCase())) {
+      properties[key] = safeUrl(value) as string;
+      continue;
+    }
     properties[key === 'className' ? 'className' : key === 'htmlFor' ? 'htmlFor' : key] = value;
   }
   return h(name, properties, children);

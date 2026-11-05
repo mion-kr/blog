@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearTables } from '../helpers/db';
 import { fetchPage, ids, seedBasic } from '../helpers/seed';
 import { mockGoogleToken, tokenResponse } from '../helpers/google';
+import { EncryptJWT } from 'jose';
+import { deriveSessionKey } from '../../src/server/auth/session';
+import { TEST_SECRET } from '../helpers/auth';
 
 async function begin(callbackUrl?: string) {
   const res = await fetchPage(`/auth/google${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`, { redirect: 'manual' });
@@ -102,6 +105,16 @@ describe('GET /api/auth/callback/google', () => {
     await oauthError(await callback(`code=c`, cookie));
     await oauthError(await callback(`code=c&state=${state}`));
     await oauthError(await callback(`code=c&state=${state}`, 'mion-oauth=forged'));
+    expect(google.calls).toHaveLength(0);
+  });
+
+  it('만료된 임시 쿠키(10분 경과)는 OAuthError(토큰 요청 없음)', async () => {
+    const past = Math.floor(Date.now() / 1000) - 700;
+    const temp = await new EncryptJWT({ state: 'st', verifier: 'v'.repeat(43), callbackUrl: '/admin' })
+      .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' }).setIssuedAt(past).setExpirationTime(past + 600)
+      .encrypt(await deriveSessionKey(TEST_SECRET, 'mion-oauth'));
+    google = mockGoogleToken(() => tokenResponse());
+    await oauthError(await callback('code=c&state=st', `mion-oauth=${temp}`));
     expect(google.calls).toHaveLength(0);
   });
 

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { adminJson } from '../helpers/admin-api';
+import { adminCookie } from '../helpers/auth';
 import { clearTables } from '../helpers/db';
 import { ids, seedBasic } from '../helpers/seed';
 
@@ -33,5 +34,11 @@ describe('DELETE /api/admin/categories/{id}', () => {
 
   it('없는 id 404', async () => {
     expect((await del('01900000-0000-7000-8000-0000000000ee')).status).toBe(404);
+  });
+
+  it('미인증 401, 다른 출처 403', async () => {
+    const json = { 'content-type': 'application/json' };
+    expect((await adminJson('DELETE', `/api/admin/categories/${ids.catSkills}`, undefined, { ...json, origin: 'http://localhost:4321' })).status).toBe(401);
+    expect((await adminJson('DELETE', `/api/admin/categories/${ids.catSkills}`, undefined, { ...json, cookie: await adminCookie(), origin: 'https://evil.test' })).status).toBe(403);
   });
 });
