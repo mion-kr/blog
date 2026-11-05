@@ -1,0 +1,58 @@
+/*
+ * 관리자 화면 Editorial 테마: 공용 토큰(editorial.module.css의 .tokens) 위에서 Tailwind 색·모서리 변수를 다시 연결합니다.
+ * 관리자 컴포넌트의 Tailwind 클래스는 어두운 테마 기준이라 slate 단계를 의도적으로 뒤집었습니다(950 = 종이, 50 = 잉크).
+ * Tailwind 유틸리티보다 우선하는 요소 선택자는 두지 않습니다.
+ */
+.root {
+  --color-slate-950: var(--color-paper);
+  --color-slate-900: var(--color-paper-2);
+  --color-slate-800: var(--color-rule);
+  --color-slate-700: var(--color-rule-2);
+  --color-slate-600: var(--color-muted);
+  --color-slate-500: var(--color-muted);
+  --color-slate-400: var(--color-muted);
+  --color-slate-300: var(--color-ink-2);
+  --color-slate-200: var(--color-ink-2);
+  --color-slate-100: var(--color-ink);
+  --color-slate-50: var(--color-ink);
+  --color-emerald-950: var(--color-accent-ink);
+  --color-emerald-800: var(--color-rule);
+  --color-emerald-500: var(--color-accent);
+  --color-emerald-400: var(--color-accent);
+  --color-emerald-300: var(--color-accent);
+  --color-emerald-200: var(--color-accent);
+  --color-cyan-500: var(--color-accent);
+  --color-cyan-400: var(--color-accent);
+  --color-cyan-300: var(--color-accent);
+  --color-cyan-200: var(--color-accent);
+  --color-red-950: var(--color-accent-ink);
+  --color-red-500: var(--color-danger);
+  --color-red-400: var(--color-danger);
+  --color-red-300: var(--color-danger);
+  --color-red-200: var(--color-danger);
+  --color-red-100: var(--color-danger);
+  --color-amber-500: var(--color-warning);
+  --color-amber-400: var(--color-warning);
+  --color-amber-300: var(--color-warning);
+  --color-amber-200: var(--color-warning);
+  /* Editorial 토큰의 --text-*가 같은 이름의 Tailwind 글자 크기를 덮으므로 Tailwind 기본값으로 되돌립니다. */
+  --text-xs: 0.75rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  min-height: 100vh;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-accent);
+}

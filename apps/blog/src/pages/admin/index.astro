@@ -1,0 +1,20 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import AdminDashboard from '../../islands/AdminDashboard';
+import { getAdminDashboard } from '../../server/admin/dashboard';
+import type { AdminDashboardData } from '../../features/admin/server/get-admin-dashboard';
+
+let data: AdminDashboardData | null = null;
+let error: string | null = null;
+try {
+  const d = await getAdminDashboard();
+  // 섬에 넘기는 값은 화면이 쓰는 필드만(본문 제외)
+  data = { ...d, recentDrafts: d.recentDrafts.map((p) => ({ id: p.id, title: p.title, slug: p.slug, createdAt: p.createdAt, updatedAt: p.updatedAt })) as never };
+} catch (e) {
+  console.error('대시보드 조회 실패', (e as Error).name);
+  error = '대시보드 데이터를 불러오지 못했어요.';
+}
+---
+<Admin>
+  <AdminDashboard client:load url={Astro.url.href} userName={Astro.locals.viewer?.name ?? '관리자'} data={data} error={error} />
+</Admin>
