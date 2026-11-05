@@ -30,8 +30,8 @@
 | `SITE_URL`(canonical·RSS·sitemap·OAuth `redirect_uri`·출처 검사 기준) | `http://localhost:4321` | `https://mion-blog.<계정 하위 도메인>.workers.dev`(구현 때 확인) | `https://mion-space.dev` |
 | OAuth 콜백 | `{SITE_URL}/api/auth/callback/google` | 같음(Google 콘솔 등록 필요, 승인 후) | 같음(지금 등록된 경로와 같다고 보지만 미확인) |
 | `ROBOTS_INDEXABLE` | `false` | `false`(전체 `Disallow: /`) | `true`(`Allow: /`, `Disallow: /admin`, `/api`) |
-| `MEDIA_BASE_URL`(공개 URL 조립·URL→키 추출 기준) | `http://localhost:4321/_media/` | `https://media.mion-space.dev/` | `https://media.mion-space.dev/` |
-| `SERVE_MEDIA_FROM_BINDING` | `true`(로컬 R2에 올린 파일을 `GET /_media/{key}`로 보여 줌) | `false`(404) | `false`(404) |
+| `MEDIA_BASE_URL`(공개 URL 조립·URL→키 추출 기준) | `http://localhost:4321/local-media/` | `https://media.mion-space.dev/` | `https://media.mion-space.dev/` |
+| `SERVE_MEDIA_FROM_BINDING` | `true`(로컬 R2에 올린 파일을 `GET /local-media/{key}`로 보여 줌) | `false`(404) | `false`(404) |
 | 세션 쿠키 이름 | `__Host-mion-session`, 로컬 http에서 안 되면 `mion-session`(작업 1에서 확인) | `__Host-mion-session` | `__Host-mion-session` |
 | `ADMIN_WRITES_FROZEN` | `false` | `false` | 전환 7일 동안 `true`, 이후 `false` |
 | D1 / R2 binding | pool-workers·miniflare 로컬 | 원격 `mion-blog` / `mion-blog-media`(운영과 같은 자원) | 같음 |
@@ -48,7 +48,7 @@ apps/blog/src/
 ├── middleware.ts            # 경로 정규화 → 관리자 보호 → 출처 검사 → 편집 동결
 ├── pages/                   # route 계층: 화면(.astro)과 API 라우트(.ts)
 │   ├── index.astro, posts/, about.astro, privacy-policy.astro, terms.astro
-│   ├── feed.xml.ts, sitemap.xml.ts, robots.txt.ts, _media/[...key].ts
+│   ├── feed.xml.ts, sitemap.xml.ts, robots.txt.ts, local-media/[...key].ts
 │   ├── auth/signin.astro, auth/google.ts, auth/signout.ts, api/auth/callback/google.ts
 │   ├── admin/…(.astro)      # 화면, React island 포함
 │   └── api/admin/…(.ts)     # 관리자 쓰기
@@ -526,7 +526,7 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
 
 - [ ] 26. `media-key`·`upload-policy` 단위
 - [ ] 27. `POST /api/admin/uploads`
-- [ ] 28. 로컬 전용 `GET /_media/{key}`(`media-route.test.ts`, `SERVE_MEDIA_FROM_BINDING=false`면 404)
+- [ ] 28. 로컬 전용 `GET /local-media/{key}`(`media-route.test.ts`, `SERVE_MEDIA_FROM_BINDING=false`면 404)
 
 관리자 글
 

@@ -7,7 +7,7 @@
   "vars": {
     "SITE_URL": "http://localhost:4321",
     "ROBOTS_INDEXABLE": "false",
-    "MEDIA_BASE_URL": "http://localhost:4321/_media/",
+    "MEDIA_BASE_URL": "http://localhost:4321/local-media/",
     "SERVE_MEDIA_FROM_BINDING": "true",
     "ADMIN_WRITES_FROZEN": "false",
     "RSS_ITEMS_LIMIT": "50",
