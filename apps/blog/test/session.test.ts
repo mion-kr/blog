@@ -66,3 +66,12 @@ describe('세션 쿠키', () => {
     await expect(deriveSessionKey('short')).rejects.toThrow(/SESSION_SECRET/);
   });
 });
+
+describe('OAuth 임시 쿠키', () => {
+  it('운영 속성: __Host-mion-oauth, Max-Age=600, HttpOnly, Secure, SameSite=Lax', async () => {
+    const { startGoogleLogin, clearOauthCookie } = await import('../src/server/auth/oauth');
+    const { setCookie } = await startGoogleLogin({ clientId: 'c', clientSecret: 's', siteUrl: PROD, secret: SECRET }, '/admin');
+    expect(setCookie).toMatch(/^__Host-mion-oauth=[^;]+; Path=\/; Max-Age=600; HttpOnly; Secure; SameSite=Lax$/);
+    expect(clearOauthCookie(PROD)).toBe('__Host-mion-oauth=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax');
+  });
+});
