@@ -4,7 +4,7 @@ export interface Props {
   title: string;
   description?: string;
   canonical?: string;
-  robots?: 'index' | 'noindex' | 'noindex-nofollow' | 'noindex-follow';
+  robots?: 'index' | 'index-basic' | 'noindex' | 'noindex-nofollow' | 'noindex-follow';
   og?: { type: 'website' | 'article'; url?: string; image?: string; imageAlt?: string; imageWidth?: number; imageHeight?: number; siteName?: string; locale?: string; publishedTime?: string; modifiedTime?: string; authors?: string[]; tags?: string[] } | null;
   keywords?: boolean;
 }
@@ -16,7 +16,7 @@ const { title, description, canonical, robots = 'index', og = null, keywords = t
 <meta name="author" content="Mion" />
 {keywords && <meta name="keywords" content="블로그,개발,Next.js,TypeScript,프론트엔드" />}
 <meta name="creator" content="Mion" />
-{robots === 'index' && <meta name="robots" content="index, follow" />}
+{(robots === 'index' || robots === 'index-basic') && <meta name="robots" content="index, follow" />}
 {robots === 'index' && <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />}
 {robots === 'noindex' && <meta name="robots" content="noindex" />}
 {robots === 'noindex-follow' && <meta name="robots" content="noindex, follow" />}
