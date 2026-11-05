@@ -36,3 +36,14 @@ export async function seedBasic() {
 
 export const fetchPage = (path: string, init?: RequestInit) =>
   import('cloudflare:workers').then(({ exports }) => exports.default.fetch(`http://localhost:4321${path}`, init));
+
+/** 발행 글 n개를 더 넣는다(published_at = T0 - i일). */
+export async function seedManyPublished(n: number) {
+  const db = env.DB;
+  await db.batch(
+    Array.from({ length: n }, (_, i) =>
+      db.prepare('INSERT INTO posts (id,title,slug,content,published,view_count,category_id,author_id,created_at,updated_at,published_at) VALUES (?,?,?,?,1,0,?,?,?,?,?)')
+        .bind(`extra-${String(i).padStart(3, '0')}`, `추가 글 ${i}`, `extra-${i}`, '본문', ids.catDev, ids.user, T0, T0, T0 - (i + 1) * 86_400_000),
+    ),
+  );
+}

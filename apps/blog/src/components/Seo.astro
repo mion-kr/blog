@@ -4,7 +4,7 @@ export interface Props {
   title: string;
   description?: string;
   canonical?: string;
-  robots?: 'index' | 'noindex' | 'noindex-nofollow';
+  robots?: 'index' | 'noindex' | 'noindex-nofollow' | 'noindex-follow';
   og?: { type: 'website' | 'article'; url?: string; image?: string; imageAlt?: string; imageWidth?: number; imageHeight?: number; siteName?: string; locale?: string; publishedTime?: string; modifiedTime?: string; authors?: string[]; tags?: string[] } | null;
   keywords?: boolean;
 }
@@ -19,6 +19,8 @@ const { title, description, canonical, robots = 'index', og = null, keywords = t
 {robots === 'index' && <meta name="robots" content="index, follow" />}
 {robots === 'index' && <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />}
 {robots === 'noindex' && <meta name="robots" content="noindex" />}
+{robots === 'noindex-follow' && <meta name="robots" content="noindex, follow" />}
+{robots === 'noindex-follow' && <meta name="googlebot" content="noindex, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />}
 {robots === 'noindex-nofollow' && <meta name="robots" content="noindex, nofollow" />}
 {robots === 'noindex-nofollow' && <meta name="googlebot" content="noindex, nofollow" />}
 {canonical && <link rel="canonical" href={canonical} />}
