@@ -1,0 +1,98 @@
+<div class="mdx-content"><p>해외 예약 시스템에서는 같은 예약을 여러 지역의 시각으로 표시하고, 알림과 예약 시작을 정확한 시점에 실행해야 한다. 여기에 예약을 받은 뒤 현지 정부가 시간대 규칙을 바꾸는 상황까지 고려하면, 저장 자료형을 선택하기 전에 서비스가 유지해야 할 시간의 의미부터 정리할 필요가 있다.</p>
+<p>이 글은 PostgreSQL을 쓰는 개발자가 예약의 시간대 정책과 저장 방식을 검토할 때 참고할 기준을 정리한다. 정부의 시간대 규칙이 바뀌어도 고객이 예약한 현지 날짜·시각을 유지하는 정책을 중심으로 설명한다.</p>
+<p>특정 컬럼이나 구현 방식을 확정된 해법으로 전제하지는 않는다.</p>
+<h2 class="scroll-mt-16">1. UTC 시점, 현지 시각, 지역 시간대의 구분</h2>
+<p>시간대 설계에서는 다음 정보를 구분하면 요구사항을 명확하게 표현할 수 있다.</p>
+<div class="table-box"><table><thead><tr><th>개념</th><th>의미</th><th>예시</th></tr></thead><tbody><tr><td>UTC 시점</td><td>세계 어디에서든 같은 순간을 가리키는 기준</td><td>2030-07-01 07:00 UTC</td></tr><tr><td>현지 날짜·시각</td><td>해당 지역의 달력과 시계에 표시되는 값</td><td>2030-07-01 09:00</td></tr><tr><td>UTC 오프셋(offset)</td><td>특정 시점에서 UTC와 현지 시각의 차이</td><td>+02:00</td></tr><tr><td>지역 시간대 식별자</td><td>지역의 시간 규칙을 찾는 식별자</td><td>Europe/Amsterdam</td></tr></tbody></table></div>
+<p>현재 오프셋 하나를 모든 미래 예약에 그대로 적용해서는 안 된다. 오프셋은 특정 시점의 차이만 나타낸다. 날짜에 따라 달라질 수 있는 규칙은 지역 시간대 식별자로 찾는다.</p>
+<p>지역 식별자가 같더라도 그 지역에 적용되는 규칙 데이터는 바뀔 수 있다. IANA 시간대 데이터베이스(tzdb)는 지역별 시간대 경계, UTC 오프셋, 서머타임 규칙의 변경을 반영해 갱신된다. <a href="https://www.iana.org/time-zones" target="_blank" rel="noopener noreferrer">IANA 시간대 데이터베이스<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<h2 class="scroll-mt-16">2. PostgreSQL의 timestamptz가 보존하는 정보</h2>
+<p>PostgreSQL의 시간대 포함 타임스탬프(timestamptz)는 timestamp with time zone의 줄임말이다. 이 자료형은 입력을 UTC 시점으로 변환해 저장한다. 입력 당시의 지역 이름이나 원래 오프셋은 보존하지 않는다.</p>
+<p>조회할 때는 세션 시간대에 맞춰 표시한다. <a href="https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-DATETIME-INPUT" target="_blank" rel="noopener noreferrer">PostgreSQL 날짜·시간 자료형 공식 문서<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>다음 두 표기는 같은 순간을 가리킨다.</p>
+<div class="table-box"><table><thead><tr><th>표시 기준</th><th>날짜·시각</th></tr></thead><tbody><tr><td>UTC</td><td>2026-09-09 00:00:00+00</td></tr><tr><td>UTC+09:00</td><td>2026-09-09 09:00:00+09</td></tr></tbody></table></div>
+<p>데이터베이스 도구에 +09:00이 보여도 입력 당시의 시간대가 저장됐다고 판단할 수는 없다. 자료형, 조회 세션의 시간대, 클라이언트의 표시 설정을 함께 확인해야 한다.</p>
+<p>반면 시간대 없는 타임스탬프(timestamp without time zone)는 날짜와 시각을 담는다. 그 값만으로는 전 세계에서 유일한 순간을 정할 수 없다. 현지 예약 시각으로 사용한다면 어느 지역의 날짜·시각인지 함께 해석해야 한다. <a href="https://www.postgresql.org/docs/current/datatype-datetime.html" target="_blank" rel="noopener noreferrer">PostgreSQL 날짜·시간 자료형<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>두 자료형의 선택은 보존하려는 정보의 의미에 따라 달라진다.</p>
+<h2 class="scroll-mt-16">3. 알려진 서머타임 규칙과 미래의 규칙 변경</h2>
+<p>여름과 겨울의 오프셋은 이미 알려진 규칙에 따라 달라질 수 있다. 이 경우에는 예약 날짜에 맞는 규칙으로 변환한다.</p>
+<p>예약을 받은 뒤 정부가 미래의 시간대 규칙 자체를 바꾸는 경우에는 추가 판단이 필요하다. 예약 당시 계산한 UTC 시점과 새 규칙에서 고객이 기대하는 현지 시각이 서로 맞지 않을 수 있기 때문이다.</p>
+<p>Temporal 공식 문서도 미래 일정에서 저장된 오프셋과 새 규칙이 충돌하는 상황을 설명한다. <a href="https://tc39.es/proposal-temporal/docs/timezone.html#ambiguity-caused-by-permanent-changes-to-a-time-zone-definition" target="_blank" rel="noopener noreferrer">Temporal 시간대 규칙 변경 설명<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>다음은 실제 국가의 변경 사례가 아닌 설명용 가정이다.</p>
+<p>어떤 지역에서 2030년 7월 1일 오전 9시 예약을 받았다. 예약 당시 그날의 오프셋을 +02:00으로 계산했다면 대응하는 UTC 시점은 오전 7시다. 이후 규칙이 바뀌어 해당 날짜의 오프셋이 +01:00이 됐다고 하자.</p>
+<div class="table-box"><table><thead><tr><th>변경 후 처리 기준</th><th>UTC 시점</th><th>변경된 규칙의 현지 시각</th></tr></thead><tbody><tr><td>기존 UTC 시점을 유지</td><td>2030-07-01 07:00 UTC</td><td>2030-07-01 08:00</td></tr><tr><td>예약한 현지 시각을 유지</td><td>2030-07-01 08:00 UTC</td><td>2030-07-01 09:00</td></tr></tbody></table></div>
+<p>어느 결과가 올바른지는 고객과 약속한 시간의 의미에 따라 결정한다. 현지 오전 9시 만남을 보장하는 예약이라면 두 번째 처리가 정책에 맞는다.</p>
+<h2 class="scroll-mt-16">4. 저장 구조보다 먼저 정할 유지 대상 시간</h2>
+<p>시간대 정책은 규칙이 바뀔 때 유지하는 값에 따라 나뉜다.</p>
+<div class="table-box"><table><thead><tr><th>정책</th><th>유지하는 값</th><th>규칙 변경 시 검토할 처리</th></tr></thead><tbody><tr><td>UTC 시점 유지</td><td>이미 정한 순간</td><td>새 규칙에 따라 현지 표시가 달라지는지 확인</td></tr><tr><td>현지 날짜·시각 유지</td><td>고객이 선택한 지역의 날짜와 시각</td><td>새 규칙에 대응하는 UTC 시점을 다시 계산</td></tr></tbody></table></div>
+<p>이 글에서 다루는 예약 정책은 현지 날짜·시각 유지다. 앞선 예시에서는 고객과 약속한 오전 9시를 유지하고, 실행 기준인 UTC를 다시 계산한다.</p>
+<p>이 정책을 구현하려면 규칙이 바뀐 뒤에도 고객이 원래 선택한 현지 날짜·시각을 식별할 수 있어야 한다.</p>
+<p>UTC 오전 7시와 지역 식별자만 남아 있다면 새 규칙으로는 현지 오전 8시가 계산된다. 이 정보만으로는 고객이 원래 오전 8시를 선택했는지, 이전 규칙에서 오전 9시를 선택했는지 구분할 수 없다.</p>
+<p>따라서 원래 현지 날짜·시각을 직접 보존하거나, 이를 복원할 수 있는 정보를 남겨야 한다. 구체적인 컬럼과 자료형은 그다음에 선택한다.</p>
+<h2 class="scroll-mt-16">5. 현지 날짜·시각을 보존하는 저장 방식 비교</h2>
+<p>현지 시각 유지 정책을 구현하는 방향은 보존하는 정보에 따라 다르다. 표의 정보를 모두 중복 저장할 필요는 없다. 각 방식의 운영 부담과 기존 데이터 구조를 함께 평가해서 고른다.</p>
+<div class="table-box"><table><thead><tr><th>검토 방향</th><th>보존 또는 복원 방법</th><th>설계 시 확인할 점</th></tr></thead><tbody><tr><td>현지 날짜·시각과 지역 식별자를 보존</td><td>고객의 입력 의미를 직접 유지</td><td>계산된 UTC를 함께 저장한다면 갱신 기준과 일관성 관리</td></tr><tr><td>UTC, 당시 적용한 오프셋, 지역 식별자를 보존</td><td>UTC와 당시 오프셋으로 원래 현지 시각을 복원</td><td>재계산 후에도 원래 입력을 복원할 정보가 남는지</td></tr><tr><td>UTC, 지역 식별자, 당시 규칙 버전을 보존</td><td>과거 규칙으로 원래 현지 시각을 복원</td><td>버전 이름뿐 아니라 해당 규칙 데이터를 실제로 다시 사용할 수 있는지</td></tr></tbody></table></div>
+<p>첫 번째 방식은 현지 날짜·시각을 직접 확인하기 쉽다. 두 번째와 세 번째 방식은 복원에 필요한 정보가 정확하게 유지되는지 검증해야 한다.</p>
+<p>과거 규칙으로 복원하는 방식이라면 해당 버전의 규칙 데이터를 실제로 사용할 수 있어야 한다. 버전 문자열만 저장하고 그 버전의 규칙을 쓸 수 없다면 복원 절차가 성립하지 않는다.</p>
+<p>timestamptz에 오프셋을 포함해 입력해도 원래 오프셋을 보존하는 방식이 되지는 않는다. 입력값 중 어떤 정보가 저장 후에도 남는지 확인해야 한다. <a href="https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-DATETIME-INPUT" target="_blank" rel="noopener noreferrer">PostgreSQL 저장·출력 동작<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>현지 시각을 별도 컬럼에 저장할지, 다른 형태로 복원 정보를 유지할지는 구현에서 고른다. 현지 시각 유지 정책만으로 특정 컬럼 추가가 정해지지는 않는다.</p>
+<h2 class="scroll-mt-16">6. 존재하지 않거나 중복되는 현지 시각의 처리 정책</h2>
+<p>지역 시간대를 지정해도 모든 현지 날짜·시각이 하나의 UTC 시점에 대응하지는 않는다.</p>
+<p>서머타임 전환으로 시계를 앞으로 당기면 일부 현지 시각이 건너뛰어진다. 시계를 뒤로 돌리면 같은 현지 시각이 두 번 나타날 수 있다.</p>
+<p>Temporal 공식 문서는 이러한 모호성을 처리하는 선택지를 설명한다. <a href="https://tc39.es/proposal-temporal/docs/timezone.html#ambiguity-due-to-dst-or-other-time-zone-offset-changes" target="_blank" rel="noopener noreferrer">Temporal 모호한 현지 시각 설명<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>예약 서비스는 이런 시각을 어떻게 처리할지 정해야 한다.</p>
+<div class="table-box"><table><thead><tr><th>상황</th><th>결정할 정책</th></tr></thead><tbody><tr><td>입력한 현지 시각이 존재하지 않음</td><td>입력을 거절할지, 다른 시각을 안내하고 다시 선택받을지</td></tr><tr><td>같은 현지 시각이 두 번 나타남</td><td>어느 시점을 선택할지, 사용자에게 어떻게 구분해 표시할지</td></tr><tr><td>기존 예약의 시각이 규칙 변경 후 유효하지 않음</td><td>자동 보정할지, 운영자 또는 고객의 재확인을 거칠지</td></tr></tbody></table></div>
+<p>현지 시각 유지 정책을 택해도 존재하지 않는 시각은 보존할 수 없다. 라이브러리 기본 동작에 처리를 맡기기 전에 서비스의 예외 정책을 명확히 하는 편이 좋다.</p>
+<h2 class="scroll-mt-16">7. 시작 시각과 종료 기준의 정의</h2>
+<p>시작 시각 정책을 정한 다음에는 종료의 의미를 확인한다.</p>
+<div class="table-box"><table><thead><tr><th>종료 기준</th><th>고객과의 약속</th><th>계산 기준</th></tr></thead><tbody><tr><td>현지 종료 시각</td><td>현지 오전 9시부터 11시까지 이용</td><td>시작과 종료의 현지 날짜·시각을 각각 해석</td></tr><tr><td>실제 경과 이용시간</td><td>시작한 순간부터 2시간 이용</td><td>시작 UTC 시점에 경과시간을 더해 종료 계산</td></tr></tbody></table></div>
+<p>시계가 바뀌는 구간에서는 두 약속의 결과가 달라질 수 있다. 그래서 시작 시각을 현지 기준으로 유지하더라도, 시작에 이용시간을 더하는 종료 계산이 항상 맞지는 않는다.</p>
+<p>기존 API가 시작과 종료를 받는지, 시작과 이용시간을 받는지도 확인해야 한다. 저장 구조를 검토하면서 API의 시간 계약까지 암묵적으로 바꾸지 않도록 주의한다.</p>
+<h2 class="scroll-mt-16">8. 규칙 갱신 이후의 처리와 검증</h2>
+<p>현지 날짜·시각을 보존해도 규칙 변경이 미래 예약과 알림에 자동으로 반영되지는 않는다. 실제 구현에서는 규칙 갱신부터 종료 계산까지 영역별로 검증해야 한다. 이 글에서는 해당 처리를 구현하거나 테스트하지 않았다.</p>
+<div class="table-box"><table><thead><tr><th>확인 영역</th><th>검증할 내용</th></tr></thead><tbody><tr><td>규칙 갱신</td><td>애플리케이션과 데이터베이스 등 변환을 수행하는 구성 요소가 어떤 규칙을 사용하는가</td></tr><tr><td>영향 예약</td><td>변경된 규칙으로 UTC 시점이 달라지는 미래 예약을 식별할 수 있는가</td></tr><tr><td>재계산</td><td>원래 현지 날짜·시각을 유지하면서 UTC를 갱신하는가</td></tr><tr><td>알림</td><td>예약 변경과 함께 알림 실행 시점도 갱신되며, 기존 작업이 중복 실행되지 않는가</td></tr><tr><td>입력 예외</td><td>존재하지 않는 시각과 중복 시각을 정한 정책대로 처리하는가</td></tr><tr><td>직렬화</td><td>API와 저장 계층을 오갈 때 서버나 클라이언트의 시간대가 현지 날짜·시각을 바꾸지 않는가</td></tr><tr><td>종료</td><td>현지 종료 시각 또는 경과시간 중 정한 계약을 유지하는가</td></tr></tbody></table></div>
+<p>검증에는 앞선 가정처럼 오프셋이 +02:00에서 +01:00으로 바뀌는 시나리오를 사용할 수 있다. 현지 오전 9시 유지 정책이라면 UTC가 오전 7시에서 오전 8시로 변경되는지 확인한다. 예약 화면의 날짜·시각과 관련 알림이 일관되게 반영되는지도 확인한다.</p>
+<p>과거에 발생한 사건의 기록과 아직 실행되지 않은 예약도 구분해야 한다. 미래 예약을 재계산할 때 이미 완료된 기록까지 일괄 변경하지 않도록 대상 범위를 정한다.</p>
+<h2 class="scroll-mt-16">작은 SQL로 확인한 기본 변환과 예외</h2>
+<p>이번 글 수정에서 아래 쿼리를 별도 로컬 환경에서 실행했다. 사용한 버전은 PostgreSQL 18.4와 시간대 데이터 tzdata 2026b다. 이 실행은 운영 예약이나 미래의 정부 규칙 변경을 재현한 실험이 아니다.</p>
+<p>같은 입력을 다른 환경에서 비교할 때는 PostgreSQL 버전과 설치된 시간대 데이터를 함께 기록해야 한다.</p>
+<div class="code"><div class="code-bar"><span>SQL</span><button class="btn" type="button">Copy</button></div><pre><code class="language-sql">SET TIME ZONE &#x27;UTC&#x27;;
+SELECT &#x27;2026-09-09 09:00:00+09&#x27;::timestamptz AS utc_value;
+-- 2026-09-09 00:00:00+00
+
+SET TIME ZONE &#x27;Asia/Seoul&#x27;;
+SELECT &#x27;2026-09-09 00:00:00+00&#x27;::timestamptz AS seoul_value;
+-- 2026-09-09 09:00:00+09
+</code></pre></div>
+<p>두 출력은 같은 순간을 세션 시간대에 맞춰 표시한 결과다.</p>
+<p>다음 쿼리는 현지 시각을 UTC로 바꾼 뒤 다시 현지 시각으로 돌려본다.</p>
+<div class="code"><div class="code-bar"><span>SQL</span><button class="btn" type="button">Copy</button></div><pre><code class="language-sql">SET TIME ZONE &#x27;UTC&#x27;;
+SELECT local_time,
+       local_time AT TIME ZONE &#x27;Europe/Amsterdam&#x27; AS instant,
+       (local_time AT TIME ZONE &#x27;Europe/Amsterdam&#x27;)
+         AT TIME ZONE &#x27;Europe/Amsterdam&#x27; AS round_trip
+FROM (VALUES
+  (timestamp &#x27;2026-03-29 02:30:00&#x27;),
+  (timestamp &#x27;2026-10-25 02:30:00&#x27;)
+) AS cases(local_time);
+</code></pre></div>
+<div class="table-box"><table><thead><tr><th>입력 현지 시각</th><th>계산된 UTC</th><th>다시 계산한 현지 시각</th></tr></thead><tbody><tr><td>2026-03-29 02:30:00</td><td>2026-03-29 01:30:00+00</td><td>2026-03-29 03:30:00</td></tr><tr><td>2026-10-25 02:30:00</td><td>2026-10-25 01:30:00+00</td><td>2026-10-25 02:30:00</td></tr></tbody></table></div>
+<p>실제 출력의 첫 행에서는 존재하지 않는 02:30이 자동으로 03:30으로 바뀌었다. 둘째 행은 원래 시각으로 돌아왔다. 다만 이 현지 시각은 서로 다른 두 UTC 시점에 대응한다.</p>
+<div class="code"><div class="code-bar"><span>SQL</span><button class="btn" type="button">Copy</button></div><pre><code class="language-sql">SELECT timestamptz &#x27;2026-10-25 02:30:00+02&#x27; AS earlier,
+       timestamptz &#x27;2026-10-25 02:30:00+01&#x27; AS later;
+-- earlier: 2026-10-25 00:30:00+00
+-- later:   2026-10-25 01:30:00+00
+</code></pre></div>
+<p>SQL 변환에 성공했다는 사실만으로 예약 입력 검증이 끝나지는 않는다. <a href="https://www.postgresql.org/docs/current/datetime-invalid-input.html" target="_blank" rel="noopener noreferrer">PostgreSQL의 모호한 시각 처리 문서<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>처럼 기본 변환은 이 입력들을 모두 거절하지 않는다.</p>
+<p>왕복 결과가 다른 누락 시각은 발견할 수 있다. 왕복 결과가 같은 중복 시각은 별도 판정이 필요하다. 예약 확정 전에 적용할 오프셋을 구분해 안내할지, 모호한 입력을 거절할지 결정해야 한다.</p>
+<p>알림 재계산이나 전체 예약 시스템의 동작은 이 작은 실험의 검증 범위에 포함하지 않았다.</p>
+<h2 class="scroll-mt-16">설계에 적용하는 순서</h2>
+<ol>
+<li>각 시간 필드가 실제 발생 시점, 현지 예약 시각, 경과시간 중 무엇을 의미하는지 정의한다.</li>
+<li>정부의 규칙 변경 후 UTC 시점과 현지 날짜·시각 중 무엇을 유지할지 결정한다.</li>
+<li>그 정책을 지킬 수 있는 저장 정보를 선택한다.</li>
+<li>중복·누락 시각과 종료 기준의 예외 정책을 정한다.</li>
+<li>규칙 갱신에 따른 재계산, 알림 갱신, 직렬화를 검증한다.</li>
+</ol>
+<p>해외 예약에서 현지 날짜·시각을 유지하려면 고객이 선택한 값을 규칙 변경 후에도 식별할 수 있어야 한다. 이 요구사항을 기준으로 저장 방식과 갱신 절차를 비교한다. 그러면 자료형 선택부터 운영 처리까지 같은 정책으로 연결할 수 있다.</p>
+<p>2026-09-14 보완: 로컬 SQL로 시간대 변환과 누락·중복 시각을 확인한 예제를 보완했다.</p></div>

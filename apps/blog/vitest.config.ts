@@ -8,7 +8,7 @@ export default defineConfig({
     cloudflareTest(async () => ({
       wrangler: { configPath: './dist/server/wrangler.json' },
       miniflare: {
-        bindings: { TEST_MIGRATIONS: await readD1Migrations(path.join(__dirname, 'migrations')) },
+        bindings: { TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, 'migrations')) },
       },
     })),
   ],
