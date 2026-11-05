@@ -1,6 +1,6 @@
 // API 응답 타입 정의
 
-import { ApiPaginationMeta, PaginationMeta } from "../utils/pagination";
+import type { ApiPaginationMeta, PaginationMeta } from "../utils/pagination";
 
 /**
  * 모든 API 응답의 기본 구조
