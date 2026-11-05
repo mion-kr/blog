@@ -15,5 +15,7 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts', 'scripts/**/*.test.ts'],
     setupFiles: ['./test/apply-migrations.ts'],
+    // hangul-romanize(CommonJS)를 테스트에서도 ESM으로 미리 묶는다. 빌드는 Rolldown이 변환한다.
+    deps: { optimizer: { ssr: { enabled: true, include: ['hangul-romanize/dist/index.js'] } } },
   },
 });
