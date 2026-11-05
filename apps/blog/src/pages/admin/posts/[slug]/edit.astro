@@ -1,0 +1,29 @@
+---
+import Admin from '../../../../layouts/Admin.astro';
+import { DeletePostForm, EditPostForm, StatusBanner } from '../../../../islands/AdminPosts';
+import { getPostFormOptions } from '../../../../server/admin/posts';
+import { findPostBySlug } from '../../../../server/posts/public';
+
+// 관리자 편집 화면은 초안도 열고, 조회수는 올리지 않는다(사용자 결정 1).
+const slug = decodeURIComponent(Astro.params.slug ?? '');
+const [post, options] = await Promise.all([findPostBySlug(slug, { publishedOnly: false }), getPostFormOptions()]);
+if (!post) {
+  return new Response('Not Found', { status: 404 });
+}
+const params = Astro.url.searchParams;
+---
+<Admin>
+  <div class="space-y-6">
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-sm text-slate-500">
+        <a href="/admin/posts" class="hover:text-slate-300">포스트 관리</a><span>›</span><span class="text-slate-300">{post.title}</span>
+      </div>
+      <h2 class="text-2xl font-semibold text-slate-50">포스트 수정</h2>
+      <p class="text-sm text-slate-500">수정 사항을 저장하면 즉시 반영돼요. 발행 상태도 여기서 변경할 수 있습니다.</p>
+    </div>
+    <StatusBanner client:load url={Astro.url.href} status={params.get('status')} message={params.get('message')} />
+    <EditPostForm client:load url={Astro.url.href} categories={options.categories as never} tags={options.tags as never} postId={post.id}
+      defaultValues={{ slug: post.slug, title: post.title, content: post.content, excerpt: post.excerpt ?? undefined, coverImage: post.coverImage ?? undefined, published: post.published, categoryId: post.categoryId, tagIds: post.tags.map((t) => t.id) }} />
+    <DeletePostForm client:load postId={post.id} />
+  </div>
+</Admin>

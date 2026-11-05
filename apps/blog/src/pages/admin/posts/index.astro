@@ -1,0 +1,51 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { PostsList, StatusBanner } from '../../../islands/AdminPosts';
+import { getAdminPosts } from '../../../server/admin/posts';
+
+const params = Astro.url.searchParams;
+const searchParams = Object.fromEntries(params.entries());
+let data: Awaited<ReturnType<typeof getAdminPosts>> = { posts: [], total: 0, postsPerPage: 10, query: { page: 1, limit: 10 } as never };
+let error: string | null = null;
+try {
+  data = await getAdminPosts(params);
+} catch (e) {
+  console.error('관리자 글 목록 조회 실패', (e as Error).name);
+  error = '포스트 목록을 불러오지 못했어요.';
+}
+const search = params.get('search')?.trim() ?? '';
+const published = params.get('published') ?? '';
+---
+<Admin>
+  <div class="space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-2xl font-semibold text-slate-50">포스트 관리</h2>
+        <p class="text-sm text-slate-500">발행된 글과 초안을 한 곳에서 확인하고 관리하세요.</p>
+      </div>
+      <a href="/admin/posts/new" class="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-500/20">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen h-4 w-4" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"></path></svg> 새 포스트 작성
+      </a>
+    </div>
+    <StatusBanner client:load url={Astro.url.href} status={params.get('status')} message={params.get('message')} />
+    <form class="grid gap-4 rounded-xl border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-[1fr_auto_auto]">
+      <div class="grid gap-2">
+        <label for="search" class="text-xs font-medium text-slate-300">검색어</label>
+        <input id="search" name="search" placeholder="제목, 본문, 요약에서 검색" value={search} class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none" />
+      </div>
+      <div class="grid gap-2">
+        <label for="published" class="text-xs font-medium text-slate-300">발행 상태</label>
+        <select id="published" name="published" class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none">
+          <option value="" selected={published === ''}>전체</option>
+          <option value="true" selected={published === 'true'}>발행됨</option>
+          <option value="false" selected={published === 'false'}>초안</option>
+        </select>
+      </div>
+      <div class="flex items-end gap-2">
+        <button type="submit" class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-emerald-950 transition hover:bg-emerald-400">필터 적용</button>
+        <a href="/admin/posts" class="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:text-slate-100">초기화</a>
+      </div>
+    </form>
+    <PostsList client:load url={Astro.url.href} searchParams={searchParams} data={data} error={error} />
+  </div>
+</Admin>

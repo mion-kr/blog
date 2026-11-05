@@ -1,0 +1,22 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { NewPostForm, StatusBanner } from '../../../islands/AdminPosts';
+import { getPostFormOptions } from '../../../server/admin/posts';
+import { uuidv7 } from 'uuidv7';
+
+const { categories, tags } = await getPostFormOptions();
+const params = Astro.url.searchParams;
+---
+<Admin>
+  <div class="space-y-6">
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-sm text-slate-500">
+        <a href="/admin/posts" class="hover:text-slate-300">포스트 관리</a><span>›</span><span class="text-slate-300">새 포스트 작성</span>
+      </div>
+      <h2 class="text-2xl font-semibold text-slate-50">새 포스트 작성</h2>
+      <p class="text-sm text-slate-500">기본 정보와 본문을 입력한 뒤 저장하면 초안 또는 발행 상태로 관리할 수 있어요.</p>
+    </div>
+    <StatusBanner client:load url={Astro.url.href} status={params.get('status')} message={params.get('message')} />
+    <NewPostForm client:load url={Astro.url.href} categories={categories as never} tags={tags as never} defaultDraftUuid={uuidv7()} />
+  </div>
+</Admin>
