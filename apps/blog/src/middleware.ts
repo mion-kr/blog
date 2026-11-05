@@ -2,7 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { readSession, sessionTokenFromRequest } from './server/auth/session';
 import { env, siteUrl } from './server/env';
 import { fail } from './server/http/json';
-import { isWriteFrozen, normalizePath, under, WRITE } from './server/http/guard';
+import { isWriteFrozen, normalizePath, under } from './server/http/guard';
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { request, url, locals } = context;
@@ -25,8 +25,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return new Response(null, { status: 307, headers: { Location: `/auth/signin?${target.toString()}` } });
   }
 
-  // 출처 검사: 관리자 쓰기와 로그아웃은 Origin이 사이트 주소와 같아야 한다(없으면 거부).
-  if (WRITE.has(request.method) && (adminPage || adminApi || path === '/auth/signout')) {
+  // 출처 검사: GET·HEAD가 아닌 모든 요청은 Origin이 사이트 주소와 같아야 한다(없으면 거부, 사용자 결정 12).
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
     if (request.headers.get('origin') !== new URL(base).origin) return fail(403, 'ORIGIN_MISMATCH', '요청 출처가 올바르지 않아요.');
   }
 

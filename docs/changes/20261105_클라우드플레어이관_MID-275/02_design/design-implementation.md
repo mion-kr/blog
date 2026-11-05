@@ -27,11 +27,11 @@
 
 | 값 | 로컬(`astro dev`, pool-workers) | 미리보기(workers.dev, 전환 전) | 운영(전환 후) |
 | --- | --- | --- | --- |
-| `SITE_URL`(canonical·RSS·sitemap·OAuth `redirect_uri`·출처 검사 기준) | `http://localhost:4321` | `https://mion-blog.<계정 하위 도메인>.workers.dev`(구현 때 확인) | `https://mion-space.dev` |
+| `SITE_URL`(canonical·RSS·sitemap·OAuth `redirect_uri`·출처 검사 기준) | `http://localhost:4321` | `https://mion-blog.whddbs311.workers.dev` | `https://mion-space.dev` |
 | OAuth 콜백 | `{SITE_URL}/api/auth/callback/google` | 같음(Google 콘솔 등록 필요, 승인 후) | 같음(지금 등록된 경로와 같다고 보지만 미확인) |
 | `ROBOTS_INDEXABLE` | `false` | `false`(전체 `Disallow: /`) | `true`(`Allow: /`, `Disallow: /admin`, `/api`) |
-| `MEDIA_BASE_URL`(공개 URL 조립·URL→키 추출 기준) | `http://localhost:4321/local-media/` | `https://media.mion-space.dev/` | `https://media.mion-space.dev/` |
-| `SERVE_MEDIA_FROM_BINDING` | `true`(로컬 R2에 올린 파일을 `GET /local-media/{key}`로 보여 줌) | `false`(404) | `false`(404) |
+| `MEDIA_BASE_URL`(공개 URL 조립·URL→키 추출 기준) | `http://localhost:4321/local-media/` | `https://mion-blog.whddbs311.workers.dev/local-media/`(사용자 결정 11) | `https://media.mion-space.dev/` |
+| `SERVE_MEDIA_FROM_BINDING` | `true`(로컬 R2에 올린 파일을 `GET /local-media/{key}`로 보여 줌) | `true`(사용자 결정 11) | `false`(404) |
 | 세션 쿠키 이름 | `__Host-mion-session`, 로컬 http에서 안 되면 `mion-session`(작업 1에서 확인) | `__Host-mion-session` | `__Host-mion-session` |
 | `ADMIN_WRITES_FROZEN` | `false` | `false` | 전환 7일 동안 `true`, 이후 `false` |
 | D1 / R2 binding | pool-workers·miniflare 로컬 | 원격 `mion-blog` / `mion-blog-media`(운영과 같은 자원) | 같음 |
@@ -39,6 +39,8 @@
 - 지금 `robots.ts`는 `NODE_ENV`가 production이 아니면 전체 차단이다(`apps/blog-web/app/robots.ts:4-20`). 새 앱은 같은 판단을 `ROBOTS_INDEXABLE`로 명시한다.
 - 미리보기는 운영과 같은 D1·R2를 쓴다. 최종 재적재(작업 49)가 D1을 새로 만들므로 미리보기에서 쓴 글은 사라지지만, R2에 올린 시험 이미지는 남는다. 미리보기 확인이 끝나면 시험 글을 관리자 화면에서 삭제해(삭제 시 이미지도 지움) 정리하고, 남은 `draft/` 객체는 목록을 보여 주고 승인 후 지운다.
 - 전환 후 workers.dev 주소는 `workers_dev = false`로 끈다. 켜 두면 `SITE_URL`이 운영 주소라 그 주소의 관리자 쓰기가 모두 출처 검사에서 거부되고 canonical만 운영을 가리키는 사본이 생긴다.
+- 미리보기 배포는 `pnpm --filter blog deploy:preview`로만 한다. `wrangler.jsonc`의 `vars`는 로컬 값이라, 이 스크립트가 `--var`로 `SITE_URL`·`MEDIA_BASE_URL`을 미리보기 값으로 바꾼다. 맨 `wrangler deploy`는 로컬 값으로 배포한다.
+- 미리보기 적재는 커버 URL을 미리보기 `MEDIA_BASE_URL`로 바꾼다(`MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`를 `build-sql.ts`·`compare.ts`에 같이 준다). R2 키는 두 주소에서 같아(`posts/{id}/thumbnail/…`), 전환 때 재적재(작업 49)가 접두사만 `https://media.mion-space.dev/`로 바꾼다.
 - 업로드 허용 MIME(`UPLOAD_ALLOWED_MIME`)은 Doppler `prd_api`·`local_api` 모두 3개로 설정돼 있고 svg는 없다(2026-11-05 확인, 값 미출력). 새 앱에도 같은 값을 `vars`로 옮긴다.
 
 ## 앱 구조
@@ -140,7 +142,7 @@ apps/blog/src/
 | 400 | `INVALID_UPLOAD_KEY` | 커버 키가 `draft/{draftUuid}/`로 시작하지 않음, 소개 이미지 draft 키 형식 위반 |
 | 400 | `UPLOAD_MIME_NOT_ALLOWED`, `UPLOAD_TOO_LARGE` | 업로드 정책 위반 |
 | 401 | `UNAUTHORIZED` | `/api/admin/*`에 세션 없음·만료·위조·`ADMIN_EMAIL` 불일치 |
-| 403 | `ORIGIN_MISMATCH` | 쓰기 메서드의 `Origin`이 `SITE_URL` origin과 다르거나 없음 |
+| 403 | `ORIGIN_MISMATCH` | GET·HEAD가 아닌 요청의 `Origin`이 `SITE_URL` origin과 다르거나 없음 |
 | 404 | `POST_NOT_FOUND`, `CATEGORY_NOT_FOUND`, `TAG_NOT_FOUND` | 경로의 `id`가 없음 |
 | 409 | `CATEGORY_SLUG_TAKEN`, `CATEGORY_NAME_TAKEN`, `TAG_SLUG_TAKEN`, `TAG_NAME_TAKEN` | 중복(slug 먼저 검사) |
 | 409 | `CATEGORY_IN_USE`, `TAG_IN_USE` | 연결된 글이 있어 삭제 불가(초안 포함) |
@@ -151,7 +153,7 @@ apps/blog/src/
 
 1. 경로를 디코드·소문자로 정규화한다.
 2. `/admin`·`/admin/*`·`/api/admin/*`이면 세션 쿠키를 복호화하고 `email === ADMIN_EMAIL`을 확인한다. 실패하면 페이지는 `307 /auth/signin?callbackUrl={원래 경로+쿼리}`(만료면 `&error=SessionExpired`, 지금도 307: `verify-server-routing.mjs:52-53`), API는 `401 UNAUTHORIZED`.
-3. 쓰기 메서드(POST·PUT·PATCH·DELETE)는 관리자 경로와 `/auth/signout`에서 `Origin`을 검사한다. 실패하면 `403 ORIGIN_MISMATCH`.
+3. GET·HEAD가 아닌 모든 요청은 경로와 무관하게 `Origin`을 검사한다(사용자 결정 12). 실패하면 `403 ORIGIN_MISMATCH`.
 4. `/api/admin/*` 쓰기이고 `ADMIN_WRITES_FROZEN=true`이면 `423 EDIT_FROZEN`.
 
 - 관리자 확인이 출처 검사보다 먼저라서, 출처 검사·동결 테스트는 유효한 관리자 세션 쿠키를 붙여 보낸다.
@@ -385,6 +387,16 @@ apps/blog/src/
 | 1 | 관리자 편집 화면을 열어도 조회수를 올리지 않는다 | 편집 화면이 blog-api `GET /api/admin/posts/:slug`를 부르고 이 경로가 조회수를 올렸다(`admin-posts.controller.ts:54-62`, `posts.service.ts:152`) | 작업 35, `admin-pages.test.ts` |
 | 2 | 설정 폼에서 칸별 오류 문구를 보여 준다 | 운영에서는 blog-api가 검증 상세를 빼고 보내 일반 문구만 나왔다(`global-exception.filter.ts:247-256`) | 공통 응답 형식, 작업 44, `admin-settings-update.test.ts` |
 
+2026-11-06 로컬 구현 뒤 결정.
+
+| # | 결정 | 이전 계획 | 반영 |
+| --- | --- | --- | --- |
+| 11 | 미리보기 커버 이미지는 로컬처럼 앱이 R2에서 내려 주는 `/local-media/{key}`로 보인다 | 미리보기도 `media.mion-space.dev`(DNS 연결 전이라 미리보기에서 커버가 비어 보임) | 환경별 값 표, 작업 48 |
+| 12 | 출처 검사를 GET·HEAD가 아닌 모든 요청에 적용한다 | 관리자 경로 쓰기와 `/auth/signout`만 | middleware, `origin-check.test.ts` |
+| 13 | 테스트 도구는 `@cloudflare/vitest-plugin` 1.6.0으로 유지한다(`vitest-pool-workers`의 바뀐 이름) | 설계 결정 8의 `@cloudflare/vitest-pool-workers` | 작업 1 확인 결과 |
+| 14 | Astro 기본 `security.checkOrigin`은 끄고 middleware 출처 검사 하나로 둔다 | Astro 기본 검사와 middleware 검사를 함께 | `astro.config.mjs` |
+| 15 | 원격 D1·R2 생성, 원격 스키마 적용, `wrangler secret` 등록, 운영 데이터 원격 D1 적재, 커버 R2 복사, workers.dev 미리보기 배포를 진행한다 | 작업 48 각 단계 승인 후 | 작업 48 |
+
 ## 대안
 
 | 대안 | 선택하지 않은 이유 |
@@ -448,7 +460,7 @@ apps/blog/src/
 | `POST /auth/signout` | 세션 있음·없음, 다른 출처 | 303 `/`, 쿠키 삭제 / 403 | `auth-signout.test.ts` |
 | `GET /auth/signin` | 비로그인, 관리자 로그인, `error` 3종 | 200 noindex 문구 / 302 | `auth-signin-page.test.ts` |
 | 관리자 보호 | `src/pages`의 `/admin`·`/api/admin` 라우트 파일을 `import.meta.glob`으로 모아 메서드별로 쿠키 없이 호출(라우트가 늘면 자동 포함, 작업 47에서 전체 재실행), 위조·만료·`ADMIN_EMAIL` 변경 쿠키, 대소문자·인코딩 변형 경로, 운영 `SITE_URL`에서 `mion-session` 이름 쿠키 무시 | 페이지 307(+`callbackUrl`, 만료면 `SessionExpired`), API 401 JSON | `admin-guard.test.ts` |
-| 출처 검사·편집 동결 | 같은 방식으로 모은 관리자 쓰기 라우트 전부에 유효 세션 + 다른 `Origin`·`Origin` 없음(JSON·multipart), 동결 켬. 각 쓰기 엔드포인트의 계약 파일에도 401·403·423 케이스를 하나씩 둔다 | 403 `ORIGIN_MISMATCH`, 423 `EDIT_FROZEN`, D1·R2 변화 없음 | `origin-check.test.ts`, `edit-freeze.test.ts` |
+| 출처 검사·편집 동결 | 같은 방식으로 모은 관리자 쓰기 라우트 전부에 유효 세션 + 다른 `Origin`·`Origin` 없음(JSON·multipart), 관리자 밖 주소의 POST·PUT·PATCH·DELETE·OPTIONS(HEAD는 검사 안 함), 동결 켬. 각 쓰기 엔드포인트의 계약 파일에도 401·403·423 케이스를 하나씩 둔다 | 403 `ORIGIN_MISMATCH`, 423 `EDIT_FROZEN`, D1·R2 변화 없음 | `origin-check.test.ts`, `edit-freeze.test.ts` |
 | `POST /api/admin/uploads` | 정상 3종 type, 허용 밖 MIME, 크기 초과(실제 바이트), `type`·`draftUuid` 누락·형식 오류, 한글 파일명 | 201 `objectKey` 형식·`publicUrl`, R2 객체와 `contentType` / 400 code | `admin-uploads.test.ts` |
 | `POST /api/admin/posts` | 정상(발행·초안), 필수 누락·길이 초과, 앞뒤 공백 trim, 없는 카테고리·태그(R2 복사 없음), `tagIds` 중복 400, 잘못된 커버 키, `draftUuid` 없이 `coverImageKey`만, 같은 제목 두 번(`-1`), 한글 제목 slug, draft 커버·본문 이미지 이동(다른 `draftUuid` URL은 그대로), 복사 도중 실패·batch 실패 시 그때까지 복사한 객체 모두 삭제, 카테고리·태그 `post_count`·`updated_at`, 401·403·423 | 201 `id`·`slug`, `published_at`, `post_tags`, `post_count`, R2 키 | `admin-posts-create.test.ts` |
 | `PUT /api/admin/posts/{id}` | 발행 글 제목 변경 시 slug 유지, 초안 제목 변경 시 재생성, 발행 전환 3종 `published_at`, `updated_at` 갱신, `excerpt`·`coverImage` 생략 시 null, 빈 본문은 유지, 커버 교체 시 이전 객체 삭제, 본문에서 뺀 이미지 삭제, 옛 Supabase URL은 지우지 않음, batch 실패 시 이번 요청 복사본만 삭제(`posts.service.spec.ts:599`), 이전·새 카테고리 집계, 없는 `id`, 401·403·423 | 200 `slug`, D1 행, R2 객체 | `admin-posts-update.test.ts` |
@@ -558,7 +570,10 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
 
 원격(각각 승인 후)
 
-- [ ] 48. 원격 D1 생성·마이그레이션·적재·전 컬럼 비교, R2 버킷 생성·커버 21개 복사, `media.mion-space.dev` 연결, Google 콘솔에 미리보기 콜백 추가, 미리보기 vars 확인(`SITE_URL`=workers.dev, `ROBOTS_INDEXABLE=false`, `UPLOAD_ALLOWED_MIME` 비어 있지 않음) 후 `wrangler deploy`, 완료 조건 항목 직접 확인, 시험 글·이미지 정리
+- [ ] 48. 미리보기. 아래 남은 항목이 끝나면 체크한다.
+  - [x] 원격 D1 생성·마이그레이션·적재·전 컬럼 비교, R2 버킷 생성·커버 21개 복사, 비밀값 등록, 미리보기 vars 확인 후 배포(실행 기록 "미리보기 배포 결과")
+  - [ ] Google 콘솔에 미리보기 콜백 추가(사용자), 미리보기에서 로그인·글 작성·이미지 업로드·수정 직접 확인, 시험 글·이미지 정리
+  - [ ] `media.mion-space.dev` 연결: DNS 변경이라 전환(작업 49) 때 승인 후 한다(사용자 결정 11로 미리보기는 앱 경로 사용)
 - [ ] 49. 전환: 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
 - [ ] 50. 7일 관찰 → `ADMIN_WRITES_FROZEN=false` 배포 → 옛 코드 정리 PR(별도)
 
@@ -635,6 +650,18 @@ design.md "변경 파일 후보"에 더한다.
   - 추가 테스트: 임시 쿠키 만료, 편집 동결 중 로그인, 쓰기 11개 전부 423(`test/frozen`), 카테고리·태그 수정·삭제 401·403, 글 생성 D1 실패 시 보상 삭제, 운영 주소에서 접두사 없는 쿠키 이름 무시.
   - 같은 state 재사용: 콜백이 임시 쿠키를 지우므로 브라우저는 다시 보내지 않는다. 다만 누군가 같은 임시 쿠키를 복사해 다시 보내는 것은 서버가 막지 않고, Google의 일회용 `code`가 막는다(서버 저장소를 두지 않는 설계 D1의 한계).
   - 옛 `verify-integrated-admin.mjs` 흐름(초안 공개 404 → 발행 200 → 삭제 404)은 `admin-flow.test.ts`, 잘못된 업로드 400은 `admin-uploads.test.ts`, feed 항목 수는 `public-feed.test.ts`로 옮겼다.
-  - 남은 사용자 확인: 테스트 도구 패키지 이름 변경(`@cloudflare/vitest-plugin`), Astro 기본 `checkOrigin` 끄기.
+  - 테스트 도구 패키지 이름 변경(`@cloudflare/vitest-plugin`)과 Astro 기본 `checkOrigin` 끄기는 사용자 결정 13·14로 확정했다.
 - 테스트를 구현 뒤에 쓴 곳(실패 먼저 확인 못 함): `compare-core`, `buildRobots` 단위, `public-header`(레이아웃을 먼저 만듦), `public-static`(이관 전 렌더 결과를 옮긴 정적 화면), 글 삭제(`PUT`과 같은 파일에 구현). 그 밖의 엔드포인트는 실패를 먼저 확인했다.
 - 테스트 기대값을 고친 곳: mermaid 원문의 `>` 이스케이프 가정과 줄 앞 공백(이관 전과 같은 결과로 맞춤), 로마자 표기 추정값(`jemog` → 이관 전 함수 결과 `jemok`), 덤프 쿼리 문자열(`floor` 수정), 테스트 도우미의 계산·선택자 오류.
+
+### 미리보기 배포 결과(작업 48 일부, 2026-11-06)
+
+- 원격 자원: D1 `mion-blog`(위치 힌트 `apac`, id는 `wrangler.jsonc`), R2 `mion-blog-media`(위치 힌트 `apac`). `wrangler d1 migrations apply mion-blog --remote`로 `0000_init.sql` 적용.
+- 적재: 운영 Supabase를 읽기 전용 트랜잭션으로 다시 덤프 → `MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`로 `build-sql.ts` → 원격 D1에 `clear.sql`·`load.sql` 실행(221행) → `compare.ts --remote` 결과: users 1/1, categories 2/2, tags 5/5, posts 21/21, post_tags 28/28, settings 0/0, 전 컬럼 일치(덤프 쿼리 값·드라이버 값 모두).
+  - 첫 적재 뒤 비교에서는 `view_count`만 1씩 달랐다. 운영이 살아 있어 덤프와 비교 사이에 조회수가 올랐다. 덤프부터 비교까지 다시 이어서 실행해 일치를 확인했다. 최종 전환(작업 49)은 편집 동결 뒤 적재하지만 조회수는 계속 오르므로, 같은 방식으로 적재 직후 비교한다.
+- 커버: 덤프의 Supabase 공개 URL 21개를 HTTP로 받아(모두 200 `image/webp`) R2 `posts/{id}/thumbnail/…` 키에 `--content-type image/webp`로 올렸다. 배포 뒤 `/local-media/{key}` 21개 모두 200 `image/webp`, 원본과 바이트가 같다.
+- 비밀값: `GOOGLE_CLIENT_ID`·`GOOGLE_CLIENT_SECRET`·`ADMIN_EMAIL`은 Doppler `prd_web` 값을 표준 입력으로 `wrangler secret put`에 넘겼다(값 미출력, `local_web`과 같은 Google 클라이언트). `SESSION_SECRET`은 새로 만든 무작위 값이다.
+- 배포: `pnpm --filter blog deploy:preview` 같은 명령으로 `https://mion-blog.whddbs311.workers.dev`. 배포 vars: `SITE_URL`·`MEDIA_BASE_URL` 미리보기 값, `ROBOTS_INDEXABLE=false`, `SERVE_MEDIA_FROM_BINDING=true`, `ADMIN_WRITES_FROZEN=false`, `UPLOAD_ALLOWED_MIME=image/jpeg,image/png,image/webp`.
+- 미리보기 확인(`verify-local.mjs`를 미리보기 주소로 실행): 공개 글 21편 200, RSS·sitemap이 운영 응답(2026-11-06 수집)과 글자 단위로 같음, 관리자 주소 307, 관리자 API 401, 목록 오류 문구. 그 밖에 `robots.txt` 전체 차단, canonical이 미리보기 주소, 다른 출처 `POST /posts` 403, 같은 출처 로그아웃 303, `/auth/google`이 미리보기 콜백 주소로 302하고 `__Host-mion-oauth`(Secure) 쿠키를 붙임, 홈 이미지 깨짐 0.
+- 미리보기 글 상세를 열어 원격 D1 조회수가 올랐다. 전환 때 D1을 다시 적재하므로 운영 값에는 영향이 없다.
+- 남은 일: Google 콘솔에 `https://mion-blog.whddbs311.workers.dev/api/auth/callback/google` 추가(사용자), 로그인 뒤 관리자 쓰기 확인, 시험 글·이미지 정리.

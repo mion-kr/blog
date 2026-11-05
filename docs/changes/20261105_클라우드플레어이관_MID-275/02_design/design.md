@@ -80,7 +80,7 @@
 | ③ | 난수·PKCE | `oauth4webapi`의 생성 함수(Web Crypto `getRandomValues` 기반), challenge 방식 `S256` 고정 |
 | ④ | 세션 암호화 | `jose` JWE `alg: dir`, `enc: A256GCM`. 키는 `SESSION_SECRET`에서 HKDF-SHA256으로 32바이트 유도. 복호화 때 허용 `alg`·`enc`를 이 둘로 고정 |
 | ⑤ | 세션 쿠키 | 이름 `__Host-mion-session`, `HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`, Domain 없음. 로컬 http에서 `__Host-`가 동작하지 않으면 로컬에서만 접두사 없는 이름을 쓴다(첫 작업에서 확인) |
-| ⑥ | 출처 검사 | Astro `security.checkOrigin`(기본 `true`)은 form·multipart·text/plain 요청만 본다. 그래서 `/admin/*`·`/api/admin/*`의 모든 쓰기 메서드(POST·PUT·PATCH·DELETE)와 `/auth/signout`에서 `Origin`이 사이트 주소와 같은지 직접 검사한다. content-type과 무관 |
+| ⑥ | 출처 검사 | Astro `security.checkOrigin`(기본 `true`)은 form·multipart·text/plain 요청만 본다. 그래서 GET·HEAD가 아닌 모든 요청에서 `Origin`이 사이트 주소와 같은지 직접 검사한다(처음엔 관리자 경로와 `/auth/signout`만이었고 사용자 결정 12로 넓혔다). content-type과 무관 |
 | ⑦ | Google 오류·교환 실패 | 콜백에 `error`가 있거나 `code`·임시 쿠키가 없거나 토큰 교환이 실패하면 500을 내지 않고 `/auth/signin?error=…`로 보낸다. 전달하는 오류 코드는 `AccessDenied`·`SessionExpired`·`OAuthError` 3개뿐이고 Google 원문(`error_description`)은 화면에 내보내지 않는다 |
 | ⑧ | 로그 | code·토큰 응답·쿠키 값·`client_secret`은 로그에 남기지 않는다. 오류 종류와 단계만 기록 |
 | ⑨ | 관리자 보호 범위 | 아래 "관리자 확인" |
@@ -221,6 +221,7 @@
 8. 테스트 도구: `@cloudflare/vitest-pool-workers` + Vitest 4.x 고정. Google 토큰 엔드포인트는 `fetch`를 주입받게 해서 테스트에서 바꿔 끼운다(저장소에 새로 들어오는 목).
 9. 관리자 편집 화면을 열어도 조회수를 올리지 않는다(2단계 검토 뒤 결정).
 10. 설정 폼은 검증 실패 시 칸별 오류 문구를 보여 준다(2단계 검토 뒤 결정).
+11~15. 로컬 구현 뒤 결정(미리보기 커버 경로, 출처 검사 범위, 테스트 도구 이름, Astro `checkOrigin`, 원격 작업 허용)은 [design-implementation.md 사용자 결정](design-implementation.md#사용자-결정)에 있다.
 
 ## 대안
 

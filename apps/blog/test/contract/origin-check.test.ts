@@ -41,6 +41,27 @@ describe('출처 검사(middleware)', () => {
     await expect403('POST', '/auth/signout', { origin: 'https://evil.test' });
   });
 
+  it('관리자 밖 주소도 GET·HEAD가 아닌 요청은 출처를 검사한다(사용자 결정 12)', async () => {
+    const PATHS: [string, string][] = [
+      ['POST', '/'], ['POST', '/posts'], ['PUT', '/api/anything'], ['DELETE', '/local-media/x'],
+      ['PATCH', '/about'], ['POST', '/api/auth/callback/google'], ['OPTIONS', '/'],
+    ];
+    for (const [method, path] of PATHS) {
+      await expect403(method, path, { origin: 'https://evil.test' });
+      await expect403(method, path, {});
+    }
+  });
+
+  it('HEAD는 출처 검사를 하지 않는다', async () => {
+    const res = await fetchPage('/', { method: 'HEAD', headers: { origin: 'https://evil.test' } });
+    expect(res.status).not.toBe(403);
+  });
+
+  it('관리자 밖 주소도 같은 출처면 출처 검사를 통과한다', async () => {
+    const res = await fetchPage('/posts', { method: 'POST', headers: { origin: 'http://localhost:4321' }, redirect: 'manual' });
+    expect(res.status).not.toBe(403);
+  });
+
   it('같은 출처면 출처 검사를 통과한다', async () => {
     const res = await fetchPage('/api/admin/settings', { method: 'PATCH', headers: { cookie: await adminCookie(), origin: 'http://localhost:4321', 'content-type': 'application/json' }, body: '{}' });
     expect(res.status).not.toBe(403);

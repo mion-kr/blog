@@ -11,6 +11,7 @@
     "test": "astro build && vitest run",
     "migrate:dump": "node scripts/migrate/dump.ts",
     "migrate:sql": "node scripts/migrate/build-sql.ts",
+    "deploy:preview": "astro build && wrangler deploy --var SITE_URL:https://mion-blog.whddbs311.workers.dev --var MEDIA_BASE_URL:https://mion-blog.whddbs311.workers.dev/local-media/",
     "migrate:load:local": "wrangler d1 migrations apply mion-blog --local && wrangler d1 execute mion-blog --local --file .migration/clear.sql && wrangler d1 execute mion-blog --local --file .migration/load.sql",
     "migrate:compare:local": "TZ=UTC node scripts/migrate/compare.ts --local",
     "migrate:fixtures": "node scripts/migrate/render-fixtures.mjs"

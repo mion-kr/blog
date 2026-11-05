@@ -15,7 +15,7 @@
     "UPLOAD_MAX_SIZE": "10485760"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "mion-blog", "database_id": "local", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "mion-blog", "database_id": "82f65236-2b67-4f02-bc30-1cdac0807069", "migrations_dir": "migrations" }
   ],
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mion-blog-media" }]
 }
