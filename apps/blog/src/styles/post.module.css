@@ -1,0 +1,354 @@
+/* 포스트 상세 전용 Editorial 규칙(머리말, 커버, 본문 MDX, 코드, Mermaid, 알림 상자, 태그). 공용 토큰은 components/layout/editorial.module.css. */
+.root :global(.grid12) {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gap-columns);
+}
+.root :global(.post-head) {
+  padding-block: var(--space-3xl) var(--space-2xl);
+}
+.root :global(.post-head .grid12 > *) {
+  grid-column: 2 / 12;
+}
+.root :global(.post-head h1) {
+  font-size: var(--text-display);
+  line-height: 0.98;
+  max-width: 18ch;
+  margin-top: var(--space-lg);
+}
+.root :global(.post-meta) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+  margin: var(--space-xl) 0 0;
+  padding-top: var(--space-md);
+  border-top: var(--rule-hair) solid var(--color-rule-2);
+}
+.root :global(.post-meta div) {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: baseline;
+}
+.root :global(.post-meta dt) {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 12;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.root :global(.post-meta dd) {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
+  color: var(--color-ink);
+}
+.root :global(.post-cover .fig) {
+  grid-column: 2 / 12;
+}
+.root :global(.reading) {
+  padding-block: var(--space-3xl) var(--section-gap-s);
+}
+.root .prose {
+  max-width: var(--measure);
+  margin-inline: auto;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+.root .prose > :global(* + *) {
+  margin-top: var(--space-lg);
+}
+.root .prose :global(p) {
+  max-width: none;
+}
+.root .prose :global(h2) {
+  font-size: var(--text-2xl);
+  max-width: none;
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-md);
+  border-top: var(--rule-heavy) solid var(--color-ink);
+}
+.root .prose :global(code) {
+  font-family: var(--font-code);
+  font-size: 0.85em;
+  padding: 0 var(--space-2xs);
+  background: var(--color-paper-2);
+}
+.root .prose :global(ul) {
+  padding-left: var(--space-lg);
+}
+.root .prose :global(li + li) {
+  margin-top: var(--space-xs);
+}
+.root .prose :global(.table-box) {
+  overflow-x: auto;
+}
+.root .prose :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  border-top: var(--rule-heavy) solid var(--color-ink);
+}
+.root .prose :global(th) {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule-2);
+  color: var(--color-ink);
+}
+.root .prose :global(td) {
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  vertical-align: top;
+}
+.root .prose :global(td:first-child) {
+  color: var(--color-ink);
+}
+.root :global(.code) {
+  margin: var(--space-lg) 0 0;
+  background: var(--color-paper-2);
+  border-top: var(--rule-hair) solid var(--color-rule-2);
+}
+.root :global(.code-bar) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: var(--space-md);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.root :global(.code-bar .btn) {
+  min-height: 44px;
+  border-width: 0 0 0 var(--rule-hair);
+  border-color: var(--color-rule);
+  font-size: var(--text-sm);
+}
+.root :global(.code pre) {
+  margin: 0;
+  padding: var(--space-md);
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--color-ink);
+}
+.root :global(.diagram) {
+  margin: var(--space-lg) 0 0;
+  padding: var(--space-xl) var(--space-lg);
+  background-color: var(--color-paper-2);
+  background-image: linear-gradient(var(--color-rule) 1px, transparent 1px), linear-gradient(90deg, var(--color-rule) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  border: var(--rule-hair) solid var(--color-rule-2);
+}
+.root .prose :global(blockquote) {
+  margin-inline: 0;
+  padding: var(--space-md) 0 0 var(--space-lg);
+  border-left: var(--rule-hair) solid var(--color-ink);
+  font-size: var(--text-xl);
+  line-height: 1.55;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.root .prose :global(blockquote p) {
+  max-width: none;
+}
+.root :global(.callout) {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-paper-2);
+  border-top: var(--rule-hair) solid var(--color-rule-2);
+  font-size: var(--text-md);
+  line-height: 1.7;
+  color: var(--color-ink);
+}
+.root :global(.callout svg) {
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.root :global(.callout strong) {
+  display: block;
+  font-weight: 700;
+  margin-bottom: var(--space-2xs);
+}
+.root :global(.callout--info svg) {
+  color: var(--color-ink);
+}
+.root :global(.callout--warning) {
+  border-top-color: var(--color-warning);
+}
+.root :global(.callout--warning svg) {
+  color: var(--color-warning);
+}
+.root :global(.callout--error) {
+  border-top-color: var(--color-danger);
+}
+.root :global(.callout--error svg) {
+  color: var(--color-danger);
+}
+.root :global(.callout--success) {
+  border-top-color: var(--color-accent);
+}
+.root :global(.callout--success svg) {
+  color: var(--color-accent);
+}
+.root .prose :global(.body-figure) {
+  margin-inline: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+.root .prose :global(.body-figure img) {
+  width: 100%;
+  outline: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+  outline-offset: -1px;
+}
+.root .prose :global(.body-figure figcaption) {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+.root :global(.post-tags) {
+  max-width: var(--measure);
+  margin: var(--space-3xl) auto 0;
+  padding-top: var(--space-lg);
+  border-top: var(--rule-heavy) solid var(--color-ink);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+.root :global(.post-tags h2) {
+  font-size: var(--text-title);
+  margin-bottom: var(--space-sm);
+}
+@media (max-width: 60rem) {
+  .root :global(.post-head .grid12 > *),
+  .root :global(.post-cover .fig) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 캔버스 시안에 없는 MDX 요소: Tailwind preflight가 지운 목록 기호와 제목 크기를 되살립니다. */
+.root .prose {
+  overflow-wrap: break-word;
+}
+.root .prose :global(ul) {
+  list-style: disc;
+}
+.root .prose :global(ol) {
+  list-style: decimal;
+  padding-left: var(--space-lg);
+}
+.root .prose :global(li > ul),
+.root .prose :global(li > ol) {
+  margin-top: var(--space-xs);
+}
+.root .prose :global(h3) {
+  font-size: var(--text-xl);
+  max-width: none;
+  margin-top: var(--space-xl);
+}
+.root .prose :global(h4),
+.root .prose :global(h5),
+.root .prose :global(h6) {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1.35;
+  color: var(--color-ink);
+  margin-top: var(--space-xl);
+}
+.root .prose :global(strong) {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.root .prose :global(hr) {
+  border: 0;
+  border-top: var(--rule-hair) solid var(--color-rule-2);
+  margin-block: var(--space-2xl);
+}
+.root .prose :global(a svg) {
+  display: inline-block;
+  vertical-align: -0.1em;
+}
+/* 인라인 code 여백이 코드 블록 첫 줄만 밀지 않게 합니다. */
+.root .prose :global(pre code) {
+  padding: 0;
+  background: none;
+}
+/* 문단 안 이미지는 figure를 쓸 수 없어 span으로 그리므로 캡션도 클래스로 맞춥니다. */
+.root .prose :global(.body-figure .caption) {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+.root .prose :global([data-x-embed] a) {
+  color: var(--color-ink);
+}
+
+/* Mermaid: 격자 위에 각진 상자와 가는 선, 점선 묶음 */
+.root :global(.diagram) {
+  /* Mermaid가 글자 폭을 잰 환경(body)과 줄바꿈 규칙을 맞춥니다. */
+  word-break: normal;
+  overflow-wrap: normal;
+  display: grid;
+  gap: var(--space-sm);
+  overflow-x: auto;
+}
+/* 공용 p 규칙(text-wrap: pretty)이 Mermaid 라벨의 nowrap을 풀어 글자가 잘리지 않게 합니다. */
+.root :global(.diagram foreignObject p) {
+  text-wrap: inherit;
+  max-width: none;
+}
+.root :global(.diagram svg) {
+  margin-inline: auto;
+  max-width: 100%;
+}
+.root :global(.diagram .node rect),
+.root :global(.diagram .cluster rect) {
+  rx: 0;
+  ry: 0;
+}
+.root :global(.diagram .cluster rect) {
+  stroke-dasharray: 3 3;
+}
+.root :global(.diagram .flowchart-link) {
+  stroke-width: 1px;
+}
+.root :global(.diagram-bar) {
+  display: flex;
+  justify-content: flex-end;
+}
+.root :global(.diagram-bar .btn) {
+  min-height: 32px;
+  padding: 0 var(--space-sm);
+  font-size: var(--text-xs);
+  background: var(--color-paper);
+}
+.root :global(.diagram-error) {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.root :global(.post-meta) {
+  row-gap: var(--space-sm);
+}
+.root :global(.post-head .lead) {
+  margin-top: var(--space-lg);
+}
+.root :global(.post-tags .btn) {
+  gap: var(--space-xs);
+}
+.root :global(.callout > div > * + *) {
+  margin-top: var(--space-xs);
+}

@@ -1,0 +1,19 @@
+---
+import '../styles/fonts.css';
+import '../styles/globals.css';
+---
+<!doctype html>
+<html lang="ko" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <slot name="head" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="180x180" />
+  </head>
+  <body class="font-sans antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[101] focus:rounded focus:bg-[var(--color-primary)] focus:px-4 focus:py-2 focus:text-white">본문으로 건너뛰기</a>
+    <slot />
+  </body>
+</html>

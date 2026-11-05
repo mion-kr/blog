@@ -1,0 +1,94 @@
+---
+import Site from '../../layouts/Site.astro';
+import Seo from '../../components/Seo.astro';
+import PostNotFound from '../../components/site/PostNotFound.astro';
+import post from '../../styles/post.module.css';
+import { findPostBySlug, incrementViewCount } from '../../server/posts/public';
+import { renderPostHtml } from '../../lib/render/render-post';
+import { formatKoreanNumericDate, formatNumber, formatReadingTime, readingTimeMinutes, serializeJsonLd } from '../../lib/format';
+import { siteUrl } from '../../server/env';
+
+const slug = Astro.params.slug ?? '';
+const found = await findPostBySlug(slug, { publishedOnly: true });
+if (!found) Astro.response.status = 404;
+
+const base = siteUrl();
+const url = `${base}/posts/${slug}`;
+const viewCount = found ? await incrementViewCount(found) : 0;
+const bodyHtml = found ? await renderPostHtml(found.content) : '';
+const description = found ? (found.excerpt ?? `${found.title}에 대한 Mion의 기술 블로그 포스트입니다.`) : '';
+const displayDate = found ? (found.publishedAt ?? found.createdAt) : new Date(0);
+const jsonLd = found && {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: found.title,
+  description,
+  url,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+  image: found.coverImage ? [found.coverImage] : undefined,
+  author: { '@type': 'Person', name: found.author?.name ?? 'Mion', url: `${base}/about` },
+  publisher: { '@type': 'Organization', name: "Mion's Blog", logo: { '@type': 'ImageObject', url: `${base}/favicon.ico` } },
+  datePublished: displayDate.toISOString(),
+  dateModified: found.updatedAt.toISOString(),
+  keywords: found.tags.map((t) => t.name).join(', '),
+  articleSection: found.category?.name,
+};
+---
+{!found ? <PostNotFound /> : (
+<Site activePath="/posts">
+  <Fragment slot="head">
+    <Seo title={`${found.title} | Mion Blog`} description={description} canonical={url}
+      og={{ type: 'article', url, publishedTime: displayDate.toISOString(), modifiedTime: found.updatedAt.toISOString(), authors: [found.author.name], tags: found.tags.map((t) => t.name),
+        image: found.coverImage ?? undefined, imageWidth: found.coverImage ? 1200 : undefined, imageHeight: found.coverImage ? 630 : undefined, imageAlt: found.coverImage ? found.title : undefined }} />
+  </Fragment>
+  <main id="main" tabindex="-1" class={post.root}>
+    <article>
+      <script type="application/ld+json" set:html={serializeJsonLd(jsonLd!)} />
+      <header class="post-head">
+        <div class="container grid12">
+          <div>
+            {found.category?.slug && found.category?.name && <a class="tag" href={`/posts?categorySlug=${found.category.slug}`}>{found.category.name}</a>}
+            <h1>{found.title}</h1>
+            <dl class="post-meta" aria-label="포스트 메타 정보">
+              <div><dt>발행</dt><dd class="num"><time datetime={displayDate.toISOString()}>{formatKoreanNumericDate(displayDate)}</time></dd></div>
+              <div><dt>조회</dt><dd class="num">{formatNumber(viewCount)} views</dd></div>
+              <div><dt>읽는 시간</dt><dd class="num">{formatReadingTime(readingTimeMinutes(found.content))}</dd></div>
+              <div><dt>작성자</dt><dd><a href="/about" rel="author">{found.author.name}</a></dd></div>
+            </dl>
+          </div>
+        </div>
+      </header>
+      {found.coverImage && (
+        <div class="post-cover">
+          <div class="container grid12">
+            <figure class="fig cover" data-slot="cover">
+              <img src={found.coverImage} alt={found.title} sizes="(max-width: 960px) 100vw, 1100px" fetchpriority="high" style="position:absolute;height:100%;width:100%;inset:0;object-fit:cover" />
+            </figure>
+          </div>
+        </div>
+      )}
+      <div class="reading">
+        <div class="container">
+          <Fragment set:html={bodyHtml.replace('<div class="mdx-content">', `<div class="mdx-content ${post.prose}">`)} />
+          <footer class="post-tags">
+            {found.tags.length > 0 && (
+              <div>
+                <h2>Related Tags</h2>
+                <div class="chips">{found.tags.map((tag) => <a class="chip" href={`/posts?tagSlug=${tag.slug}`}>{tag.name}</a>)}</div>
+              </div>
+            )}
+            <button type="button" class="btn" data-copy-link data-copied="false" aria-label="Copy Link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link-2 h-4 w-4" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"></path><path d="M15 7h2a5 5 0 1 1 0 10h-2"></path><line x1="8" x2="16" y1="12" y2="12"></line></svg>
+              Copy Link
+              <span class="sr-only" aria-live="polite"></span>
+            </button>
+          </footer>
+        </div>
+      </div>
+    </article>
+  </main>
+  <script>
+    import '../../scripts/post-body';
+  </script>
+</Site>
+)}

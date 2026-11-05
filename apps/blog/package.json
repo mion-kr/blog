@@ -19,10 +19,13 @@
   "dependencies": {
     "@astrojs/cloudflare": "14.4.4",
     "@astrojs/react": "7.1.2",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@tailwindcss/vite": "4.3.4",
     "astro": "7.4.5",
     "drizzle-orm": "0.45.4",
     "hangul-romanize": "0.3.2",
     "jose": "6.2.15",
+    "mermaid": "11.12.0",
     "oauth4webapi": "3.8.8",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -31,6 +34,7 @@
     "remark-mdx": "3.1.1",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
+    "tailwindcss": "4.3.4",
     "unified": "11.0.5",
     "unist-util-visit": "5.2.0",
     "uuidv7": "1.2.1"
