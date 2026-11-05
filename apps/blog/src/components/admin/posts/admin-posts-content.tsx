@@ -189,11 +189,14 @@ export function AdminPostsContent({
                       <span className="text-xs text-slate-500">
                         {post.published
                           ? `발행일 ${new Intl.DateTimeFormat("ko-KR", {
+                              // 서버(UTC)와 브라우저 렌더가 같은 값이 되게 한국 시간으로 고정
                               dateStyle: "medium",
+                              timeZone: "Asia/Seoul",
                             }).format(new Date(post.publishedAt ?? post.createdAt ?? Date.now()))}`
                           : `마지막 수정 ${new Intl.DateTimeFormat("ko-KR", {
                               dateStyle: "medium",
                               timeStyle: "short",
+                              timeZone: "Asia/Seoul",
                             }).format(new Date(post.updatedAt ?? Date.now()))}`}
                       </span>
                     </div>

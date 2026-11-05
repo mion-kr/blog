@@ -167,7 +167,7 @@ export function AdminDashboardContent({
                       마지막 수정:{" "}
                       {new Date(draft.updatedAt ?? draft.createdAt ?? Date.now()).toLocaleString(
                         "ko-KR",
-                        { hour12: false },
+                        { hour12: false, timeZone: "Asia/Seoul" },
                       )}
                     </p>
                   </div>
