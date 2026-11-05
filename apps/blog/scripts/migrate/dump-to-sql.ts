@@ -5,7 +5,8 @@ type Value = string | number | null;
 export type Row = Record<string, Value>;
 export type Dump = Record<Table, Row[]>;
 
-const ms = (col: string) => `(extract(epoch from ${col}) * 1000)::bigint AS ${col}`;
+// Postgres는 마이크로초까지 저장한다. 이관 전 JS Date처럼 밀리초 아래는 버린다(반올림하면 1ms 밀린다).
+const ms = (col: string) => `floor(extract(epoch from ${col}) * 1000)::bigint AS ${col}`;
 
 // 컬럼 순서가 곧 INSERT 컬럼 순서다.
 export const DUMP_QUERIES: Record<Table, string> = {

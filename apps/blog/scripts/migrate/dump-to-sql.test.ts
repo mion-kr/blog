@@ -52,7 +52,7 @@ describe('toSql', () => {
 
 describe('DUMP_QUERIES', () => {
   it('시간은 Postgres에서 UTC epoch ms로, boolean은 ::int로 변환해 꺼낸다(클라이언트 시간대 무관)', () => {
-    expect(DUMP_QUERIES.posts).toContain('(extract(epoch from published_at) * 1000)::bigint AS published_at');
+    expect(DUMP_QUERIES.posts).toContain('floor(extract(epoch from published_at) * 1000)::bigint AS published_at');
     expect(DUMP_QUERIES.posts).toContain('published::int AS published');
     for (const q of Object.values(DUMP_QUERIES)) expect(q).not.toMatch(/\bnow\(\)/);
     expect(Object.keys(DUMP_QUERIES)).toEqual(TABLE_ORDER);

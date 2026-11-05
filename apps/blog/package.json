@@ -13,7 +13,7 @@
     "migrate:dump": "node scripts/migrate/dump.ts",
     "migrate:sql": "node scripts/migrate/build-sql.ts",
     "migrate:load:local": "wrangler d1 migrations apply mion-blog --local && wrangler d1 execute mion-blog --local --file .migration/clear.sql && wrangler d1 execute mion-blog --local --file .migration/load.sql",
-    "migrate:compare:local": "node scripts/migrate/compare.ts --local",
+    "migrate:compare:local": "TZ=UTC node scripts/migrate/compare.ts --local",
     "migrate:fixtures": "node scripts/migrate/render-fixtures.mjs"
   },
   "dependencies": {
