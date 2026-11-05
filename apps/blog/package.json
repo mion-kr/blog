@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check-types": "astro check",
+    "check-types": "tsc --noEmit -p .",
     "test": "astro build && vitest run",
     "test:unit": "vitest run --project unit",
     "migrate:dump": "node scripts/migrate/dump.ts",
@@ -43,7 +43,6 @@
     "uuidv7": "1.2.1"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.12",
     "@cloudflare/vitest-plugin": "1.6.0",
     "@cloudflare/workers-types": "5.20261104.1",
     "@types/hast": "3.0.5",

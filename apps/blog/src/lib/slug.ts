@@ -1,5 +1,4 @@
 // packages/shared/src/utils/slug.ts 이식. hangul-romanize는 workerd에서 ESM 진입이 깨져 CommonJS 진입을 쓴다.
-// @ts-expect-error 타입 선언이 패키지 루트에만 있다.
 import { Romanize } from 'hangul-romanize/dist/index.js';
 
 export function generateSlug(title: string): string {

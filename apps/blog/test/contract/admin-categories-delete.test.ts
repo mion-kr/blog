@@ -25,7 +25,7 @@ describe('DELETE /api/admin/categories/{id}', () => {
     // 발행 글 연결을 끊고 초안만 남긴다
     await env.DB.prepare("UPDATE posts SET category_id=? WHERE published=0").bind(ids.catSkills).run();
     await env.DB.prepare('DELETE FROM post_tags WHERE post_id IN (SELECT id FROM posts WHERE published=1)').run();
-    const target = 'categories' === 'categories' ? ids.catSkills : ids.tagAi;
+    const target = ids.catSkills;
     const res = await del(target);
     expect(res.status).toBe(409);
     expect(res.body!.error).toEqual({ code: 'CATEGORY_IN_USE', message: '이 카테고리를 사용하는 포스트가 1개 있어 삭제할 수 없습니다.' });

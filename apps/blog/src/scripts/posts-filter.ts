@@ -1,8 +1,7 @@
 // 이관 전 posts-filter.tsx·posts-content.tsx: 검색어는 500ms 뒤 주소에 반영, 정렬 프리셋, page는 1로.
-const root = document.querySelector('[data-posts-filter]');
-if (root) {
-  const input = root.querySelector<HTMLInputElement>('#q')!;
-  const select = root.querySelector<HTMLSelectElement>('#sort')!;
+const input = document.getElementById('q') as HTMLInputElement | null;
+const select = document.getElementById('sort') as HTMLSelectElement | null;
+if (document.querySelector('[data-posts-filter]') && input && select) {
   const go = (updates: Record<string, string>) => {
     const params = new URLSearchParams(location.search);
     for (const [k, v] of Object.entries(updates)) (v ? params.set(k, v) : params.delete(k));

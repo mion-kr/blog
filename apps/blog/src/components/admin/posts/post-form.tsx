@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import {
-  ChangeEvent,
+  type ChangeEvent,
   useCallback,
   useMemo,
   useRef,

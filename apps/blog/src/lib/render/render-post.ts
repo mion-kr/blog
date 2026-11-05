@@ -16,7 +16,7 @@ type State = { all: (node: unknown) => ElementContent[] };
 
 class RenderError extends Error {}
 
-const h = (tagName: string, properties: Properties = {}, children: ElementContent[] = []): Element => ({ type: 'element', tagName, properties, children });
+const h = (tagName: string, properties: Record<string, unknown> = {}, children: ElementContent[] = []): Element => ({ type: 'element', tagName, properties: properties as Properties, children });
 const t = (value: string): Text => ({ type: 'text', value });
 
 const callout = (type: 'info' | 'warning' | 'error' | 'success', role: string, children: ElementContent[]) =>
@@ -120,7 +120,7 @@ function unsupported(): never {
 // 이관 전 컴포넌트 맵(h1→h2, 제목 scroll-mt-16, 표 감싸기, 이미지, 링크, 코드 블록)을 HTML 트리에 적용한다.
 function rehypeComponents() {
   return (tree: HastRoot) => {
-    visit(tree, 'element', (node: Element, index, parent) => {
+    visit(tree, 'element', ((node: Element, index: number | undefined, parent: HastRoot | Element | undefined) => {
       if (!parent || index === undefined) return;
       const replace = (next: ElementContent | ElementContent[]) => {
         const list = Array.isArray(next) ? next : [next];
@@ -129,7 +129,7 @@ function rehypeComponents() {
       };
       if (/^h[1-6]$/.test(node.tagName)) {
         node.tagName = node.tagName === 'h1' ? 'h2' : node.tagName;
-        node.properties = { ...node.properties, className: ['scroll-mt-16'] };
+        node.properties = { ...node.properties, className: ['scroll-mt-16'] } as Properties;
         return;
       }
       if (node.tagName === 'table' && !(parent.type === 'element' && parent.properties?.className?.toString() === 'table-box')) {
@@ -152,7 +152,7 @@ function rehypeComponents() {
         ]));
       }
       return;
-    });
+    }) as never);
     visit(tree, 'element', (node: Element) => {
       if (node.data) delete node.data;
       if (node.properties?.dataDone) delete node.properties.dataDone;
@@ -165,7 +165,7 @@ const processor = unified()
   .use(remarkMdx)
   .use(remarkGfm)
   .use(remarkMermaid)
-  .use(remarkRehype, {
+  .use(remarkRehype as never, {
     handlers: {
       mdxJsxFlowElement: jsx as never,
       mdxJsxTextElement: jsx as never,

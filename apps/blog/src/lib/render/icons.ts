@@ -2,15 +2,16 @@ import type { Element } from 'hast';
 
 // lucide-react 아이콘의 SVG(이관 전 렌더 결과와 같은 마크업)
 const svg = (name: string, children: Element['children'], extraClass = ''): Element => ({
+  // hast Properties는 className을 배열로 본다. 문자열 그대로 두면 rehype-stringify가 공백으로 잇는다.
   type: 'element',
   tagName: 'svg',
   properties: {
     xmlns: 'http://www.w3.org/2000/svg', width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
-    strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round', className: `lucide lucide-${name}${extraClass}`, ariaHidden: 'true',
+    strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round', className: `lucide lucide-${name}${extraClass}`.split(' '), ariaHidden: 'true',
   },
   children,
 });
-const el = (tagName: string, properties: Element['properties']): Element => ({ type: 'element', tagName, properties, children: [] });
+const el = (tagName: string, properties: Record<string, unknown>): Element => ({ type: 'element', tagName, properties: properties as Element['properties'], children: [] });
 const circle = () => el('circle', { cx: '12', cy: '12', r: '10' });
 const path = (d: string) => el('path', { d });
 

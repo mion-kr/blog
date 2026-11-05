@@ -1,9 +1,12 @@
+/// <reference types="@cloudflare/vitest-plugin/types" />
 import type { D1Migration } from 'cloudflare:test';
 
-declare module 'cloudflare:workers' {
-  interface ProvidedEnv {
-    DB: D1Database;
-    MEDIA: R2Bucket;
-    TEST_MIGRATIONS: D1Migration[];
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DB: D1Database;
+      MEDIA: R2Bucket;
+      TEST_MIGRATIONS: D1Migration[];
+    }
   }
 }

@@ -123,7 +123,7 @@ function loadXWidgets(): Promise<XWidgets> {
       script.id = 'twitter-wjs';
       script.src = 'https://platform.x.com/widgets.js';
       script.async = true;
-      document.head.append(script);
+      document.head.appendChild(script);
     }
   });
   return widgetsPromise;
@@ -133,7 +133,7 @@ for (const figure of document.querySelectorAll<HTMLElement>('figure[data-x-embed
   const container = figure.querySelector<HTMLElement>(':scope > div')!;
   const status = figure.querySelector<HTMLElement>('[role="status"]')!;
   const target = document.createElement('div');
-  container.append(target);
+  container.appendChild(target);
   let done = false;
   const setError = () => {
     done = true;

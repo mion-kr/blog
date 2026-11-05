@@ -35,7 +35,7 @@ export async function seedBasic() {
 }
 
 export const fetchPage = (path: string, init?: RequestInit) =>
-  import('cloudflare:workers').then(({ exports }) => exports.default.fetch(`http://localhost:4321${path}`, init));
+  import('cloudflare:workers').then(({ exports }) => (exports as unknown as { default: { fetch: typeof fetch } }).default.fetch(`http://localhost:4321${path}`, init));
 
 /** 발행 글 n개를 더 넣는다(published_at = T0 - i일). */
 export async function seedManyPublished(n: number) {
