@@ -398,6 +398,7 @@ apps/blog/src/
 | 15 | 원격 D1·R2 생성, 원격 스키마 적용, `wrangler secret` 등록, 운영 데이터 원격 D1 적재, 커버 R2 복사, workers.dev 미리보기 배포를 진행한다 | 작업 48 각 단계 승인 후 | 작업 48 |
 | 16 | `SESSION_SECRET`도 Doppler로 관리한다 | Worker 비밀값에만 있음 | Doppler `prd_blog`, 미리보기 배포 결과 |
 | 17 | 보안 응답 헤더를 넣는다: HSTS, CSP(`frame-ancestors 'none'` 등 최소), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. 관리자 클릭재킹 방지 우선 | 이관 전·후 모두 없음 | middleware, `security-headers.test.ts` |
+| 18 | 전환 뒤 7일 관찰과 관리자 편집 동결을 없앤다(2026-11-06) | 설계 결정 7: 7일 동안 `ADMIN_WRITES_FROZEN=true`, 롤백 때 잃는 것은 조회수뿐 | `deploy:prod`의 `ADMIN_WRITES_FROZEN=false`, 작업 50 |
 
 ## 대안
 
@@ -577,7 +578,7 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
   - [ ] Google 콘솔에 미리보기 콜백 추가(사용자), 미리보기에서 로그인·글 작성·이미지 업로드·수정 직접 확인, 시험 글·이미지 정리
   - [x] `media.mion-space.dev` 연결: 전환(작업 49) 때 R2 커스텀 도메인으로 연결했다
 - [x] 49. 전환(2026-11-06, 실행 기록 "전환 결과"): 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`, `MEDIA_BASE_URL=https://media.mion-space.dev/`, `SERVE_MEDIA_FROM_BINDING=false`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
-- [ ] 50. 7일 관찰 → `ADMIN_WRITES_FROZEN=false` 배포 → 옛 코드 정리 PR(별도)
+- [ ] 50. ~~7일 관찰 →~~ `ADMIN_WRITES_FROZEN=false` 배포(2026-11-06 완료, 사용자 결정 18로 관찰 기간 폐지) → 옛 코드 정리 PR(별도)
 
 ## 변경 파일 후보
 
@@ -765,4 +766,10 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 측정 2(같은 임시 Worker에 세션 적용 전·후 배포, tail `wallTime` 중앙값, 9회): `/` 285 → 222ms, `/posts` 252 → 158ms, `/posts?categorySlug=…` 215 → 199ms, `/posts?tagSlug=…` 170 → 113ms, `/feed.xml` 128 → 63ms, 없는 글 상세 149 → 145ms(조회수 쓰기가 primary로 가서 거의 같다). 실제 글 상세는 운영 조회수를 올리지 않으려고 재지 않았다. 측정 Worker 2개는 삭제했다.
 - 결과: 공개 읽기마다 약 60ms씩 줄어 적용했다.
 - 주의: 복제본은 primary보다 잠깐 늦을 수 있다. 관리자가 글을 저장한 직후 공개 화면이 이전 내용을 잠시 보여 줄 수 있다(관리자 화면은 primary라 바로 보인다).
+
+### 편집 동결 폐지(사용자 결정 18, 2026-11-06)
+
+- 전환 뒤 7일 관찰과 관리자 편집 동결(설계 결정 7)을 사용자 결정으로 없앴다. `pnpm --filter blog deploy:prod`가 `ADMIN_WRITES_FROZEN=false`로 배포한다(버전 `0b7efeaf-681e-4ca1-b80e-067c256a9174`, 배포된 vars에서 `false` 확인).
+- 확인: 세션 없이 `POST`·`PUT`·`DELETE`·`PATCH /api/admin/posts`(같은 출처)가 모두 `401`이다. 실제 쓰기는 하지 않았다. 동결 판정 코드와 `423 EDIT_FROZEN` 계약 테스트(`test/frozen`)는 다시 켤 때를 위해 남긴다.
+- **롤백 영향**: 이 배포부터 새 앱(D1·R2)에서 쓴 글·수정·삭제·이미지는 옛 Supabase·S3에 없다. Vercel(옛 앱)로 DNS를 되돌리면 그 내용이 옛 사이트에서 사라진다(조회수 유실도 함께). 되돌린 뒤 살리려면 D1에서 Postgres로 옮기는 별도 작업이 필요하다(설계에서는 Supabase 쓰기를 하지 않기로 했다). Worker 코드만 문제면 DNS를 두고 `wrangler rollback`으로 되돌리는 것이 데이터 유실이 없다.
 
