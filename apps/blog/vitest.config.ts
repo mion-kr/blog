@@ -28,7 +28,7 @@ const shared = {
 export default defineConfig({
   test: {
     projects: [
-      { plugins: [worker()], test: { ...shared, name: 'main', include: ['test/**/*.test.ts', 'scripts/**/*.test.ts'], exclude: ['test/frozen/**'] } },
+      { plugins: [worker()], test: { ...shared, name: 'main', include: ['test/**/*.test.ts'], exclude: ['test/frozen/**'] } },
       { plugins: [worker({ ADMIN_WRITES_FROZEN: 'true', SERVE_MEDIA_FROM_BINDING: 'false' })], test: { ...shared, name: 'frozen', include: ['test/frozen/**/*.test.ts'] } },
     ],
   },

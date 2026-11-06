@@ -1,104 +1,51 @@
-# mion blog – 학습 중심 블로그 Monorepo
+# mion blog
 
-개발 공부를 목적으로 다양한 기술을 실험하고, AI 도구를 적극 활용하여 서비스 형태로 구현해 보는 프로젝트입니다. 제품 완성도보다 학습과 경험 축적을 우선시합니다.
+[mion-space.dev](https://mion-space.dev) 블로그 저장소입니다. 개발 공부를 목적으로 다양한 기술을 실험하고, AI 도구를 적극 활용하여 서비스 형태로 구현해 보는 프로젝트입니다.
 
-**요약**
+## 기술 스택
 
-- 모노레포 기반으로 프론트엔드(Next.js 16)와 백엔드(NestJS 11)를 구성합니다.
-- 데이터 계층은 Drizzle ORM을 사용하며, 환경 변수와 시크릿은 Doppler로 관리합니다.
-- 애플리케이션은 Vercel에 배포하고, PostgreSQL과 오브젝트 스토리지는 Supabase를 사용합니다.
-- 프로젝트 초반에는 Claude Code를, API 구성 이후에는 Codex를 주요 AI 도구로 사용합니다.
+- 앱: `Astro 7`(서버 렌더링), 관리자 화면은 `React 19` island
+- 런타임·배포: `Cloudflare Workers`(`@astrojs/cloudflare`, `wrangler`)
+- DB: `Cloudflare D1`(SQLite) + `Drizzle ORM`
+- 이미지 저장소: `Cloudflare R2`(공개 주소 `media.mion-space.dev`)
+- 인증: Google OAuth(`oauth4webapi`) + 서명 쿠키 세션(`jose`)
+- 글 렌더링: MDX(`unified`·`remark`·`rehype`), Mermaid
+- 스타일: `Tailwind CSS 4`
+- 테스트: `Vitest` + `@cloudflare/vitest-plugin`(workerd에서 실행)
+- 비밀값: `Doppler`(프로젝트 `mion-blog`)
+- 워크스페이스: `pnpm`, `Turborepo`
 
-**목차**
+## 저장소 구조
 
-- 프로젝트 목적
-- 성공 기준(학습 목표)
-- 기술 스택
-- 모노레포 구조
-- 빠른 시작
-- 개발/빌드/테스트 명령어
-- 배포와 환경 변수
-- AI 활용 방식
-- 라이선스 및 기여
+- `apps/blog`: 블로그 앱(공개 화면, 관리자 화면, RSS·sitemap, 이미지 업로드)
+  - `src/`: 화면·서버 처리·DB 스키마
+  - `migrations/`: D1 마이그레이션 SQL
+  - `test/`: 단위 테스트와 계약 테스트
+  - `wrangler.jsonc`: Worker·D1·R2 바인딩과 로컬 기본 설정값
+- `docs/changes`: 변경 기록, `docs/content`: 블로그 글 원고
 
-**프로젝트 목적**
+## 빠른 시작
 
-- 디자인과 퍼블리싱 장벽으로 인한 과거의 시행착오를 AI로 극복하고, 다시 한 번 서비스 구축 흐름 전반을 경험합니다.
-- ‘제품’보다 ‘개발 공부’를 우선하여 Turborepo, Next.js, NestJS, Drizzle ORM, Doppler, Vercel, Supabase 등 다양한 도구를 채택하고 비교 평가합니다.
-- 실제 블로그 기능은 후순위이며, 학습과 실험의 컨테이너 역할을 수행합니다.
+1. 의존성을 설치합니다: `pnpm install`
+2. Doppler `mion-blog` 프로젝트의 `local_blog` 설정 값으로 `apps/blog/.dev.vars`를 만듭니다. 이 파일은 커밋하지 않습니다.
+3. 로컬 D1에 마이그레이션을 적용합니다: `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --local`
+4. 개발 서버를 띄웁니다: `pnpm --filter blog dev` (`http://localhost:4321`)
 
-**성공 기준(학습 목표)**
+## 명령어
 
-- 디자인: Playwright MCP + shadcn 조합으로 벤치마킹 컴포넌트를 제작합니다.
-- SNS 로그인: Next.js에서의 소셜 로그인 플로우를 직접 구성해 봅니다.
-- AI 컨텍스트: AI와의 질의응답을 통해 요구사항을 구체화하고 정확히 구현합니다.
-- Drizzle ORM: Prisma 사용 경험 대비 Drizzle의 장단점을 체감합니다.
-- Vercel·Supabase: 애플리케이션 배포와 관리형 PostgreSQL·오브젝트 스토리지 구성을 경험합니다.
-- Doppler: Git worktree 사용 시 복잡해지는 환경 변수 관리를 일원화합니다.
-- 블로그 운영: Markdown + Mermaid 포스팅, SEO, Google Ads 적용 과정을 경험합니다.
+- 전체 빌드: `pnpm build`
+- 타입 체크: `pnpm check-types`
+- 테스트: `pnpm --filter blog test`
+- 서식: `pnpm format`
+- 마이그레이션 생성(스키마 변경 뒤): `pnpm --filter blog exec drizzle-kit generate`
 
-**기술 스택**
+## 배포와 환경 변수
 
-- 프레임워크: `Next.js 16`, `NestJS 11`
-- 언어/런타임: `TypeScript`, `Node.js`
-- ORM/DB: `Drizzle ORM`, `PostgreSQL(Supabase)`
-- 인증: `NextAuth`(소셜 로그인 실험)
-- 환경/시크릿: `Doppler`
-- 인프라: `Vercel`, `Supabase`
-- 오브젝트 스토리지: `Supabase Storage(S3 호환)`
-- 패키징/워크스페이스: `pnpm`, `Turborepo`
-- 테스트: `Jest`(API)
-- UI: `@repo/ui`(shadcn 기반 구성)
+- 운영 배포는 `pnpm --filter blog deploy:prod`로 합니다. 빌드 뒤 `wrangler deploy`가 운영 설정값(`SITE_URL`, `ROBOTS_INDEXABLE`, `MEDIA_BASE_URL` 등)을 `--var`로 넣습니다.
+- 비밀값(`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `SESSION_SECRET`)은 Doppler `prd_blog`가 원본이고, 운영 Worker에는 `wrangler secret`으로 등록합니다.
+- 비밀이 아닌 로컬 기본값은 `apps/blog/wrangler.jsonc`의 `vars`에 있습니다.
 
-**모노레포 구조**
-
-- 앱
-  - `apps/blog-web`: Next.js 16 프론트엔드 앱입니다.
-  - `apps/blog-api`: NestJS 11 백엔드 앱입니다.
-- 패키지
-  - `packages/database`: Drizzle ORM 래퍼입니다.
-  - `packages/shared`: 유틸과 타입을 제공합니다.
-  - `packages/ui`: 디자인 시스템 컴포넌트입니다.
-  - `packages/eslint-config`, `packages/typescript-config`: 툴링 프리셋입니다.
-
-**빠른 시작**
-
-- 의존성 설치: `pnpm install`을 실행합니다.
-- 환경 변수 템플릿: `pnpm doppler-setup`으로 로컬 프로필을 설정합니다.
-- 프론트엔드 개발 서버: `pnpm --filter blog-web dev`로 실행합니다.
-- 백엔드 개발 서버: `pnpm --filter blog-api dev`로 실행합니다.
-
-**개발/빌드/테스트 명령어**
-
-- 전체 빌드: `pnpm build`를 실행합니다.
-- 형상 점검: `pnpm lint`, `pnpm check-types`, `pnpm format`을 사용합니다.
-- 데이터베이스 작업(Drizzle):
-  - `pnpm --filter @repo/database generate`
-  - `pnpm --filter @repo/database push`
-  - `pnpm --filter @repo/database migrate`
-- API 테스트(Jest):
-  - `pnpm --filter blog-api test`
-
-**배포와 환경 변수**
-
-- 모든 시크릿과 환경 변수는 Doppler 프로젝트(`mion-blog`)에서 관리합니다.
-- 로컬 실행 시 `.env` 파일을 커밋하지 않으며, Doppler 변수를 우선합니다.
-- 오브젝트 스토리지는 `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_ENDPOINT`로 설정합니다.
-- 애플리케이션은 Vercel 서울 리전에 배포하고, 데이터베이스와 오브젝트 스토리지는 Supabase 서울 리전을 사용합니다.
-
-**AI 활용 방식**
-
-- 프로젝트 초반 설계와 골격 구성에는 Claude Code를 사용했습니다.
-- API 구성 이후부터는 Codex를 활용하여 요구사항 정제와 구현 정확도 향상을 목표로 합니다.
-- AI 질의응답 기록을 문서화하여 의사결정 근거를 남깁니다.
-
-**컨벤션 요약**
-
-- TypeScript/TSX는 Prettier 기본값(2-space, 세미콜론 유지, 100열)을 따릅니다.
-- React 컴포넌트와 Nest 서비스/프로바이더는 `PascalCase`를, 유틸/파일은 `camelCase`를 사용합니다.
-- Next `app` 라우트는 소문자-kebab-case, Nest 모듈은 `*.module.ts` 패턴을 유지합니다.
-
-**라이선스 및 기여**
+## 라이선스 및 기여
 
 - 개인 학습과 포트폴리오 목적의 리포지토리입니다.
 - 개선 제안이나 아이디어는 이슈로 등록해 주시면 검토합니다.

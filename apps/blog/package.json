@@ -9,12 +9,7 @@
     "preview": "astro preview",
     "check-types": "tsc --noEmit -p .",
     "test": "astro build && vitest run",
-    "migrate:dump": "node scripts/migrate/dump.ts",
-    "migrate:sql": "node scripts/migrate/build-sql.ts",
-    "deploy:prod": "astro build && wrangler deploy --var SITE_URL:https://mion-space.dev --var ROBOTS_INDEXABLE:true --var ADMIN_WRITES_FROZEN:false --var MEDIA_BASE_URL:https://media.mion-space.dev/ --var SERVE_MEDIA_FROM_BINDING:false",
-    "migrate:load:local": "wrangler d1 migrations apply mion-blog --local && wrangler d1 execute mion-blog --local --file .migration/clear.sql && wrangler d1 execute mion-blog --local --file .migration/load.sql",
-    "migrate:compare:local": "TZ=UTC node scripts/migrate/compare.ts --local",
-    "migrate:fixtures": "node scripts/migrate/render-fixtures.mjs"
+    "deploy:prod": "astro build && wrangler deploy --var SITE_URL:https://mion-space.dev --var ROBOTS_INDEXABLE:true --var ADMIN_WRITES_FROZEN:false --var MEDIA_BASE_URL:https://media.mion-space.dev/ --var SERVE_MEDIA_FROM_BINDING:false"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.4.4",
@@ -50,11 +45,9 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "drizzle-kit": "0.31.11",
-    "esbuild": "0.28.2",
     "hast-util-from-html": "2.0.3",
     "hast-util-select": "6.0.4",
     "hast-util-to-text": "4.0.3",
-    "postgres": "3.4.7",
     "typescript": "5.9.2",
     "unist-util-remove": "4.0.0",
     "vitest": "4.1.12",

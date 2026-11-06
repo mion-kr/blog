@@ -4,11 +4,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "start": "turbo run start",
-    "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
-    "doppler-setup": "pnpm --filter=blog-web doppler-setup && pnpm --filter=blog-api doppler-setup && pnpm --filter=@repo/database doppler-setup"
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
     "prettier": "^3.6.2",

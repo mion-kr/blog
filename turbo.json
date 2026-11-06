@@ -1,168 +1,27 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalDependencies": [
-    "package.json",
-    "tsconfig.json",
-    "tsconfig.*.json",
-    ".env*"
-  ],
-  "globalEnv": [
-    "NODE_ENV",
-    "DATABASE_URL",
-    "DATABASE_MIGRATION_URL",
-    "NEXTAUTH_SECRET",
-    "NEXTAUTH_URL",
-    "BLOG_API_URL",
-    "BLOG_API_CALLER_ISSUER",
-    "BLOG_API_CALLER_AUDIENCE",
-    "BLOG_API_CALLER_SUBJECT",
-    "VERCEL",
-    "NEXT_PUBLIC_IMAGE_ENDPOINT",
-    "NEXT_PUBLIC_SITE_URL",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "ADMIN_EMAIL",
-    "RSS_ITEMS_LIMIT"
-  ],
-  "globalPassThroughEnv": ["BLOG_API_LOCAL_SECRET", "VERCEL_OIDC_TOKEN"],
+  "globalDependencies": ["package.json", "tsconfig.json", "tsconfig.*.json"],
+  "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*",
-        "src/**",
-        "tsconfig.json",
-        "tsconfig.build.json",
-        "tsup.config.ts"
-      ],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "!dist/cache/**"],
-      "outputLogs": "new-only",
-      "env": ["NODE_ENV", "RSS_ITEMS_LIMIT"]
+      "outputs": ["dist/**", "!dist/cache/**"],
+      "outputLogs": "new-only"
     },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
-      "persistent": true,
-      "inputs": [
-        "src/**",
-        "public/**",
-        "app/**",
-        "components/**",
-        "lib/**",
-        "styles/**",
-        ".env*",
-        "next.config.mjs",
-        "tailwind.config.ts",
-        "tsconfig.json",
-        "tsup.config.ts"
-      ],
-      "outputLogs": "new-only"
+      "persistent": true
     },
     "check-types": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "src/**",
-        "app/**",
-        "components/**",
-        "lib/**",
-        "types/**",
-        "tsconfig.json",
-        "tsconfig.build.json"
-      ],
-      "outputLogs": "new-only"
-    },
-    "lint": {
-      "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "src/**",
-        "app/**",
-        "components/**",
-        "lib/**",
-        ".eslintrc*",
-        "eslint.config.*"
-      ],
-      "outputLogs": "new-only",
-      "env": [
-        "NODE_ENV",
-        "NEXTAUTH_SECRET",
-        "GOOGLE_CLIENT_ID",
-        "GOOGLE_CLIENT_SECRET",
-        "ADMIN_EMAIL",
-        "RSS_ITEMS_LIMIT"
-      ]
-    },
-    "format": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "src/**",
-        "app/**",
-        "components/**",
-        "lib/**",
-        ".prettierrc*",
-        "prettier.config.*"
-      ],
       "outputLogs": "new-only"
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "src/**",
-        "test/**",
-        "jest.config.*",
-        "vitest.config.*"
-      ],
-      "outputs": ["coverage/**"],
+      "outputs": ["coverage/**", "dist/**"],
       "outputLogs": "new-only"
-    },
-    "test:watch": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true,
-      "inputs": ["src/**", "test/**", "jest.config.*", "vitest.config.*"]
-    },
-    "db:generate": {
-      "inputs": ["src/schema/**", "drizzle.config.ts", "drizzle/**/*.sql"],
-      "outputs": ["drizzle/**"],
-      "outputLogs": "new-only"
-    },
-    "db:migrate": {
-      "dependsOn": ["db:generate"],
-      "cache": false,
-      "inputs": ["drizzle/**/*.sql"],
-      "outputLogs": "new-only"
-    },
-    "db:push": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "inputs": ["src/schema/**", "drizzle.config.ts"],
-      "outputLogs": "new-only"
-    },
-    "db:studio": {
-      "cache": false,
-      "persistent": true,
-      "inputs": ["src/schema/**", "drizzle.config.ts"]
-    },
-    "db:seed": {
-      "dependsOn": ["^build", "db:push"],
-      "cache": false,
-      "inputs": ["src/seed.ts", "src/schema/**"],
-      "outputLogs": "new-only"
-    },
-    "clean": {
-      "cache": false,
-      "inputs": [],
-      "outputs": []
-    },
-    "doppler-setup": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "inputs": [],
-      "outputs": []
     }
   }
 }
