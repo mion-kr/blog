@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, sql, type SQLWrapper } from 'drizzle-orm';
-import { getDb, getReadDb, schema, type Db } from '../db';
+import { getDb, schema, type Db } from '../db';
 
 const { posts, categories, tags, postTags, users } = schema;
 
@@ -43,8 +43,8 @@ export async function findPostBySlug(slug: string, { publishedOnly, db = getDb()
 
 /** 공개 글 상세: 글·태그 조회와 조회수 +1을 같은 왕복(병렬)으로 보낸다. 미발행·없는 글은 둘 다 0행이라 조회수가 그대로다. */
 export async function viewPublishedPost(slug: string): Promise<{ post: PostDetail; viewCount: number } | null> {
-  // 읽기는 복제본 세션, 조회수 +1(쓰기)은 primary.
-  const [post, viewCount] = await Promise.all([findPostBySlug(slug, { publishedOnly: true, db: getReadDb() }), incrementViewCountBySlug(slug)]);
+  // 읽기도 primary: 복제본은 발행 직후 잠깐 늦어 404가 날 수 있고, 상세는 복제본으로 빨라지지 않았다.
+  const [post, viewCount] = await Promise.all([findPostBySlug(slug, { publishedOnly: true }), incrementViewCountBySlug(slug)]);
   return post ? { post, viewCount: viewCount ?? post.viewCount } : null;
 }
 

@@ -5,7 +5,8 @@ import { getPostFormOptions } from '../../../../server/admin/posts';
 import { findPostBySlug } from '../../../../server/posts/public';
 
 // 관리자 편집 화면은 초안도 열고, 조회수는 올리지 않는다(사용자 결정 1).
-const slug = decodeURIComponent(Astro.params.slug ?? '');
+// Astro.params는 이미 디코드돼 있다(공개 상세와 같게 한 번만).
+const slug = Astro.params.slug ?? '';
 const [post, options] = await Promise.all([findPostBySlug(slug, { publishedOnly: false }), getPostFormOptions()]);
 if (!post) {
   return new Response('Not Found', { status: 404 });

@@ -5,7 +5,7 @@ export const SESSION_MAX_AGE = 604_800; // 7일
 export type Session = { sub: string; email: string; name: string; role: 'ADMIN'; exp: number };
 export type SessionResult = { ok: true; session: Session } | { ok: false; reason: 'expired' | 'invalid' };
 
-const isLocalHttp = (siteUrl: string) => {
+export const isLocalHttp = (siteUrl: string) => {
   const url = new URL(siteUrl);
   return url.protocol === 'http:' && url.hostname === 'localhost';
 };
@@ -15,11 +15,23 @@ export const sessionCookieName = (siteUrl: string) => (isLocalHttp(siteUrl) ? 'm
 const attributes = (siteUrl: string, maxAge: number) =>
   `Path=/; Max-Age=${maxAge}; HttpOnly${isLocalHttp(siteUrl) ? '' : '; Secure'}; SameSite=Lax`;
 
-export async function deriveSessionKey(secret: string, info = 'mion-session'): Promise<Uint8Array> {
-  if (!secret || secret.length < 32) throw new Error('SESSION_SECRET은 32자 이상이어야 한다');
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), 'HKDF', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: new TextEncoder().encode(info) }, base, 256);
-  return new Uint8Array(bits);
+// 비밀값·용도별 키는 isolate 안에서 한 번만 유도한다(middleware가 매 요청 쿠키를 복호화한다).
+const keyCache = new Map<string, Promise<Uint8Array>>();
+
+export function deriveSessionKey(secret: string, info = 'mion-session'): Promise<Uint8Array> {
+  if (!secret || secret.length < 32) return Promise.reject(new Error('SESSION_SECRET은 32자 이상이어야 한다'));
+  const cacheKey = `${info}\0${secret}`;
+  let key = keyCache.get(cacheKey);
+  if (!key) {
+    key = (async () => {
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), 'HKDF', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: new TextEncoder().encode(info) }, base, 256);
+      return new Uint8Array(bits);
+    })();
+    keyCache.set(cacheKey, key);
+    key.catch(() => keyCache.delete(cacheKey));
+  }
+  return key;
 }
 
 export async function createSessionCookie(user: { sub: string; email: string; name: string }, opts: { secret: string; siteUrl: string; now?: Date }): Promise<string> {
@@ -54,12 +66,14 @@ export async function readSession(token: string | undefined, opts: { secret: str
   }
 }
 
-/** Cookie 헤더에서 세션 쿠키 값을 꺼낸다. 운영에서는 접두사 없는 이름을 읽지 않는다. */
-export function sessionTokenFromRequest(request: Request, siteUrl: string): string | undefined {
-  const name = sessionCookieName(siteUrl);
+/** Cookie 헤더에서 이름이 정확히 같은 쿠키 값을 꺼낸다(세션·OAuth 임시 쿠키 공용). */
+export function readCookie(request: Request, name: string): string | undefined {
   for (const part of (request.headers.get('cookie') ?? '').split(';')) {
     const [key, ...rest] = part.trim().split('=');
     if (key === name) return rest.join('=');
   }
   return undefined;
 }
+
+/** 세션 쿠키 값. 운영에서는 접두사 없는 이름을 읽지 않는다. */
+export const sessionTokenFromRequest = (request: Request, siteUrl: string) => readCookie(request, sessionCookieName(siteUrl));

@@ -8,11 +8,12 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "mion-space.dev", "custom_domain": true }],
+  // 기본(맨 `astro build` → `wrangler deploy`)은 운영 값이다. 로컬 값은 아래 env.local(`CLOUDFLARE_ENV=local`)에 둔다.
   "vars": {
-    "SITE_URL": "http://localhost:4321",
-    "ROBOTS_INDEXABLE": "false",
-    "MEDIA_BASE_URL": "http://localhost:4321/local-media/",
-    "SERVE_MEDIA_FROM_BINDING": "true",
+    "SITE_URL": "https://mion-space.dev",
+    "ROBOTS_INDEXABLE": "true",
+    "MEDIA_BASE_URL": "https://media.mion-space.dev/",
+    "SERVE_MEDIA_FROM_BINDING": "false",
     "ADMIN_WRITES_FROZEN": "false",
     "RSS_ITEMS_LIMIT": "50",
     "UPLOAD_ALLOWED_MIME": "image/jpeg,image/png,image/webp",
@@ -21,5 +22,26 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "mion-blog", "database_id": "82f65236-2b67-4f02-bc30-1cdac0807069", "migrations_dir": "migrations" }
   ],
-  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mion-blog-media" }]
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mion-blog-media" }],
+  "env": {
+    // 로컬 개발 전용(`pnpm --filter blog dev`). vars·바인딩은 env로 상속되지 않아 다시 적는다. 로컬 D1 상태는 database_id로 같은 것을 쓴다.
+    "local": {
+      // 실수로 이 설정을 배포해도 운영 도메인을 가져가지 않게 routes를 비운다(routes는 상속된다).
+      "routes": [],
+      "vars": {
+        "SITE_URL": "http://localhost:4321",
+        "ROBOTS_INDEXABLE": "false",
+        "MEDIA_BASE_URL": "http://localhost:4321/local-media/",
+        "SERVE_MEDIA_FROM_BINDING": "true",
+        "ADMIN_WRITES_FROZEN": "false",
+        "RSS_ITEMS_LIMIT": "50",
+        "UPLOAD_ALLOWED_MIME": "image/jpeg,image/png,image/webp",
+        "UPLOAD_MAX_SIZE": "10485760"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "mion-blog", "database_id": "82f65236-2b67-4f02-bc30-1cdac0807069", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "mion-blog-media" }]
+    }
+  }
 }

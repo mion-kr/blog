@@ -112,9 +112,11 @@ function jsx(state: State, node: JsxNode): ElementContent | ElementContent[] {
     }
   }
   if (/^[A-Z]/.test(name) || name.includes('.')) throw new RenderError(`알 수 없는 컴포넌트 ${name}`);
+  // 본문에서 스크립트가 실행되지 않게 한다: <script>는 내용째 버리고, iframe srcdoc(같은 출처 HTML)은 속성을 버린다.
+  if (name.toLowerCase() === 'script') return [];
   const properties: Properties = {};
   for (const [key, value] of Object.entries(attrs)) {
-    if (/^on/i.test(key)) continue;
+    if (/^on/i.test(key) || key.toLowerCase() === 'srcdoc') continue;
     if (URL_ATTRIBUTES.has(key.toLowerCase())) {
       properties[key] = safeUrl(value) as string;
       continue;

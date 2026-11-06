@@ -104,3 +104,21 @@ describe('renderPostHtml javascript: URL 차단(이관 전 React와 같음)', ()
     expect(await renderPostHtml('[x](https://e.com/javascript:ok)')).toContain('href="https://e.com/javascript:ok"');
   });
 });
+
+describe('renderPostHtml 실행되는 HTML 차단', () => {
+  it('<script>는 내용째 버린다', async () => {
+    for (const src of ['<script>alert(1)</script>', '<div><script src="https://e.com/x.js"></script>안녕</div>', '앞 <script>alert(1)</script> 뒤']) {
+      const html = await renderPostHtml(src);
+      expect(html, src).not.toMatch(/<script|alert\(1\)/i);
+    }
+    expect(await renderPostHtml('<div><script>alert(1)</script>안녕</div>')).toContain('<div>안녕</div>');
+  });
+
+  it('iframe의 srcdoc(대소문자 무관)은 버리고 다른 속성은 둔다', async () => {
+    for (const name of ['srcdoc', 'srcDoc', 'SRCDOC']) {
+      const html = await renderPostHtml(`<iframe ${name}="<script>alert(1)</script>" title="t"></iframe>`);
+      expect(html, name).not.toMatch(/srcdoc|alert/i);
+      expect(html, name).toContain('<iframe title="t"></iframe>');
+    }
+  });
+});

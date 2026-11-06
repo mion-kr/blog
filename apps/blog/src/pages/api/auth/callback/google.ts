@@ -21,7 +21,8 @@ export const GET: APIRoute = async ({ request, url }) => {
   if (result.identity.email !== env.ADMIN_EMAIL) return redirect('/auth/signin?error=AccessDenied');
   try {
     const user = await upsertAdminUser(result.identity);
-    headers.append('Set-Cookie', await createSessionCookie({ sub: user.id, email: user.email, name: user.name }, { secret: env.SESSION_SECRET!, siteUrl: base }));
+    // 세션 이메일은 방금 ADMIN_EMAIL과 비교한 Google 이메일이다. 저장된 email은 대소문자가 다를 수 있어 쓰면 middleware에서 막혀 로그인이 반복된다.
+    headers.append('Set-Cookie', await createSessionCookie({ sub: user.id, email: result.identity.email, name: user.name }, { secret: env.SESSION_SECRET!, siteUrl: base }));
     return redirect(result.callbackUrl);
   } catch (error) {
     console.error('관리자 사용자 저장 실패', (error as Error).name);

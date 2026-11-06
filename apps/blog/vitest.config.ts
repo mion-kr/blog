@@ -9,6 +9,11 @@ const worker = (vars: Record<string, string> = {}) =>
     miniflare: {
       bindings: {
         TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, 'migrations')),
+        // 로컬 값(wrangler.jsonc env.local과 같음). 빌드 산출물의 기본 vars는 운영 값이다.
+        SITE_URL: 'http://localhost:4321',
+        ROBOTS_INDEXABLE: 'false',
+        MEDIA_BASE_URL: 'http://localhost:4321/local-media/',
+        SERVE_MEDIA_FROM_BINDING: 'true',
         // 테스트 전용 값(비밀 아님)
         SESSION_SECRET: 'test-session-secret-0123456789abcdef',
         ADMIN_EMAIL: 'admin@example.com',

@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminCookie } from '../helpers/auth';
 import { adminJson } from '../helpers/admin-api';
 import { clearTables } from '../helpers/db';
@@ -100,5 +100,31 @@ describe('PUT /api/admin/posts/{id}', () => {
     expect((await update(ids.post1, full({ title: '' }))).status).toBe(400);
     expect((await update(ids.post1, full(), { origin: 'http://localhost:4321', 'content-type': 'application/json' })).status).toBe(401);
     expect((await update(ids.post1, full(), { cookie: await adminCookie(), origin: 'https://evil.test', 'content-type': 'application/json' })).status).toBe(403);
+  });
+
+  it('이전 커버·본문에서 뺀 이미지라도 다른 글이나 설정이 쓰면 지우지 않는다', async () => {
+    const cover = `${BASE}posts/${ids.post1}/thumbnail/shared_1.png`;
+    const shared = `${BASE}posts/${ids.post1}/content/shared_2.png`;
+    const profile = `${BASE}posts/${ids.post1}/content/profile.png`;
+    for (const url of [cover, shared, profile]) await put(url.slice(BASE.length));
+    await env.DB.prepare('UPDATE posts SET cover_image=?, content=? WHERE id=?').bind(cover, `![a](${shared}) ![b](${profile})`, ids.post1).run();
+    await env.DB.prepare('UPDATE posts SET cover_image=?, content=? WHERE id=?').bind(cover, `다른 글 ![a](${shared})`, ids.post2).run();
+    await env.DB.prepare("INSERT INTO settings (id,key,value,updated_at) VALUES ('s1','profile_image_url',?,0)").bind(profile).run();
+    const res = await update(ids.post1, full({ coverImage: null, content: '이미지 없음' }));
+    expect(res.status).toBe(200);
+    for (const url of [cover, shared, profile]) expect(await exists(url.slice(BASE.length)), url).toBe(true);
+  });
+
+  it('미발행 글 제목 변경 중 다른 저장이 같은 slug를 먼저 쓰면 500 없이 다음 slug로 저장한다', async () => {
+    const batch = env.DB.batch.bind(env.DB);
+    vi.spyOn(env.DB, 'batch').mockImplementationOnce(async (statements) => {
+      await env.DB.prepare("UPDATE posts SET slug='gateun-sae-jemok' WHERE id=?").bind(ids.post2).run();
+      return batch(statements);
+    });
+    const res = await update(ids.draft, full({ title: '같은 새 제목', published: false }));
+    vi.restoreAllMocks();
+    expect(res.status).toBe(200);
+    expect(res.body!.data.slug).toBe('gateun-sae-jemok-1');
+    expect((await row(ids.draft))!.slug).toBe('gateun-sae-jemok-1');
   });
 });

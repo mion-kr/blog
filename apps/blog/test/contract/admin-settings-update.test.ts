@@ -88,4 +88,17 @@ describe('PATCH /api/admin/settings', () => {
     expect((await patch({}, { origin: 'http://localhost:4321', 'content-type': 'application/json' })).status).toBe(401);
     expect((await patch({}, { cookie: await adminCookie(), origin: 'https://evil.test', 'content-type': 'application/json' })).status).toBe(403);
   });
+
+  it('이전 소개 이미지라도 글이 쓰면 교체·제거 때 지우지 않는다', async () => {
+    await put('about/old.png');
+    await env.DB.prepare("INSERT INTO settings (id,key,value,updated_at) VALUES ('s1','profile_image_url',?,0)").bind(`${BASE}about/old.png`).run();
+    await env.DB.prepare('UPDATE posts SET cover_image=? WHERE id=?').bind(`${BASE}about/old.png`, ids.post1).run();
+    await put(`draft/${D}/about/1-me.png`);
+    await patch({ profileImageUrl: `${BASE}draft/${D}/about/1-me.png` });
+    expect(await exists('about/old.png')).toBe(true);
+
+    await env.DB.prepare('UPDATE posts SET cover_image=NULL, content=? WHERE id=?').bind(`![me](${BASE}about/1-me.png)`, ids.post2).run();
+    await patch({ profileImageRemove: true });
+    expect(await exists('about/1-me.png')).toBe(true);
+  });
 });
