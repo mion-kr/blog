@@ -17,6 +17,15 @@ describe('정적 페이지', () => {
     });
   }
 
+  it('/about "이 사이트는"은 지금 구성만 짧게 말하고 내부 운영 정보를 담지 않는다', async () => {
+    const html = await (await fetchPage('/about')).text();
+    const section = html.slice(html.indexOf('id="about-site"'), html.indexOf('id="about-contact"'));
+    for (const word of ['Astro', 'Cloudflare Workers', 'D1', 'R2']) expect(section).toContain(word);
+    for (const word of ['Next.js', 'NestJS', 'Vercel', 'PostgreSQL', 'Supabase', 'pre-signed', 'Doppler', 'Turborepo', 'PNPM']) expect(section).not.toContain(word);
+    expect(section).toContain('href="https://github.com/mion-kr/blog"');
+    expect(section).toContain('href="https://github.com/mion-kr"');
+  });
+
   it('/about은 소개 OG 이미지', async () => {
     expect(await (await fetchPage('/about')).text()).toContain('<meta property="og:image" content="http://localhost:4321/og/about.png">');
   });
