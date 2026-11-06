@@ -1,0 +1,20 @@
+/* 관리자 로그인 전용 Editorial 규칙. 토큰과 제목 영역은 components/layout/editorial.module.css. */
+.root :global(.signin) {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: start;
+  padding-block: 0 var(--space-3xl);
+}
+.root :global(.signin .btn) {
+  gap: var(--space-xs);
+}
+.root :global(.signin-error) {
+  padding: var(--space-sm) var(--space-md);
+  border-left: var(--rule-heavy) solid var(--color-danger);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+}
+.root :global(.signin-note) {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}

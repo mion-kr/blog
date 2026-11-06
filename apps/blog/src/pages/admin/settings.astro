@@ -1,0 +1,36 @@
+---
+import { eq } from 'drizzle-orm';
+import Admin from '../../layouts/Admin.astro';
+import { ProfileCard } from '../../components/admin/settings/profile-card';
+import { BlogInfo, PostSettings } from '../../islands/AdminSettings';
+import { getSettings } from '../../server/settings/read';
+import { getDb, schema } from '../../server/db';
+
+const viewer = Astro.locals.viewer!;
+// 세션에는 사진이 없어 users에서 읽는다.
+const [settings, user] = await Promise.all([
+  getSettings().catch(() => null),
+  getDb().select({ name: schema.users.name, email: schema.users.email, image: schema.users.image, role: schema.users.role }).from(schema.users).where(eq(schema.users.id, viewer.id)).get(),
+]);
+const back = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>';
+---
+<Admin>
+  <div class="space-y-6">
+    <div class="flex items-center gap-4">
+      <a href="/admin" class="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-slate-200"><Fragment set:html={back} />관리자 콘솔로 돌아가기</a>
+    </div>
+    {!settings ? (
+      <div class="rounded-xl border border-red-500/30 bg-red-500/10 p-6"><p class="text-red-200">설정을 불러올 수 없습니다.</p></div>
+    ) : (
+      <>
+        <div>
+          <h1 class="text-2xl font-semibold text-slate-50">설정</h1>
+          <p class="mt-2 text-sm text-slate-400">블로그 설정을 관리하세요.</p>
+        </div>
+        <ProfileCard name={user?.name ?? viewer.name ?? '사용자'} email={user?.email ?? viewer.email} image={user?.image} role={user?.role ?? 'ADMIN'} />
+        <BlogInfo client:load url={Astro.url.href} initialData={{ siteTitle: settings.siteTitle, siteDescription: settings.siteDescription, siteUrl: settings.siteUrl, profileImageUrl: settings.profileImageUrl ?? undefined }} />
+        <PostSettings client:load url={Astro.url.href} postsPerPage={settings.postsPerPage} />
+      </>
+    )}
+  </div>
+</Admin>

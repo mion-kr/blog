@@ -1,0 +1,142 @@
+---
+import Site from '../layouts/Site.astro';
+import Seo from '../components/Seo.astro';
+import styles from '../styles/home.module.css';
+import { listCategories, listPosts, listTags } from '../server/posts/list';
+import { summaryExcerpt } from '../lib/post-summary';
+import { formatKoreanMonthDay, formatKoreanNumericDate, serializeJsonLd } from '../lib/format';
+import { siteUrl } from '../server/env';
+import { getReadDb } from '../server/db';
+
+const SITE_NAME = '미온 블로그';
+const TITLE = `${SITE_NAME} — AI로 만들고 배우기`;
+const DESCRIPTION = 'AI를 활용해 아이디어를 구현하고, 직접 만들며 배운 경험을 기록합니다. 다양한 도구의 활용 사례부터 개발 과정의 시행착오, 완성한 결과물까지 공유합니다.';
+const TOPICS = [
+  { title: 'AI와 함께 만들기', description: '코딩 에이전트에게 일을 나누고, 결과를 테스트와 리뷰로 확인하는 방법을 정리합니다.' },
+  { title: '설계와 인프라', description: 'AI로 아이디어를 구현하며 사용했던 설계와 인프라를 기록 합니다.' },
+  { title: '장애 기록', description: '운영 중에 부딪힌 문제의 원인과 대응을 기록합니다.' },
+];
+const base = siteUrl();
+const fmt = (v: number) => new Intl.NumberFormat('ko-KR').format(v);
+const settle = <T,>(p: Promise<T>) => p.catch((e) => { console.error('홈 데이터 조회 실패', (e as Error).name); return null; });
+
+const db = getReadDb();
+const [latest, trending, categoriesRes, tagsRes] = await Promise.all([
+  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'publishedAt', order: 'desc' }, db)),
+  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'viewCount', order: 'desc' }, db)),
+  settle(listCategories({ page: 1, limit: 8, sort: 'name', order: 'asc' }, db)),
+  settle(listTags({ page: 1, limit: 12, sort: 'name', order: 'asc' }, db)),
+]);
+const latestPosts = latest?.items ?? [];
+const trendingPosts = (trending?.items ?? []).slice(0, 5);
+const categories = (categoriesRes?.items ?? []).filter((c) => c.postCount > 0);
+const tags = tagsRes?.items ?? [];
+const featured = latestPosts[0] ?? null;
+const recent = latestPosts.slice(1, 7);
+const stats = { posts: latest?.total ?? latestPosts.length, categories: categories.length, tags: tagsRes?.total ?? tags.length };
+const jsonLd = [
+  { '@context': 'https://schema.org', '@type': 'WebSite', '@id': `${base}#website`, name: SITE_NAME, alternateName: "Mion's Blog", url: base, inLanguage: 'ko-KR', description: DESCRIPTION, publisher: { '@id': `${base}#organization` } },
+  { '@context': 'https://schema.org', '@type': 'Organization', '@id': `${base}#organization`, name: "Mion's Blog", url: base, logo: { '@type': 'ImageObject', url: `${base}/favicon.ico` }, description: `${stats.posts}개의 포스트와 ${stats.categories}개 카테고리, ${stats.tags}개 태그를 운영하는 기술 블로그입니다.` },
+];
+---
+<Site activePath="/">
+  <Seo slot="head" title={TITLE} description={DESCRIPTION} canonical={base} keywords={false}
+    og={{ type: 'website', url: base, siteName: SITE_NAME, locale: 'ko_KR', image: `${base}/og/blog.png`, imageWidth: 1200, imageHeight: 630, imageAlt: 'Mion 기술 블로그 공유 이미지' }} />
+  <main id="main" class={styles.root}>
+    <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />
+    <section class="masthead" aria-label="홈 히어로">
+      <div class="container masthead-in"><h1>백엔드에서<br />AI 빌더로</h1></div>
+    </section>
+    <section class="front" aria-label="최근 글">
+      <div class="container front-in">
+        {featured ? (
+          <article class="lead-story">
+            <figure class="fig cover" data-slot="featured">
+              {featured.coverImage && <img src={featured.coverImage} alt="" sizes="(max-width: 960px) 100vw, 760px" fetchpriority="high" style="position:absolute;height:100%;width:100%;inset:0" />}
+            </figure>
+            <div class="meta">
+              <a class="tag" href={`/posts?categorySlug=${featured.category.slug}`}>{featured.category.name}</a>
+              <span class="num">{formatKoreanNumericDate(featured.publishedAt ?? featured.createdAt)}</span>
+              <span class="num">조회 {fmt(featured.viewCount)}회</span>
+            </div>
+            <h2><a href={`/posts/${featured.slug}`}>{featured.title}</a></h2>
+            <p>{summaryExcerpt(featured)}</p>
+            {featured.tags.length > 0 && <div class="chips">{featured.tags.slice(0, 3).map((t) => <a class="chip" href={`/posts?tagSlug=${t.slug}`}>{t.name}</a>)}</div>}
+          </article>
+        ) : (
+          <article class="lead-story">
+            <figure class="fig cover" data-slot="featured"></figure>
+            <h2>아직 추천할 글이 없어요</h2>
+            <p>첫 글이 발행되면 여기에서 바로 확인할 수 있어요.</p>
+          </article>
+        )}
+        <div class="latest">
+          <div class="latest-head">
+            <h2>최근 글</h2>
+            <a class="edge-link" href="/posts">최근 포스트 더 보기</a>
+          </div>
+          <ol class="latest-list">
+            {recent.map((post) => (
+              <li>
+                <figure class="fig cover" data-slot="latest">
+                  {post.coverImage && <img src={post.coverImage} alt="" loading="lazy" sizes="136px" style="position:absolute;height:100%;width:100%;inset:0" />}
+                </figure>
+                <div>
+                  <h3><a href={`/posts/${post.slug}`}>{post.title}</a></h3>
+                  <div class="meta">
+                    <span>{post.category.name}</span>
+                    <span class="num">{formatKoreanMonthDay(post.publishedAt ?? post.createdAt)}</span>
+                    <span class="num">조회 {fmt(post.viewCount)}회</span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+    {trendingPosts.length > 0 && (
+      <section class="section" aria-labelledby="popular-h">
+        <div class="container">
+          <div class="head"><h2 id="popular-h">인기 글</h2></div>
+          <table class="register">
+            <thead><tr><th scope="col">순위</th><th scope="col">제목</th><th scope="col" class="views">조회</th></tr></thead>
+            <tbody>
+              {trendingPosts.map((post, i) => (
+                <tr>
+                  <td class="rank num">{String(i + 1).padStart(2, '0')}</td>
+                  <td class="title"><a href={`/posts/${post.slug}`}>{post.title}</a></td>
+                  <td class="views num">{fmt(post.viewCount)}회</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
+    <section class="section" aria-labelledby="topics-h">
+      <div class="container topics">
+        <div>
+          <div class="head head--stack"><h2 id="topics-h">이 블로그에서 다루는 것</h2></div>
+          <ul class="rows">{TOPICS.map((t) => <li><h3>{t.title}</h3><p>{t.description}</p></li>)}</ul>
+        </div>
+        <aside class="explore" aria-labelledby="explore-h">
+          <div class="head head--stack"><h2 id="explore-h">주제로 찾기</h2></div>
+          <p class="explore-span">지금까지 쓴 글 <span class="num">{fmt(stats.posts)}</span>편을 카테고리와 태그로 묶었습니다.</p>
+          {categories.length > 0 && (
+            <>
+              <h3>카테고리</h3>
+              <div class="chips">{categories.map((c) => <a class="chip" href={`/posts?categorySlug=${c.slug}`}>{c.name}<span class="num">{fmt(c.postCount)}</span></a>)}</div>
+            </>
+          )}
+          {tags.length > 0 && (
+            <>
+              <h3>태그</h3>
+              <div class="chips">{tags.slice(0, 10).map((t) => <a class="chip" href={`/posts?tagSlug=${t.slug}`}>{t.name}</a>)}</div>
+            </>
+          )}
+        </aside>
+      </div>
+    </section>
+  </main>
+</Site>

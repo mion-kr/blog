@@ -1,0 +1,243 @@
+/* 홈 전용 Editorial 규칙(머리 영역, 대표 글·최근 글, 인기 글, 다루는 것·주제로 찾기). 공용 토큰은 components/layout/editorial.module.css. */
+.root :global(.section) {
+  padding-block: var(--space-3xl);
+}
+.root :global(.head) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+  border-top: var(--rule-heavy) solid var(--color-ink);
+  padding-top: var(--space-lg);
+}
+.root :global(.head h2) {
+  font-size: var(--text-display-s);
+}
+.root :global(.edge-link) {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
+  font-size: var(--text-md);
+}
+.root :global(.masthead) {
+  padding-block: var(--space-2xl) var(--space-xl);
+}
+.root :global(.masthead-in) {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--space-2xl);
+  align-items: end;
+  border-bottom: var(--rule-heavy) solid var(--color-ink);
+  padding-bottom: var(--space-xl);
+}
+.root :global(.masthead h1) {
+  font-size: var(--text-display);
+  line-height: 0.98;
+  max-width: none;
+}
+.root :global(.masthead .lead) {
+  font-size: var(--text-lead);
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+.root :global(.front) {
+  padding-block: var(--space-xl) var(--space-3xl);
+}
+.root :global(.front-in) {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--space-2xl);
+  align-items: start;
+}
+.root :global(.lead-story) {
+  position: relative;
+  display: grid;
+  gap: var(--space-sm);
+}
+.root :global(.lead-story .fig) {
+  margin-bottom: var(--space-xs);
+}
+.root :global(.lead-story h2) {
+  font-size: var(--text-section);
+  line-height: 1.12;
+  max-width: none;
+}
+.root :global(.lead-story h2 a) {
+  text-decoration: none;
+}
+.root :global(.lead-story h2 a:hover) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+}
+.root :global(.lead-story p) {
+  font-size: var(--text-lead);
+  line-height: 1.55;
+}
+.root :global(.latest) {
+  border-left: var(--rule-hair) solid var(--color-rule);
+  padding-left: var(--space-2xl);
+}
+.root :global(.latest-head) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: var(--rule-heavy) solid var(--color-ink);
+}
+.root :global(.latest-head h2) {
+  font-size: var(--text-title);
+}
+.root :global(.latest-list) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.root :global(.latest-list li) {
+  position: relative;
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: start;
+  padding-block: var(--space-md);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+.root :global(.latest-list h3) {
+  font-size: var(--text-lg);
+  line-height: 1.35;
+  margin-bottom: var(--space-2xs);
+}
+.root :global(.latest-list h3 a) {
+  text-decoration: none;
+}
+.root :global(.latest-list h3 a::after) {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.root :global(.latest-list li:hover h3 a) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+}
+.root :global(.register) {
+  width: 100%;
+  border-collapse: collapse;
+}
+.root :global(.register th) {
+  text-align: left;
+  color: inherit;
+  opacity: 0.75;
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  border-bottom: var(--rule-hair) solid currentColor;
+}
+.root :global(.register td) {
+  padding: var(--space-lg) var(--space-md) var(--space-lg) 0;
+  border-top: var(--rule-hair) solid color-mix(in oklab, currentColor 30%, transparent);
+  vertical-align: baseline;
+}
+.root :global(.register .rank) {
+  width: 96px;
+  font-size: var(--text-display-s);
+  font-weight: 800;
+  font-variation-settings: "wdth" 75, "opsz" 96;
+  line-height: 1;
+}
+.root :global(.register .title) {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-variation-settings: "wdth" 75, "opsz" 96;
+  font-size: var(--text-xl);
+  line-height: 1.25;
+}
+.root :global(.register .title a) {
+  text-decoration: none;
+}
+.root :global(.register .title a:hover) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+}
+.root :global(.register .views) {
+  width: 160px;
+  text-align: right;
+  font-family: var(--font-display);
+}
+.root :global(.topics) {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: var(--space-2xl);
+  align-items: start;
+}
+.root :global(.head--stack h2) {
+  font-size: var(--text-section);
+}
+.root :global(.rows) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.root :global(.rows li) {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--gap-columns);
+  padding-block: var(--space-lg);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+.root :global(.rows li:first-child) {
+  padding-top: 0;
+}
+.root :global(.rows h3) {
+  font-size: var(--text-title);
+}
+.root :global(.rows p) {
+  font-size: var(--text-md);
+  line-height: 1.7;
+  color: var(--color-ink-2);
+}
+.root :global(.explore) {
+  display: grid;
+  gap: var(--space-sm);
+  align-content: start;
+}
+.root :global(.explore .head) {
+  margin-bottom: var(--space-md);
+}
+.root :global(.explore-span) {
+  font-size: var(--text-lead);
+  line-height: 1.5;
+  color: var(--color-ink);
+  margin-bottom: var(--space-md);
+}
+.root :global(.explore h3) {
+  font-size: var(--text-md);
+  margin-top: var(--space-sm);
+}
+@media (max-width: 60rem) {
+  .root :global(.masthead-in),
+  .root :global(.front-in),
+  .root :global(.topics) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .root :global(.latest) {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .root :global(.rows li) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-xs);
+  }
+}
+@media (max-width: 40rem) {
+  .root :global(.latest-list li) {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .root :global(.register .rank) {
+    width: 56px;
+  }
+  .root :global(.register .views) {
+    width: auto;
+  }
+}

@@ -1,0 +1,22 @@
+---
+import Site from '../../layouts/Site.astro';
+import Seo from '../Seo.astro';
+import post from '../../styles/post.module.css';
+---
+<Site activePath="/posts">
+  <Seo slot="head" title="페이지를 찾을 수 없습니다 | Mion's Blog" description="요청한 페이지가 존재하지 않거나 이동되었습니다." robots="noindex" />
+  <main id="main" tabindex="-1" class={post.root}>
+    <div class="post-head">
+      <div class="container grid12">
+        <div>
+          <h1>포스트를 찾을 수 없습니다</h1>
+          <p class="lead">요청하신 포스트가 존재하지 않거나 이동되었을 수 있습니다.</p>
+          <div class="actions">
+            <a href="/" class="btn">홈으로 돌아가기</a>
+            <a href="/posts" class="btn">모든 포스트 보기</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Site>

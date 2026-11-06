@@ -1,0 +1,46 @@
+---
+import Base from './Base.astro';
+import editorial from '../styles/editorial.module.css';
+
+export interface Props { activePath?: '/' | '/posts' | '/about' }
+const { activePath } = Astro.props;
+const navigation = [
+  { href: '/', label: 'Home' },
+  { href: '/posts', label: 'Posts' },
+  { href: '/about', label: 'About' },
+] as const;
+const viewer = Astro.locals.viewer;
+const year = new Date().getFullYear();
+---
+<Base>
+  <slot name="head" slot="head" />
+  <div class={editorial.root}>
+    <header class="nav">
+      <div class="container nav-in">
+        <a class="wordmark" href="/">Mion’s Blog</a>
+        <nav class="nav-links" aria-label="메인 네비게이션">
+          {navigation.map((item) => <a href={item.href} aria-current={item.href === activePath ? 'page' : undefined}>{item.label}</a>)}
+          {viewer && <a href="/admin">Admin</a>}
+          {viewer && (
+            <form method="post" action="/auth/signout" style="display:contents">
+              <button type="submit">로그아웃</button>
+            </form>
+          )}
+        </nav>
+      </div>
+    </header>
+    <div class="chrome-body"><slot /></div>
+    <footer class="foot">
+      <div class="container">
+        <div class="foot-row">
+          <small>© {year} Mion’s Blog. All rights reserved.</small>
+          <nav class="foot-links" aria-label="푸터 네비게이션">
+            <a href="/terms">이용약관</a>
+            <a href="/privacy-policy">개인정보처리방침</a>
+            <a href="https://github.com/mion-kr" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </nav>
+        </div>
+      </div>
+    </footer>
+  </div>
+</Base>
