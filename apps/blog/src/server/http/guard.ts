@@ -31,4 +31,3 @@ export function withSecurityHeaders(res: Response): Response {
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
   return out;
 }
-
