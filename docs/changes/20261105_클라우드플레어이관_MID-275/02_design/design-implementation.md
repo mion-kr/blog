@@ -397,6 +397,7 @@ apps/blog/src/
 | 14 | Astro 기본 `security.checkOrigin`은 끄고 middleware 출처 검사 하나로 둔다 | Astro 기본 검사와 middleware 검사를 함께 | `astro.config.mjs` |
 | 15 | 원격 D1·R2 생성, 원격 스키마 적용, `wrangler secret` 등록, 운영 데이터 원격 D1 적재, 커버 R2 복사, workers.dev 미리보기 배포를 진행한다 | 작업 48 각 단계 승인 후 | 작업 48 |
 | 16 | `SESSION_SECRET`도 Doppler로 관리한다 | Worker 비밀값에만 있음 | Doppler `prd_blog`, 미리보기 배포 결과 |
+| 17 | 보안 응답 헤더를 넣는다: HSTS, CSP(`frame-ancestors 'none'` 등 최소), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. 관리자 클릭재킹 방지 우선 | 이관 전·후 모두 없음 | middleware, `security-headers.test.ts` |
 
 ## 대안
 
@@ -720,4 +721,14 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 브라우저 확인(로컬, 빌드 산출물을 `wrangler dev`로): 홈 ↔ 글 목록, 관리자 대시보드 → 포스트 관리 → 카테고리 → 대시보드 이동마다 첫 그림 시점에 이미 받은 굵기가 모두 `loaded`. 관리자 포스트 관리에서 처음 쓰는 700만 첫 방문 1회 `loading`(이후 캐시).
 - 글꼴 라이선스(재배포 허용 확인): Paperlogy(Copyright 2024 The PAPERLOGY Authors), Geist(Copyright 2023 Vercel), IBM Plex Mono(Copyright 2017 IBM, `@fontsource/ibm-plex-mono`) 모두 SIL Open Font License 1.1이다. OFL 1.1은 소프트웨어와 함께 묶어 재배포·웹 임베딩을 허용하고, 글꼴만 따로 파는 것과 수정본에 예약 이름을 쓰는 것을 막는다. 파일을 수정하지 않았고 Paperlogy 라이선스 원문은 `/fonts/paperlogy/OFL license.txt`로 계속 제공한다.
 - 운영 배포(사용자 승인, 2026-11-06): `pnpm --filter blog deploy:prod`, 버전 `dd37bc42-a82b-45c4-a1f4-255522649718`(이전 `2bf2d17c-15ee-4acc-919c-4a4468e1a1fe`). 운영 확인: 글꼴 응답 `Cache-Control: public, max-age=31536000, immutable`, 홈 → 글 목록 → 글 상세와 관리자 대시보드 → 포스트 관리 → 카테고리 → 대시보드 이동마다 첫 그림 시점에 쓰는 굵기 모두 `loaded`, 304 재확인 0건. 글 21편·`/feed.xml`·sitemap 200, 피드는 전환 직전 옛 사이트 응답과 같다. 관리자 화면은 운영 `SESSION_SECRET`으로 만든 세션 쿠키로 열었다(값 미출력, 조회만).
+
+### 전환 뒤 수정: 보안 응답 헤더(사용자 결정 17, 2026-11-06, 운영 미배포)
+
+- middleware가 모든 동적 응답(페이지·API·리디렉션·오류)에 붙인다(`withSecurityHeaders`, `src/server/http/guard.ts`). `Response.redirect()`처럼 헤더가 잠긴 응답도 복사본에 붙인다.
+  - `Strict-Transport-Security: max-age=31536000`: 다른 하위 도메인(`blog`·`speed`·`game-1`)에 영향을 주지 않게 `includeSubDomains`·`preload`는 넣지 않았다.
+  - `Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; object-src 'none'`: 화면이 island·JSON-LD 인라인 스크립트와 `style` 속성을 써서 `script-src`·`style-src`·`default-src`는 넣지 않았다(넣으려면 nonce·hash 작업이 필요하다). `form-action`도 Google 로그인 리디렉션과 얽혀 넣지 않았다.
+  - `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
+- 정적 자산(`/_astro/*`, 공개 파일)은 Worker를 거치지 않아 이 헤더가 붙지 않는다. HTML은 모두 Worker 응답이라 클릭재킹 방지에는 영향이 없다.
+- 테스트: `test/contract/security-headers.test.ts`(공개 홈·목록·404·RSS·로그인 화면·Google 302·관리자 200·307·401·출처 거부 403에 다섯 헤더, CSP에 스크립트·스타일 정책 없음, Google 302와 임시 쿠키 유지). 구현 전 11개 실패 확인 후 통과. 전체 53개 파일 317개 통과, 타입 검사 통과.
+- 브라우저 확인(로컬, 빌드 산출물 + 로컬 테스트 비밀값): 공개 `/`·`/posts`·`/about`·글 상세, 로그인 화면 → Google 버튼 → `accounts.google.com` 이동, 관리자 6개 화면 200·이미지 깨짐 0·메뉴 클릭 이동, 다른 페이지에서 `/admin`을 iframe으로 넣으면 `frame-ancestors 'none'`으로 차단. 페이지 오류 0, 그 밖의 CSP 위반 0.
 

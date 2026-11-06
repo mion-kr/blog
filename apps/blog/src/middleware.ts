@@ -1,10 +1,13 @@
+import type { APIContext, MiddlewareNext } from 'astro';
 import { defineMiddleware } from 'astro:middleware';
 import { readSession, sessionTokenFromRequest } from './server/auth/session';
 import { env, siteUrl } from './server/env';
 import { fail } from './server/http/json';
-import { isWriteFrozen, normalizePath, under } from './server/http/guard';
+import { isWriteFrozen, normalizePath, under, withSecurityHeaders } from './server/http/guard';
 
-export const onRequest = defineMiddleware(async (context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => withSecurityHeaders(await handle(context, next)));
+
+async function handle(context: APIContext, next: MiddlewareNext): Promise<Response> {
   const { request, url, locals } = context;
   const base = siteUrl();
   const path = normalizePath(url.pathname);
@@ -33,4 +36,4 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isWriteFrozen(env.ADMIN_WRITES_FROZEN, request.method, path)) return fail(423, 'EDIT_FROZEN', '전환 기간이라 편집이 잠겨 있어요.');
 
   return next();
-});
+}
