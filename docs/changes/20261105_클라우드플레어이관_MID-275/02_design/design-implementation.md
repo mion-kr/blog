@@ -719,5 +719,5 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 테스트: `test/contract/fonts.test.ts`(빌드된 CSS의 글꼴 주소가 `/_astro/`이고 `/fonts/`가 없음, 대체 글꼴 값, `/`·`/auth/signin`·`/admin`의 preload 3개). 수정 전 코드로 5개 실패를 확인한 뒤 고쳐 통과. 전체 52개 파일 305개 통과, 타입 검사 통과.
 - 브라우저 확인(로컬, 빌드 산출물을 `wrangler dev`로): 홈 ↔ 글 목록, 관리자 대시보드 → 포스트 관리 → 카테고리 → 대시보드 이동마다 첫 그림 시점에 이미 받은 굵기가 모두 `loaded`. 관리자 포스트 관리에서 처음 쓰는 700만 첫 방문 1회 `loading`(이후 캐시).
 - 글꼴 라이선스(재배포 허용 확인): Paperlogy(Copyright 2024 The PAPERLOGY Authors), Geist(Copyright 2023 Vercel), IBM Plex Mono(Copyright 2017 IBM, `@fontsource/ibm-plex-mono`) 모두 SIL Open Font License 1.1이다. OFL 1.1은 소프트웨어와 함께 묶어 재배포·웹 임베딩을 허용하고, 글꼴만 따로 파는 것과 수정본에 예약 이름을 쓰는 것을 막는다. 파일을 수정하지 않았고 Paperlogy 라이선스 원문은 `/fonts/paperlogy/OFL license.txt`로 계속 제공한다.
-- 운영 배포는 하지 않았다(사용자 결정). 배포는 `pnpm --filter blog deploy:prod`.
+- 운영 배포(사용자 승인, 2026-11-06): `pnpm --filter blog deploy:prod`, 버전 `dd37bc42-a82b-45c4-a1f4-255522649718`(이전 `2bf2d17c-15ee-4acc-919c-4a4468e1a1fe`). 운영 확인: 글꼴 응답 `Cache-Control: public, max-age=31536000, immutable`, 홈 → 글 목록 → 글 상세와 관리자 대시보드 → 포스트 관리 → 카테고리 → 대시보드 이동마다 첫 그림 시점에 쓰는 굵기 모두 `loaded`, 304 재확인 0건. 글 21편·`/feed.xml`·sitemap 200, 피드는 전환 직전 옛 사이트 응답과 같다. 관리자 화면은 운영 `SESSION_SECRET`으로 만든 세션 쿠키로 열었다(값 미출력, 조회만).
 
