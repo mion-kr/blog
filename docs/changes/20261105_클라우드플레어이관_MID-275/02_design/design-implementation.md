@@ -39,7 +39,7 @@
 - 지금 `robots.ts`는 `NODE_ENV`가 production이 아니면 전체 차단이다(`apps/blog-web/app/robots.ts:4-20`). 새 앱은 같은 판단을 `ROBOTS_INDEXABLE`로 명시한다.
 - 미리보기는 운영과 같은 D1·R2를 쓴다. 최종 재적재(작업 49)가 D1을 새로 만들므로 미리보기에서 쓴 글은 사라지지만, R2에 올린 시험 이미지는 남는다. 미리보기 확인이 끝나면 시험 글을 관리자 화면에서 삭제해(삭제 시 이미지도 지움) 정리하고, 남은 `draft/` 객체는 목록을 보여 주고 승인 후 지운다.
 - 전환 후 workers.dev 주소는 `workers_dev = false`로 끈다. 켜 두면 `SITE_URL`이 운영 주소라 그 주소의 관리자 쓰기가 모두 출처 검사에서 거부되고 canonical만 운영을 가리키는 사본이 생긴다.
-- 미리보기 배포는 `pnpm --filter blog deploy:preview`로만 한다. `wrangler.jsonc`의 `vars`는 로컬 값이라, 이 스크립트가 `--var`로 `SITE_URL`·`MEDIA_BASE_URL`을 미리보기 값으로 바꾼다. 맨 `wrangler deploy`는 로컬 값으로 배포한다.
+- 전환 뒤 배포는 `pnpm --filter blog deploy:prod`로만 한다(운영 vars를 `--var`로 넣는다). 미리보기 배포 스크립트는 전환 때 지웠다(같은 Worker라 운영을 덮어쓴다). 전환 전 미리보기 배포는 `pnpm --filter blog deploy:preview`로만 했다. `wrangler.jsonc`의 `vars`는 로컬 값이라, 이 스크립트가 `--var`로 `SITE_URL`·`MEDIA_BASE_URL`을 미리보기 값으로 바꾼다. 맨 `wrangler deploy`는 로컬 값으로 배포한다.
 - 미리보기 적재는 커버 URL을 미리보기 `MEDIA_BASE_URL`로 바꾼다(`MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`를 `build-sql.ts`·`compare.ts`에 같이 준다). R2 키는 두 주소에서 같아(`posts/{id}/thumbnail/…`), 전환 때 재적재(작업 49)가 접두사만 `https://media.mion-space.dev/`로 바꾼다.
 - 업로드 허용 MIME(`UPLOAD_ALLOWED_MIME`)은 Doppler `prd_api`·`local_api` 모두 3개로 설정돼 있고 svg는 없다(2026-11-05 확인, 값 미출력). 새 앱에도 같은 값을 `vars`로 옮긴다.
 
@@ -574,8 +574,8 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
 - [ ] 48. 미리보기. 아래 남은 항목이 끝나면 체크한다.
   - [x] 원격 D1 생성·마이그레이션·적재·전 컬럼 비교, R2 버킷 생성·커버 21개 복사, 비밀값 등록, 미리보기 vars 확인 후 배포(실행 기록 "미리보기 배포 결과")
   - [ ] Google 콘솔에 미리보기 콜백 추가(사용자), 미리보기에서 로그인·글 작성·이미지 업로드·수정 직접 확인, 시험 글·이미지 정리
-  - [ ] `media.mion-space.dev` 연결: DNS 변경이라 전환(작업 49) 때 승인 후 한다(사용자 결정 11로 미리보기는 앱 경로 사용)
-- [ ] 49. 전환: 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`, `MEDIA_BASE_URL=https://media.mion-space.dev/`, `SERVE_MEDIA_FROM_BINDING=false`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
+  - [x] `media.mion-space.dev` 연결: 전환(작업 49) 때 R2 커스텀 도메인으로 연결했다
+- [x] 49. 전환(2026-11-06, 실행 기록 "전환 결과"): 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`, `MEDIA_BASE_URL=https://media.mion-space.dev/`, `SERVE_MEDIA_FROM_BINDING=false`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
 - [ ] 50. 7일 관찰 → `ADMIN_WRITES_FROZEN=false` 배포 → 옛 코드 정리 PR(별도)
 
 ## 변경 파일 후보
@@ -669,3 +669,42 @@ design.md "변경 파일 후보"에 더한다.
 - 출처 검사 확장(사용자 결정 12): 관리자 밖 주소 케이스를 먼저 추가해 실패를 확인했고(`POST /`가 200), middleware 조건을 바꾼 뒤 51개 파일 300개 통과.
 - 미리보기 글 상세를 열어 원격 D1 조회수가 올랐다. 전환 때 D1을 다시 적재하므로 운영 값에는 영향이 없다.
 - 남은 일: Google 콘솔에 `https://mion-blog.whddbs311.workers.dev/api/auth/callback/google` 추가(사용자), 로그인 뒤 관리자 쓰기 확인, 시험 글·이미지 정리.
+
+### 전환 결과(작업 49, 2026-11-06)
+
+#### 전환 전 DNS 기록(롤백 기준)
+
+Cloudflare 대시보드(zone `mion-space.dev`, id `d65a809cbae6807de55799f23bcc3fa8`)에서 수정 전에 읽은 값이다.
+
+| 이름 | 타입 | 값 | TTL | 프록시 | 레코드 id |
+| --- | --- | --- | --- | --- | --- |
+| `mion-space.dev` | CNAME | `712930625c6bf100.vercel-dns-017.com` | Auto | DNS only | `21248d48d43b58a5ead009e61472c52b` |
+| `media.mion-space.dev` | 없음 | | | | |
+| `www.mion-space.dev` | 없음 | | | | |
+
+- 건드리지 않는 레코드: `blog`(CNAME railway, proxied), `speed`(CNAME pages.dev, proxied), MX 3개, TXT(SPF, google-site-verification 2개, `cf2024-1._domainkey` DKIM), `game-1`(AAAA, 다른 Worker 커스텀 도메인).
+- 루트 A 응답이 질의마다 바뀐 것은 CNAME 평탄화 때문이었다.
+- 롤백: Worker 커스텀 도메인 `mion-space.dev` 해제 → 위 CNAME(DNS only, TTL Auto) 다시 생성 → 옛 사이트 응답 확인. `media`는 R2 커스텀 도메인 해제만 하면 된다.
+
+#### 전환 실행(2026-11-06 KST)
+
+- 편집 동결: 사용자가 옛 관리자에서 편집하지 않는 것으로 동결했다(옛 앱 코드·설정은 바꾸지 않음). 새 앱은 `ADMIN_WRITES_FROZEN=true`.
+- 10:49 최종 덤프(읽기 전용) → `MEDIA_TO` 기본값 `https://media.mion-space.dev/`로 `build-sql.ts` → 원격 D1 `clear.sql`(57행 삭제)·`load.sql` → `compare.ts --remote`: users 1/1, categories 2/2, tags 5/5, posts 21/21, post_tags 28/28, settings 0/0, 전 컬럼 일치(10:49:20). D1은 새로 만들지 않고 모든 행을 지운 뒤 다시 넣었다(미리보기 중 시험 글이 없어 결과는 같다). R2에는 커버 21개만 있다.
+- `pnpm --filter blog deploy:prod`: `SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`, `MEDIA_BASE_URL=https://media.mion-space.dev/`, `SERVE_MEDIA_FROM_BINDING=false`.
+- `media.mion-space.dev`: `wrangler r2 bucket domain add`로 R2 `mion-blog-media`에 연결(최소 TLS 1.2). 커버 21개 200 `image/webp`, 원본과 바이트 같음.
+- `mion-space.dev`: Workers 커스텀 도메인 API가 기존 CNAME 때문에 거부(`100117`)해, 대시보드 세션으로 루트 CNAME을 지우고(10:52:08) 바로 커스텀 도메인을 붙였다(10:52:15). Cloudflare가 루트에 Worker용 AAAA `100::`(proxied)을 만들었다.
+- `wrangler.jsonc`에 `workers_dev: false`, `preview_urls: false`, `routes`(`mion-space.dev` 커스텀 도메인)를 넣고 다시 배포했다. workers.dev 주소는 404.
+- 전환 뒤 DNS 레코드 수 12(전: 11). 루트 CNAME → AAAA, `media` CNAME 추가 외에는 같다(MX·TXT 그대로).
+
+#### 전환 뒤 확인
+
+Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는 TTL 300초 동안 옛 Vercel을 가리켰다. 1.1.1.1·8.8.8.8은 바로 Cloudflare).
+
+- `server: cloudflare`, canonical `https://mion-space.dev`, robots `Allow: /`·`Disallow: /admin`·`/api`
+- `/feed.xml`·`/sitemap.xml`이 전환 직전 옛 사이트 응답과 바이트 단위로 같음
+- sitemap의 글 21편 모두 200, 옛 sitemap 표본 10개(`/`, `/about`, `/privacy-policy`, 글 7편) 모두 200
+- `/auth/google` → 302 `accounts.google.com`, `redirect_uri=https://mion-space.dev/api/auth/callback/google`
+- 홈 커버 7개 200(`media.mion-space.dev`), `/admin` 307, `/local-media/x` 404, 다른 출처 `POST /posts` 403
+- 확인하느라 글 상세를 열어 새 D1 조회수가 글마다 1~2 올랐다. 덤프(10:49)부터 리졸버 캐시가 끝날 때까지 옛 사이트에 쌓인 조회수는 옮기지 않았다(설계 결정 7에서 조회수 유실 허용).
+- 남은 일: 운영 Google 콜백 콘솔 등록 확인(감독), 관리자 로그인 확인, 7일 관찰 뒤 작업 50.
+
