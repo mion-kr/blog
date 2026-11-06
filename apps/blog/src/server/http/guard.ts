@@ -13,4 +13,4 @@ export function normalizePath(pathname: string): string | null {
 export const under = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 
 /** 전환 뒤 관찰 기간의 관리자 편집 동결(사용자 결정 7): /api/admin/* 쓰기만 */
-export const isWriteFrozen = (flag: string | undefined, method: string, path: string) => flag === 'true' && WRITE.has(method) && under(path, '/api/admin');
+export const isWriteFrozen = (flag: string | undefined, method: string, path: string) => flag === 'true' && WRITE.has(method.toUpperCase()) && under(path, '/api/admin');

@@ -574,7 +574,7 @@ design.md "단위 테스트" 표(render, session, oauth-start, oauth-callback, a
   - [x] 원격 D1 생성·마이그레이션·적재·전 컬럼 비교, R2 버킷 생성·커버 21개 복사, 비밀값 등록, 미리보기 vars 확인 후 배포(실행 기록 "미리보기 배포 결과")
   - [ ] Google 콘솔에 미리보기 콜백 추가(사용자), 미리보기에서 로그인·글 작성·이미지 업로드·수정 직접 확인, 시험 글·이미지 정리
   - [ ] `media.mion-space.dev` 연결: DNS 변경이라 전환(작업 49) 때 승인 후 한다(사용자 결정 11로 미리보기는 앱 경로 사용)
-- [ ] 49. 전환: 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
+- [ ] 49. 전환: 옛 관리자 편집 동결 → 최종 덤프·D1 재생성·적재·전 컬럼 비교 → A 레코드 기록 → vars를 운영 값(`SITE_URL=https://mion-space.dev`, `ROBOTS_INDEXABLE=true`, `ADMIN_WRITES_FROZEN=true`, `MEDIA_BASE_URL=https://media.mion-space.dev/`, `SERVE_MEDIA_FROM_BINDING=false`)으로 바꿔 배포 → 커스텀 도메인 연결 → `workers_dev=false` → 21편·RSS·sitemap 확인
 - [ ] 50. 7일 관찰 → `ADMIN_WRITES_FROZEN=false` 배포 → 옛 코드 정리 PR(별도)
 
 ## 변경 파일 후보
@@ -657,11 +657,14 @@ design.md "변경 파일 후보"에 더한다.
 ### 미리보기 배포 결과(작업 48 일부, 2026-11-06)
 
 - 원격 자원: D1 `mion-blog`(위치 힌트 `apac`, id는 `wrangler.jsonc`), R2 `mion-blog-media`(위치 힌트 `apac`). `wrangler d1 migrations apply mion-blog --remote`로 `0000_init.sql` 적용.
-- 적재: 운영 Supabase를 읽기 전용 트랜잭션으로 다시 덤프 → `MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`로 `build-sql.ts` → 원격 D1에 `clear.sql`·`load.sql` 실행(221행) → `compare.ts --remote` 결과: users 1/1, categories 2/2, tags 5/5, posts 21/21, post_tags 28/28, settings 0/0, 전 컬럼 일치(덤프 쿼리 값·드라이버 값 모두).
+- 적재: 운영 Supabase를 읽기 전용 트랜잭션으로 다시 덤프 → `MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`로 `build-sql.ts` → 원격 D1에 `clear.sql`·`load.sql` 실행(INSERT 57건, D1 `rows_written` 221은 인덱스 쓰기 포함) → `compare.ts --remote` 결과: users 1/1, categories 2/2, tags 5/5, posts 21/21, post_tags 28/28, settings 0/0, 전 컬럼 일치(덤프 쿼리 값·드라이버 값 모두).
   - 첫 적재 뒤 비교에서는 `view_count`만 1씩 달랐다. 운영이 살아 있어 덤프와 비교 사이에 조회수가 올랐다. 덤프부터 비교까지 다시 이어서 실행해 일치를 확인했다. 최종 전환(작업 49)은 편집 동결 뒤 적재하지만 조회수는 계속 오르므로, 같은 방식으로 적재 직후 비교한다.
 - 커버: 덤프의 Supabase 공개 URL 21개를 HTTP로 받아(모두 200 `image/webp`) R2 `posts/{id}/thumbnail/…` 키에 `--content-type image/webp`로 올렸다. 배포 뒤 `/local-media/{key}` 21개 모두 200 `image/webp`, 원본과 바이트가 같다.
 - 비밀값: `GOOGLE_CLIENT_ID`·`GOOGLE_CLIENT_SECRET`·`ADMIN_EMAIL`은 Doppler `prd_web` 값을 표준 입력으로 `wrangler secret put`에 넘겼다(값 미출력, `local_web`과 같은 Google 클라이언트). `SESSION_SECRET`은 새로 만든 무작위 값이다.
 - 배포: `pnpm --filter blog deploy:preview` 같은 명령으로 `https://mion-blog.whddbs311.workers.dev`. 배포 vars: `SITE_URL`·`MEDIA_BASE_URL` 미리보기 값, `ROBOTS_INDEXABLE=false`, `SERVE_MEDIA_FROM_BINDING=true`, `ADMIN_WRITES_FROZEN=false`, `UPLOAD_ALLOWED_MIME=image/jpeg,image/png,image/webp`.
 - 미리보기 확인(`verify-local.mjs`를 미리보기 주소로 실행): 공개 글 21편 200, RSS·sitemap이 운영 응답(2026-11-06 수집)과 글자 단위로 같음, 관리자 주소 307, 관리자 API 401, 목록 오류 문구. 그 밖에 `robots.txt` 전체 차단, canonical이 미리보기 주소, 다른 출처 `POST /posts` 403, 같은 출처 로그아웃 303, `/auth/google`이 미리보기 콜백 주소로 302하고 `__Host-mion-oauth`(Secure) 쿠키를 붙임, 홈 이미지 깨짐 0.
+- 브라우저 확인(Playwright, 미리보기): 글 상세 21편·`/about`·`/posts`에서 이미지 33개 모두 로드(깨짐 0), 페이지 오류 0. `pnpm --filter blog deploy:preview -- --dry-run`이 두 값을 덮어쓰는 것도 확인했다.
+- 독립 리뷰(`mion-reviewer`) 반영: 작업 49 운영 vars에 `MEDIA_BASE_URL`·`SERVE_MEDIA_FROM_BINDING` 추가, 변경 명세 문구를 관리자 확인 순서에 맞춤, 편집 동결 판정이 소문자 메서드(`patch`, fetch가 대문자로 바꾸지 않음)도 잡게 고침(`edit-freeze.test.ts` 실패 확인 후 통과).
+- 출처 검사 확장(사용자 결정 12): 관리자 밖 주소 케이스를 먼저 추가해 실패를 확인했고(`POST /`가 200), middleware 조건을 바꾼 뒤 51개 파일 300개 통과.
 - 미리보기 글 상세를 열어 원격 D1 조회수가 올랐다. 전환 때 D1을 다시 적재하므로 운영 값에는 영향이 없다.
 - 남은 일: Google 콘솔에 `https://mion-blog.whddbs311.workers.dev/api/auth/callback/google` 추가(사용자), 로그인 뒤 관리자 쓰기 확인, 시험 글·이미지 정리.

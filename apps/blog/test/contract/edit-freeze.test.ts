@@ -11,5 +11,7 @@ describe('편집 동결 판정', () => {
     expect(isWriteFrozen('true', 'GET', '/posts/a')).toBe(false);
     expect(isWriteFrozen('false', 'POST', '/api/admin/posts')).toBe(false);
     expect(isWriteFrozen(undefined, 'POST', '/api/admin/posts')).toBe(false);
+    // fetch는 PATCH를 대문자로 바꾸지 않는다. 소문자 patch도 Astro가 PATCH 핸들러로 보내므로 동결해야 한다.
+    expect(isWriteFrozen('true', 'patch', '/api/admin/settings')).toBe(true);
   });
 });
