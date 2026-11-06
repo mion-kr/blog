@@ -2,7 +2,7 @@
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import * as oauth from 'oauth4webapi';
 import { getSafeCallbackUrl } from './callback-url';
-import { deriveSessionKey } from './session';
+import { deriveSessionKey, isLocalHttp, readCookie } from './session';
 
 export const GOOGLE: oauth.AuthorizationServer = {
   issuer: 'https://accounts.google.com',
@@ -14,10 +14,6 @@ export const GOOGLE: oauth.AuthorizationServer = {
 const GOOGLE_LEGACY: oauth.AuthorizationServer = { ...GOOGLE, issuer: 'accounts.google.com' };
 
 const TEMP_MAX_AGE = 600;
-const isLocalHttp = (siteUrl: string) => {
-  const url = new URL(siteUrl);
-  return url.protocol === 'http:' && url.hostname === 'localhost';
-};
 export const oauthCookieName = (siteUrl: string) => (isLocalHttp(siteUrl) ? 'mion-oauth' : '__Host-mion-oauth');
 const attrs = (siteUrl: string, maxAge: number) => `Path=/; Max-Age=${maxAge}; HttpOnly${isLocalHttp(siteUrl) ? '' : '; Secure'}; SameSite=Lax`;
 export const clearOauthCookie = (siteUrl: string) => `${oauthCookieName(siteUrl)}=; ${attrs(siteUrl, 0)}`;
@@ -102,11 +98,4 @@ export async function finishGoogleLogin(config: OAuthConfig, currentUrl: URL, te
   };
 }
 
-export function oauthTokenFromRequest(request: Request, siteUrl: string): string | undefined {
-  const name = oauthCookieName(siteUrl);
-  for (const part of (request.headers.get('cookie') ?? '').split(';')) {
-    const [key, ...rest] = part.trim().split('=');
-    if (key === name) return rest.join('=');
-  }
-  return undefined;
-}
+export const oauthTokenFromRequest = (request: Request, siteUrl: string) => readCookie(request, oauthCookieName(siteUrl));

@@ -173,4 +173,14 @@ describe('GET /api/auth/callback/google', () => {
     // 브라우저는 지운 쿠키를 다시 보내지 않는다
     await oauthError(await callback(`code=c&state=${state}`));
   });
+
+  it('저장된 사용자 이메일이 대소문자만 달라도 세션은 Google 이메일로 발급해 관리자 화면이 열린다(로그인 반복 없음)', async () => {
+    await env.DB.prepare("UPDATE users SET email='Admin@Example.com' WHERE id=?").bind(ids.user).run();
+    const { state, cookie } = await begin('/admin');
+    google = mockGoogleToken(() => tokenResponse());
+    const res = await callback(`code=c&state=${state}`, cookie);
+    expect(res.headers.get('location')).toBe('/admin');
+    const admin = await fetchPage('/admin', { redirect: 'manual', headers: { cookie: sessionSet(res)!.split(';')[0]! } });
+    expect(admin.status).toBe(200);
+  });
 });

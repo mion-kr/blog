@@ -4,6 +4,7 @@ import { slugFromTitle, slugBase } from '../../lib/slug';
 import { getDb, schema, type Db } from '../db';
 import { env } from '../env';
 import { InvalidUploadKeyError, MediaMover, contentKeys } from '../uploads/finalize';
+import { keyFromUrl } from '../uploads/media';
 import type { CreatePostInput, UpdatePostInput } from './input';
 import { nextPublishedAt, shouldRegenerateSlug } from './rules';
 
@@ -50,6 +51,22 @@ function recountStatements(db: Db, categoryIds: string[], tagIds: string[], now:
   return statements;
 }
 
+// 같은 제목을 동시에 저장하면 둘 다 같은 slug를 고를 수 있다. UNIQUE 위반이면 slug만 다시 골라 재시도한다.
+const SLUG_RETRIES = 3;
+const isSlugTaken = (error: unknown) => /UNIQUE constraint failed: posts\.slug/.test(`${(error as Error)?.message} ${((error as Error)?.cause as Error | undefined)?.message}`);
+
+async function writeWithSlug(slug: string, write: (slug: string) => Promise<unknown>, nextSlug: () => Promise<string>): Promise<string> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await write(slug);
+      return slug;
+    } catch (error) {
+      if (attempt >= SLUG_RETRIES || !isSlugTaken(error)) throw error;
+      slug = await nextSlug();
+    }
+  }
+}
+
 function mapUploadError(error: unknown): never {
   if (error instanceof InvalidUploadKeyError) throw new PostError(400, 'INVALID_UPLOAD_KEY', error.message);
   if (error instanceof PostError) throw error;
@@ -74,18 +91,19 @@ export async function createPost(input: CreatePostInput, authorId: string) {
     mapUploadError(error);
   }
   const now = new Date();
+  let saved: string;
   try {
-    await db.batch([
+    saved = await writeWithSlug(slug, (slug) => db.batch([
       db.insert(posts).values({ id, title: input.title, slug, content, excerpt: input.excerpt ?? null, coverImage, published: input.published, categoryId: input.categoryId, authorId, createdAt: now, updatedAt: now, publishedAt: input.published ? now : null }),
       db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId, createdAt: now }))),
       ...recountStatements(db, [input.categoryId], input.tagIds, now),
-    ] as never);
+    ] as never), () => uniqueSlug(db, input.title));
   } catch (error) {
     await mover.rollback();
     throw error;
   }
   await mover.deleteKeys(mover.drafts);
-  return { id, slug };
+  return { id, slug: saved };
 }
 
 export async function updatePost(id: string, input: UpdatePostInput) {
@@ -107,24 +125,22 @@ export async function updatePost(id: string, input: UpdatePostInput) {
     mapUploadError(error);
   }
   const now = new Date();
+  let saved: string;
   try {
-    await db.batch([
+    saved = await writeWithSlug(slug, (slug) => db.batch([
       db.update(posts).set({ title: input.title, slug, content, excerpt: input.excerpt ?? null, coverImage, published: input.published, categoryId: input.categoryId, updatedAt: now, publishedAt: nextPublishedAt(existing, input.published, now) }).where(eq(posts.id, id)),
       db.delete(postTags).where(eq(postTags.postId, id)),
       db.insert(postTags).values(input.tagIds.map((tagId) => ({ postId: id, tagId, createdAt: now }))),
       ...recountStatements(db, [...new Set([existing.categoryId, input.categoryId])], [...new Set([...previousTags, ...input.tagIds])], now),
-    ] as never);
+    ] as never), () => uniqueSlug(db, input.title, id));
   } catch (error) {
     await mover.rollback();
     throw error;
   }
-  // 성공 뒤 정리: draft 원본, 바뀐 이전 커버, 본문에서 빠진 이미지(삭제 실패는 로그만)
+  // 성공 뒤 정리: draft 원본, 바뀐 이전 커버, 본문에서 빠진 이미지. 이 글의 새 값이나 다른 글·설정이 쓰는 객체는 남긴다(삭제 실패는 로그만).
   await mover.deleteKeys(mover.drafts);
-  if (existing.coverImage && existing.coverImage !== coverImage) await mover.deleteUrls([existing.coverImage]);
-  const prefix = `posts/${id}/content/`;
-  const kept = contentKeys(content, prefix, env.MEDIA_BASE_URL);
-  await mover.deleteKeys([...contentKeys(existing.content, prefix, env.MEDIA_BASE_URL)].filter((k) => !kept.has(k)));
-  return { slug };
+  await mover.deleteUnused(db, [keyFromUrl(existing.coverImage, env.MEDIA_BASE_URL), ...contentKeys(existing.content, `posts/${id}/content/`, env.MEDIA_BASE_URL)]);
+  return { slug: saved };
 }
 
 export async function deletePost(id: string) {
@@ -134,7 +150,6 @@ export async function deletePost(id: string) {
   const tagIds = (await db.select({ tagId: postTags.tagId }).from(postTags).where(eq(postTags.postId, id))).map((t) => t.tagId);
   const now = new Date();
   await db.batch([db.delete(postTags).where(eq(postTags.postId, id)), db.delete(posts).where(eq(posts.id, id)), ...recountStatements(db, [existing.categoryId], tagIds, now)] as never);
-  const mover = new MediaMover(env.MEDIA, env.MEDIA_BASE_URL);
-  await mover.deleteUrls([existing.coverImage]);
-  await mover.deleteKeys([...contentKeys(existing.content, `posts/${id}/content/`, env.MEDIA_BASE_URL)]);
+  // 다른 글·설정이 같이 쓰는 커버·본문 이미지는 남긴다.
+  await new MediaMover(env.MEDIA, env.MEDIA_BASE_URL).deleteUnused(db, [keyFromUrl(existing.coverImage, env.MEDIA_BASE_URL), ...contentKeys(existing.content, `posts/${id}/content/`, env.MEDIA_BASE_URL)]);
 }

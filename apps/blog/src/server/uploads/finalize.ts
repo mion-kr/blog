@@ -1,4 +1,6 @@
 // draft 업로드를 확정 경로로 옮긴다(이관 전 uploads.service·content-image-finalizer). R2 binding에는 복사가 없어 get → put.
+import { or, sql } from 'drizzle-orm';
+import { schema, type Db } from '../db';
 import { keyFromUrl, publicUrl } from './media';
 
 export class InvalidUploadKeyError extends Error {
@@ -90,7 +92,25 @@ export class MediaMover {
     }
   }
 
-  async deleteUrls(urls: (string | null | undefined)[]) {
-    await this.deleteKeys(urls.map((u) => keyFromUrl(u, this.base)).filter((k): k is string => Boolean(k)));
+  /** 저장이 끝난 뒤 정리: 어느 글(커버·본문)이나 설정도 쓰지 않는 객체만 지운다(다른 글과 공유하는 이미지 보호). */
+  async deleteUnused(db: Db, keys: (string | null | undefined)[]) {
+    const { posts, settings } = schema;
+    // 키를 부분 문자열(instr)로 찾는다. LIKE는 키의 _·%를 와일드카드로 읽는다. 넓게 걸리면 남기는 쪽이라 안전하다.
+    // 확인이 실패하면 쓰는 것으로 보고 남긴다(정리는 저장 뒤 최선 노력이라 응답을 막지 않는다).
+    const used = async (key: string) => {
+      try {
+        const [post, setting] = await Promise.all([
+          db.select({ id: posts.id }).from(posts).where(or(sql`instr(${posts.content}, ${key}) > 0`, sql`instr(${posts.coverImage}, ${key}) > 0`)).limit(1).get(),
+          db.select({ id: settings.id }).from(settings).where(sql`instr(${settings.value}, ${key}) > 0`).limit(1).get(),
+        ]);
+        return Boolean(post || setting);
+      } catch (error) {
+        console.warn('객체 참조 확인 실패', (error as Error).name);
+        return true;
+      }
+    };
+    const candidates = [...new Set(keys.filter((k): k is string => Boolean(k)))];
+    const flags = await Promise.all(candidates.map(used));
+    await this.deleteKeys(candidates.filter((_, i) => !flags[i]));
   }
 }

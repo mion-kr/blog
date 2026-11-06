@@ -5,6 +5,7 @@ import { uuidv7 } from 'uuidv7';
 import { getDb, schema } from '../db';
 import { env } from '../env';
 import { InvalidUploadKeyError, MediaMover } from '../uploads/finalize';
+import { keyFromUrl } from '../uploads/media';
 import { getSettings, SETTINGS_KEYS, type BlogSettingsView } from './read';
 
 // validator.js isURL 기본값처럼 http(s)이고 최상위 도메인이 있어야 한다.
@@ -89,6 +90,7 @@ export async function updateSettings(input: UpdateSettingsInput, userId: string)
     throw error;
   }
   await mover.deleteKeys(mover.drafts);
-  if (deletePrevious && current.profileImageUrl && current.profileImageUrl !== nextImage) await mover.deleteUrls([current.profileImageUrl]);
+  // 글이 같이 쓰는 이전 이미지는 남긴다.
+  if (deletePrevious && current.profileImageUrl && current.profileImageUrl !== nextImage) await mover.deleteUnused(db, [keyFromUrl(current.profileImageUrl, env.MEDIA_BASE_URL)]);
   return getSettings();
 }

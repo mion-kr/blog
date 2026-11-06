@@ -46,4 +46,33 @@ describe('DELETE /api/admin/posts/{id}', () => {
     expect((await del(ids.post1, { origin: 'http://localhost:4321' })).status).toBe(401);
     expect((await del(ids.post1, { cookie: await adminCookie(), origin: 'https://evil.test' })).status).toBe(403);
   });
+
+  it('다른 글이나 설정이 쓰는 커버·본문 이미지는 지우지 않는다', async () => {
+    const cover = `${BASE}posts/${ids.post1}/thumbnail/a.png`;
+    const shared = `${BASE}posts/${ids.post1}/content/shared_1.png`;
+    const profile = `${BASE}posts/${ids.post1}/content/profile.png`;
+    const own = `${BASE}posts/${ids.post1}/content/own.png`;
+    for (const url of [cover, shared, profile, own]) await put(url.slice(BASE.length));
+    await env.DB.prepare('UPDATE posts SET cover_image=?, content=? WHERE id=?').bind(cover, `![a](${shared}) ![b](${profile}) ![c](${own})`, ids.post1).run();
+    await env.DB.prepare('UPDATE posts SET content=? WHERE id=?').bind(`![a](${shared}) ![cover](${cover})`, ids.post2).run();
+    await env.DB.prepare("INSERT INTO settings (id,key,value,updated_at) VALUES ('s1','profile_image_url',?,0)").bind(profile).run();
+    expect((await del(ids.post1)).status).toBe(200);
+    for (const url of [cover, shared, profile]) expect(await exists(url.slice(BASE.length)), url).toBe(true);
+    expect(await exists(`posts/${ids.post1}/content/own.png`)).toBe(false);
+  });
+
+  it('참조 확인 쿼리가 실패해도 200, 이미지는 지우지 않고 남긴다(경고 로그만)', async () => {
+    await put(`posts/${ids.post1}/thumbnail/a.png`);
+    await env.DB.prepare('UPDATE posts SET cover_image=? WHERE id=?').bind(`${BASE}posts/${ids.post1}/thumbnail/a.png`, ids.post1).run();
+    const prepare = env.DB.prepare.bind(env.DB);
+    vi.spyOn(env.DB, 'prepare').mockImplementation((query: string) => {
+      if (query.includes('instr(')) throw new Error('D1 down');
+      return prepare(query);
+    });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { status } = await del(ids.post1);
+    vi.restoreAllMocks();
+    expect(status).toBe(200);
+    expect(await exists(`posts/${ids.post1}/thumbnail/a.png`)).toBe(true);
+  });
 });

@@ -60,4 +60,13 @@ describe('관리자 글 화면', () => {
     expect(await env.DB.prepare('SELECT view_count FROM posts WHERE id=?').bind(ids.post1).first('view_count')).toBe(before);
     expect((await page('/admin/posts/nope/edit')).status).toBe(404);
   });
+
+  it('/admin/posts/{slug}/edit: 주소를 한 번 더 디코드하지 않는다(공개 상세와 같은 slug를 연다)', async () => {
+    // Astro가 이미 디코드한 params를 다시 풀면 %40이 @로 바뀌어 다른 slug를 찾는다.
+    await env.DB.prepare("UPDATE posts SET slug='a%40b' WHERE id=?").bind(ids.post2).run();
+    expect((await fetchPage('/posts/a%2540b')).status).toBe(200);
+    const res = await page('/admin/posts/a%2540b/edit');
+    expect(res.status).toBe(200);
+    expect(res.html).toContain(`"postId":[0,"${ids.post2}"]`);
+  });
 });

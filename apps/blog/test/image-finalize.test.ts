@@ -1,6 +1,9 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { getDb } from '../src/server/db';
 import { InvalidUploadKeyError, MediaMover, contentKeys } from '../src/server/uploads/finalize';
+import { keyFromUrl } from '../src/server/uploads/media';
+import { clearTables } from './helpers/db';
 
 const BASE = 'https://media.mion-space.dev/';
 const D = '01900000-0000-7000-8000-00000000d001';
@@ -67,10 +70,12 @@ describe('이미지 확정(이관 전 uploads.service·content-image-finalizer)'
     }
   });
 
-  it('deleteUrls: MEDIA_BASE_URL 밖 주소는 지우지 않는다', async () => {
+  it('deleteUnused: MEDIA_BASE_URL 밖 주소는 키가 없어 지우지 않고, 아무도 안 쓰는 키만 지운다', async () => {
+    await clearTables();
     await put('posts/p1/thumbnail/a.png');
     const mover = new MediaMover(env.MEDIA, BASE);
-    await mover.deleteUrls([`${BASE}posts/p1/thumbnail/a.png`, 'https://abc.supabase.co/storage/v1/object/public/production/posts/p1/thumbnail/a.png', null]);
+    const urls = [`${BASE}posts/p1/thumbnail/a.png`, 'https://abc.supabase.co/storage/v1/object/public/production/posts/p1/thumbnail/a.png', null];
+    await mover.deleteUnused(getDb(), urls.map((u) => keyFromUrl(u, BASE)));
     expect(await exists('posts/p1/thumbnail/a.png')).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { CompactEncrypt, EncryptJWT } from 'jose';
-import { describe, expect, it } from 'vitest';
-import { clearSessionCookie, createSessionCookie, deriveSessionKey, readSession, sessionCookieName } from '../src/server/auth/session';
+import { describe, expect, it, vi } from 'vitest';
+import { clearSessionCookie, createSessionCookie, deriveSessionKey, readCookie, readSession, sessionCookieName } from '../src/server/auth/session';
 
 const SECRET = 'test-session-secret-0123456789abcdef';
 const PROD = 'https://mion-space.dev';
@@ -87,5 +87,32 @@ describe('쿠키 이름 판정', () => {
   it('http이어도 localhost가 아니면 운영 이름·Secure를 쓴다', () => {
     expect(sessionCookieName('http://preview.example.com')).toBe('__Host-mion-session');
     expect(clearSessionCookie('http://preview.example.com')).toContain('; Secure;');
+  });
+});
+
+describe('세션 키 캐시', () => {
+  it('같은 비밀값·용도의 키는 한 번만 유도한다', async () => {
+    const secret = 'cache-test-secret-0123456789abcdefgh';
+    const spy = vi.spyOn(crypto.subtle, 'deriveBits');
+    try {
+      const token = value(await createSessionCookie(user, { secret, siteUrl: PROD, now }));
+      await readSession(token, { secret, now });
+      await readSession(token, { secret, now });
+      expect(spy).toHaveBeenCalledTimes(1);
+      await deriveSessionKey(secret, 'mion-oauth');
+      expect(spy).toHaveBeenCalledTimes(2);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('readCookie', () => {
+  const req = (cookie: string) => new Request('http://x', { headers: { cookie } });
+  it('이름이 정확히 같은 쿠키 값만 꺼낸다(값의 = 유지, 앞뒤 공백 무시)', () => {
+    expect(readCookie(req('a=1; mion-session=x.y==; b=2'), 'mion-session')).toBe('x.y==');
+    expect(readCookie(req('  mion-session=v  ;b=2'), 'mion-session')).toBe('v');
+    expect(readCookie(req('__Host-mion-session=v'), 'mion-session')).toBeUndefined();
+    expect(readCookie(new Request('http://x'), 'mion-session')).toBeUndefined();
   });
 });

@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminCookie } from '../helpers/auth';
 import { adminJson } from '../helpers/admin-api';
 import { clearTables } from '../helpers/db';
@@ -125,5 +125,20 @@ describe('POST /api/admin/posts', () => {
   it('미인증 401, 다른 출처 403', async () => {
     expect((await create(valid(), { origin: 'http://localhost:4321', 'content-type': 'application/json' })).status).toBe(401);
     expect((await create(valid(), { cookie: await adminCookie(), origin: 'https://evil.test', 'content-type': 'application/json' })).status).toBe(403);
+  });
+
+  it('slug를 고른 뒤 다른 저장이 같은 slug를 먼저 쓰면 500 없이 다음 slug로 저장한다', async () => {
+    // 동시 저장 재현: 이 요청의 첫 batch 직전에 다른 글이 같은 slug를 차지한다.
+    const batch = env.DB.batch.bind(env.DB);
+    vi.spyOn(env.DB, 'batch').mockImplementationOnce(async (statements) => {
+      await env.DB.prepare("INSERT INTO posts (id,title,slug,content,published,view_count,category_id,author_id,created_at,updated_at) VALUES ('race',?,?,?,0,0,?,?,0,0)")
+        .bind('동시 저장', 'dongsi-jeojang', '본문', ids.catDev, ids.user).run();
+      return batch(statements);
+    });
+    const { status, body } = await create(valid({ title: '동시 저장' }));
+    vi.restoreAllMocks();
+    expect(status).toBe(201);
+    expect(body!.data.slug).toBe('dongsi-jeojang-1');
+    expect(await row('dongsi-jeojang-1')).toMatchObject({ id: body!.data.id, title: '동시 저장' });
   });
 });

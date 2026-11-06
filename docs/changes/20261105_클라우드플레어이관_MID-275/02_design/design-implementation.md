@@ -39,7 +39,8 @@
 - 지금 `robots.ts`는 `NODE_ENV`가 production이 아니면 전체 차단이다(`apps/blog-web/app/robots.ts:4-20`). 새 앱은 같은 판단을 `ROBOTS_INDEXABLE`로 명시한다.
 - 미리보기는 운영과 같은 D1·R2를 쓴다. 최종 재적재(작업 49)가 D1을 새로 만들므로 미리보기에서 쓴 글은 사라지지만, R2에 올린 시험 이미지는 남는다. 미리보기 확인이 끝나면 시험 글을 관리자 화면에서 삭제해(삭제 시 이미지도 지움) 정리하고, 남은 `draft/` 객체는 목록을 보여 주고 승인 후 지운다.
 - 전환 후 workers.dev 주소는 `workers_dev = false`로 끈다. 켜 두면 `SITE_URL`이 운영 주소라 그 주소의 관리자 쓰기가 모두 출처 검사에서 거부되고 canonical만 운영을 가리키는 사본이 생긴다.
-- 전환 뒤 배포는 `pnpm --filter blog deploy:prod`로만 한다(운영 vars를 `--var`로 넣는다). 미리보기 배포 스크립트는 전환 때 지웠다(같은 Worker라 운영을 덮어쓴다). 전환 전 미리보기 배포는 `pnpm --filter blog deploy:preview`로만 했다. `wrangler.jsonc`의 `vars`는 로컬 값이라, 이 스크립트가 `--var`로 `SITE_URL`·`MEDIA_BASE_URL`을 미리보기 값으로 바꾼다. 맨 `wrangler deploy`는 로컬 값으로 배포한다.
+- 전환 뒤 배포는 `pnpm --filter blog deploy:prod`(`astro build && wrangler deploy`)로 한다. 미리보기 배포 스크립트는 전환 때 지웠다(같은 Worker라 운영을 덮어쓴다). 전환 전 미리보기 배포는 `pnpm --filter blog deploy:preview`로만 했다.
+- (MID-291, 2026-11-06) `wrangler.jsonc`의 기본 `vars`를 운영 값으로 바꿨다. 맨 `astro build` 뒤 `wrangler deploy`를 해도 운영 값이 나간다(`test/deploy-config.test.ts`가 빌드 산출물로 확인). 로컬 값은 `env.local`에 두고 `pnpm --filter blog dev`가 `CLOUDFLARE_ENV=local`로 쓴다. `env.local`은 `routes`를 비워 잘못 배포해도 운영 도메인을 가져가지 않는다. 테스트는 `vitest.config.ts` 바인딩으로 로컬 값을 넣는다. `astro preview`는 빌드 산출물(운영 값)을 쓴다.
 - 미리보기 적재는 커버 URL을 미리보기 `MEDIA_BASE_URL`로 바꾼다(`MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`를 `build-sql.ts`·`compare.ts`에 같이 준다). R2 키는 두 주소에서 같아(`posts/{id}/thumbnail/…`), 전환 때 재적재(작업 49)가 접두사만 `https://media.mion-space.dev/`로 바꾼다.
 - 업로드 허용 MIME(`UPLOAD_ALLOWED_MIME`)은 Doppler `prd_api`·`local_api` 모두 3개로 설정돼 있고 svg는 없다(2026-11-05 확인, 값 미출력). 새 앱에도 같은 값을 `vars`로 옮긴다.
 

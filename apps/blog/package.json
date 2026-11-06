@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "CLOUDFLARE_ENV=local astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "check-types": "tsc --noEmit -p .",
     "test": "astro build && vitest run",
-    "deploy:prod": "astro build && wrangler deploy --var SITE_URL:https://mion-space.dev --var ROBOTS_INDEXABLE:true --var ADMIN_WRITES_FROZEN:false --var MEDIA_BASE_URL:https://media.mion-space.dev/ --var SERVE_MEDIA_FROM_BINDING:false"
+    "deploy:prod": "astro build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.4.4",
