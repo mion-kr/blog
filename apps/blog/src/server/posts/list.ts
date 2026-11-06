@@ -32,32 +32,30 @@ export async function listPosts(options: ListOptions): Promise<{ items: PostList
     const term = `%${options.search}%`;
     where.push(or(like(posts.title, term), like(posts.content, term), like(posts.excerpt, term))!);
   }
-  if (options.categorySlug) {
-    const category = await db.select({ id: categories.id }).from(categories).where(eq(categories.slug, options.categorySlug)).get();
-    if (!category) return { items: [], total: 0 };
-    where.push(eq(posts.categoryId, category.id));
-  }
+  // 카테고리·태그 slug는 하위 쿼리로 넣어 따로 왕복하지 않는다. 없는 slug면 조건이 거짓이라 빈 결과다.
+  if (options.categorySlug) where.push(eq(posts.categoryId, sql`(SELECT ${categories.id} FROM ${categories} WHERE ${categories.slug} = ${options.categorySlug})`));
   if (options.tagSlug) {
-    const tag = await db.select({ id: tags.id }).from(tags).where(eq(tags.slug, options.tagSlug)).get();
-    if (!tag) return { items: [], total: 0 };
-    where.push(inArray(posts.id, db.select({ id: postTags.postId }).from(postTags).where(eq(postTags.tagId, tag.id))));
+    where.push(inArray(posts.id, db.select({ id: postTags.postId }).from(postTags).innerJoin(tags, eq(postTags.tagId, tags.id)).where(eq(tags.slug, options.tagSlug))));
   }
   const condition = where.length ? and(...where) : undefined;
   const column = SORT_COLUMNS[options.sort as keyof typeof SORT_COLUMNS] ?? posts.createdAt;
   const direction = options.order === 'asc' ? asc : desc;
 
-  const [rows, totalRow] = await Promise.all([
-    db
-      .select({ post: posts, category: { id: categories.id, name: categories.name, slug: categories.slug } })
-      .from(posts)
-      .innerJoin(categories, eq(posts.categoryId, categories.id))
-      .where(condition)
-      .orderBy(direction(column), desc(posts.id))
-      .limit(options.limit)
-      .offset((options.page - 1) * options.limit),
+  const page = <T extends { orderBy: (...a: SQL[]) => T; limit: (n: number) => T; offset: (n: number) => T }>(q: T) =>
+    q.orderBy(direction(column), desc(posts.id)).limit(options.limit).offset((options.page - 1) * options.limit);
+  // 글·전체 수·태그를 한 번의 왕복(병렬)으로 읽는다. 태그는 같은 조건·정렬·범위의 글 id 하위 쿼리로 찾는다.
+  const [rows, totalRow, tagMap] = await Promise.all([
+    page(
+      db
+        .select({ post: posts, category: { id: categories.id, name: categories.name, slug: categories.slug } })
+        .from(posts)
+        .innerJoin(categories, eq(posts.categoryId, categories.id))
+        .where(condition)
+        .$dynamic(),
+    ),
     db.select({ n: count() }).from(posts).where(condition).get(),
+    tagsForPosts(page(db.select({ id: posts.id }).from(posts).innerJoin(categories, eq(posts.categoryId, categories.id)).where(condition).$dynamic())),
   ]);
-  const tagMap = await tagsForPosts(rows.map((r) => r.post.id));
   return {
     items: rows.map((r) => ({ ...r.post, category: r.category, tags: tagMap.get(r.post.id) ?? [] })),
     total: totalRow?.n ?? 0,

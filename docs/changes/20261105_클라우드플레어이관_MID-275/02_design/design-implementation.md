@@ -732,3 +732,28 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 테스트: `test/contract/security-headers.test.ts`(공개 홈·목록·404·RSS·로그인 화면·Google 302·관리자 200·307·401·출처 거부 403에 다섯 헤더, CSP에 스크립트·스타일 정책 없음, Google 302와 임시 쿠키 유지). 구현 전 11개 실패 확인 후 통과. 전체 53개 파일 317개 통과, 타입 검사 통과.
 - 브라우저 확인(로컬, 빌드 산출물 + 로컬 테스트 비밀값): 공개 `/`·`/posts`·`/about`·글 상세, 로그인 화면 → Google 버튼 → `accounts.google.com` 이동, 관리자 6개 화면 200·이미지 깨짐 0·메뉴 클릭 이동, 다른 페이지에서 `/admin`을 iframe으로 넣으면 `frame-ancestors 'none'`으로 차단. 페이지 오류 0, 그 밖의 CSP 위반 0.
 
+### 전환 뒤 수정: 소개 페이지 구성 문구(2026-11-06, 운영 미배포)
+
+- 문구는 DB가 아니라 코드(`src/pages/about.astro`)에 있다.
+- 전: "이 블로그는 Next.js 16(App Router)와 NestJS 11 위에서 동작하며, Turborepo + PNPM 모노레포로 관리됩니다. Vercel에 배포하고, PostgreSQL과 이미지 저장소는 Supabase를 사용합니다. 이미지 업로드는 S3 호환 pre-signed URL 흐름을 사용하며, Doppler가 모든 환경 변수를 제공합니다."
+- 후: "이 블로그는 Astro로 만들어 Cloudflare Workers에서 동작합니다. 글은 D1에, 이미지는 R2에 저장합니다." 저장소 링크 버튼 2개는 그대로다. 테스트: `public-static.test.ts`(실패 확인 후 통과).
+
+### 전환 뒤 수정: 공개 페이지 응답 속도(2026-11-06, 운영 미배포)
+
+측정(한국 단말, 요청은 Cloudflare LAX에서 처리, D1 primary는 APAC):
+
+| 구간 | 값 | 근거 |
+| --- | --- | --- |
+| 단말 ↔ LAX 네트워크 | TCP 왕복 약 150ms, 새 연결 TLS까지 약 0.5초, 새 연결 `/cdn-cgi/trace` TTFB 약 0.9초. 연결을 재사용해도 D1을 안 쓰는 `/robots.txt`가 0.34~3.4초로 흔들린다 | `curl -w` |
+| Worker 실행 위치 | 운영 요청 모두 `colo=LAX`(tail `cf.colo`) | `wrangler tail` |
+| D1 왕복 1회(LAX → APAC) | 약 117~121ms. 쿼리 4개를 직렬로 보내면 465ms, 병렬(`Promise.all`) 121ms, `db.batch` 117ms | 임시 측정 Worker(읽기 전용, 삭제함) |
+| 페이지별 서버 시간(수정 전, 운영 tail) | `/robots.txt`·`/about` 1~5ms, `/feed.xml` 130ms(왕복 1), `/` 350~400ms, `/posts` 450~585ms | `wrangler tail` `wallTime` |
+
+- 원인: 공개 페이지가 D1 쿼리를 단계적으로(글 → 태그, 목록 → 사이드바, 카테고리 slug → 목록, 상세 → 태그 → 조회수) 보내 LAX → APAC 왕복이 2~4번 겹쳤다. 그 위에 한국 ↔ LAX 네트워크 지연과 흔들림(새 연결 약 0.9초)이 더해졌다. 1.3~4.6초 중 앱이 줄일 수 있는 부분은 D1 왕복이다.
+- 적용(효과 확인): 같은 왕복으로 보낼 수 있는 쿼리를 병렬로 묶었다. 태그는 글 id 하위 쿼리로 글과 함께, 카테고리·태그 slug는 하위 쿼리로, 목록과 사이드바를 함께, 글 상세는 글·태그·조회수 +1(slug 기준, 발행 글만)을 함께 보낸다. 결과·응답은 그대로다(전체 318개 통과).
+  - 측정(같은 임시 Worker에 수정 전·후를 배포해 tail `wallTime` 중앙값): `/` 403 → 274ms, `/posts` 456 → 206ms, `/posts?categorySlug=…` 635 → 225ms, `/posts?tagSlug=…` 255 → 154ms, `/feed.xml` 131 → 134ms(변화 없음). 글 상세는 직렬 3왕복 → 1왕복(없는 글로 잰 1왕복 156ms, 운영 조회수를 올리지 않으려고 실제 글은 재지 않았다).
+- 적용하지 않음
+  - Worker 배치(Placement): `aws:ap-northeast-1`(도쿄)에 두면 D1 왕복이 약 13ms로 줄지만 단말 응답은 오히려 느려졌다(연결 재사용 중앙값 `/` 0.65 → 2.37초, `/posts` 1.05 → 2.66초, `cf-placement: remote-NRT`). LAX → 도쿄 → LAX 경유가 더해진다. `aws:ap-southeast-1`, `aws:ap-northeast-2`는 D1 왕복이 각각 약 90ms, 45ms로 도쿄보다 멀다. Smart Placement는 분석에 트래픽과 최대 15분이 필요하고, 같은 경유 비용이 생겨 시험하지 않았다.
+  - 공개 HTML 캐시(Cache API·`Cache-Control`): 글 상세는 조회수를 매 요청 올리므로 캐시하면 동작이 바뀐다. 목록도 조회수를 보여 준다. Cache API 삭제는 데이터센터 하나에만 적용돼 관리자 쓰기 때 전 세계 무효화가 안 되므로 짧은 TTL이 필요하다. 제품 결정이 필요해 넣지 않았다.
+  - D1 읽기 복제(Global read replication): 복제본 추가 요금 없음(공식 문서). 켜면 LAX 근처(WNAM) 복제본에서 읽어 남은 D1 왕복(약 120~270ms)을 줄일 수 있다. 원격 D1 설정 변경과 Sessions API(`withSession`) 코드가 필요해 승인 전에는 켜지 않았다. 켜기 전에는 효과를 잴 수 없다.
+

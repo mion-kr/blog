@@ -3,18 +3,19 @@ import Site from '../../layouts/Site.astro';
 import Seo from '../../components/Seo.astro';
 import PostNotFound from '../../components/site/PostNotFound.astro';
 import post from '../../styles/post.module.css';
-import { findPostBySlug, incrementViewCount } from '../../server/posts/public';
+import { viewPublishedPost } from '../../server/posts/public';
 import { renderPostHtml } from '../../lib/render/render-post';
 import { formatKoreanNumericDate, formatNumber, formatReadingTime, readingTimeMinutes, serializeJsonLd } from '../../lib/format';
 import { siteUrl } from '../../server/env';
 
 const slug = Astro.params.slug ?? '';
-const found = await findPostBySlug(slug, { publishedOnly: true });
+const viewed = await viewPublishedPost(slug);
+const found = viewed?.post ?? null;
 if (!found) Astro.response.status = 404;
 
 const base = siteUrl();
 const url = `${base}/posts/${slug}`;
-const viewCount = found ? await incrementViewCount(found) : 0;
+const viewCount = viewed?.viewCount ?? 0;
 const bodyHtml = found ? await renderPostHtml(found.content) : '';
 const description = found ? (found.excerpt ?? `${found.title}에 대한 Mion의 기술 블로그 포스트입니다.`) : '';
 const displayDate = found ? (found.publishedAt ?? found.createdAt) : new Date(0);

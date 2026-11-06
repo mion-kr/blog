@@ -21,18 +21,17 @@ const title = query.page > 1 ? `전체 포스트 ${query.page}페이지 | Mion's
 let error: string | null = null;
 let result: Awaited<ReturnType<typeof listPosts>> = { items: [], total: 0 };
 if (query.invalid) error = '입력 데이터가 올바르지 않습니다.';
-else {
-  try {
-    result = await listPosts({ ...query, published: true });
-  } catch (e) {
+// 목록과 사이드바를 한 번의 왕복(병렬)으로 읽는다.
+const [listed, categories, tags] = await Promise.all([
+  query.invalid ? null : listPosts({ ...query, published: true }).catch((e) => {
     console.error('글 목록 조회 실패', (e as Error).name);
     error = '포스트를 불러오지 못했습니다. 다시 시도해주세요.';
-  }
-}
-const [categories, tags] = await Promise.all([
+    return null;
+  }),
   listCategories({ limit: 50, sort: 'postCount', order: 'desc' }).then((r) => r.items.filter((c) => c.postCount > 0)).catch(() => []),
   listTags({ limit: 30, sort: 'postCount', order: 'desc' }).then((r) => r.items).catch(() => []),
 ]);
+if (listed) result = listed;
 const totalPages = query.limit > 0 ? Math.ceil(result.total / query.limit) : 0;
 const notFound = !error && query.page > 1 && query.page > totalPages;
 if (notFound) Astro.response.status = 404;
