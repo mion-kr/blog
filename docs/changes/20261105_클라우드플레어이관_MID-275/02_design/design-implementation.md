@@ -708,3 +708,16 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 확인하느라 글 상세를 열어 새 D1 조회수가 글마다 1~2 올랐다. 덤프(10:49)부터 리졸버 캐시가 끝날 때까지 옛 사이트에 쌓인 조회수는 옮기지 않았다(설계 결정 7에서 조회수 유실 허용).
 - 남은 일: 운영 Google 콜백 콘솔 등록 확인(감독), 관리자 로그인 확인, 7일 관찰 뒤 작업 50.
 
+### 전환 뒤 수정: 화면 이동 때 글자 크기 깜빡임(2026-11-06, 운영 미배포)
+
+- 증상: 운영에서 공개·관리자 화면을 옮길 때마다 글자가 작아졌다 커졌다 한다.
+- 원인: 글꼴 파일이 `public/fonts/`에 있어 Workers 정적 자산 기본값 `Cache-Control: public, max-age=0, must-revalidate`로 나갔다. 새 앱은 페이지마다 문서를 새로 받으므로(이관 전 Next는 클라이언트 이동이라 글꼴을 다시 받지 않았다) 이동할 때마다 글꼴을 304로 재검증했고, 그동안 `font-display: swap`이 대체 글꼴로 먼저 그렸다. 운영 측정: 홈 → 글 목록 이동 시 첫 그림(DOMContentLoaded) 시점에 Paperlogy 400·500·800이 `loading`, 응답 304 3개. 대체 글꼴에 크기 보정도 없었다(이관 전 `next/font`는 `paperlogy Fallback` 등에 `size-adjust`를 넣었다). CSS(`/_astro/*.css`)는 이미 immutable이라 원인이 아니다. 외부 CDN 글꼴 링크는 없었다(이미 자체 호스팅).
+- 수정:
+  - 글꼴 파일을 `src/assets/fonts/`로 옮겨 Vite가 `/_astro/{이름}.{해시}.woff2`로 내보내게 했다(`_headers`의 `/_astro/*` immutable 캐시).
+  - 첫 화면 굵기 Paperlogy 400·500·800을 `Base.astro`에서 `preload`(굵기마다 약 430KB라 9개 모두는 하지 않는다).
+  - 대체 글꼴 `… Fallback`(local Arial + `size-adjust`·`ascent-override` 등)을 이관 전 `next/font` 빌드 값 그대로 옮기고 글꼴 변수에 붙였다. `font-display: swap`은 이관 전과 같다.
+- 테스트: `test/contract/fonts.test.ts`(빌드된 CSS의 글꼴 주소가 `/_astro/`이고 `/fonts/`가 없음, 대체 글꼴 값, `/`·`/auth/signin`·`/admin`의 preload 3개). 수정 전 코드로 5개 실패를 확인한 뒤 고쳐 통과. 전체 52개 파일 305개 통과, 타입 검사 통과.
+- 브라우저 확인(로컬, 빌드 산출물을 `wrangler dev`로): 홈 ↔ 글 목록, 관리자 대시보드 → 포스트 관리 → 카테고리 → 대시보드 이동마다 첫 그림 시점에 이미 받은 굵기가 모두 `loaded`. 관리자 포스트 관리에서 처음 쓰는 700만 첫 방문 1회 `loading`(이후 캐시).
+- 글꼴 라이선스(재배포 허용 확인): Paperlogy(Copyright 2024 The PAPERLOGY Authors), Geist(Copyright 2023 Vercel), IBM Plex Mono(Copyright 2017 IBM, `@fontsource/ibm-plex-mono`) 모두 SIL Open Font License 1.1이다. OFL 1.1은 소프트웨어와 함께 묶어 재배포·웹 임베딩을 허용하고, 글꼴만 따로 파는 것과 수정본에 예약 이름을 쓰는 것을 막는다. 파일을 수정하지 않았고 Paperlogy 라이선스 원문은 `/fonts/paperlogy/OFL license.txt`로 계속 제공한다.
+- 운영 배포는 하지 않았다(사용자 결정). 배포는 `pnpm --filter blog deploy:prod`.
+

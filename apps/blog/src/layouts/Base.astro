@@ -1,12 +1,19 @@
 ---
 import '../styles/fonts.css';
 import '../styles/globals.css';
+import paperlogy400 from '../assets/fonts/paperlogy/Paperlogy-4Regular.woff2?url';
+import paperlogy500 from '../assets/fonts/paperlogy/Paperlogy-5Medium.woff2?url';
+import paperlogy800 from '../assets/fonts/paperlogy/Paperlogy-8ExtraBold.woff2?url';
+
+// 첫 화면에 쓰는 굵기만 미리 받는다(굵기마다 약 430KB라 9개 모두는 받지 않는다).
+const preloadFonts = [paperlogy400, paperlogy500, paperlogy800];
 ---
 <!doctype html>
 <html lang="ko" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {preloadFonts.map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
     <slot name="head" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
