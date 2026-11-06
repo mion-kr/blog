@@ -22,7 +22,6 @@
   - `migrations/`: D1 마이그레이션 SQL
   - `test/`: 단위 테스트와 계약 테스트
   - `wrangler.jsonc`: Worker·D1·R2 바인딩과 로컬 기본 설정값
-- `packages/eslint-config`, `packages/typescript-config`: 툴링 프리셋
 - `docs/changes`: 변경 기록, `docs/content`: 블로그 글 원고
 
 ## 빠른 시작

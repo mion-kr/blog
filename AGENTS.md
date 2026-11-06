@@ -4,7 +4,6 @@
 
 - 이 레포는 블로그 앱 `apps/blog` 하나로 구성됩니다. Astro 7 서버 렌더링 앱을 Cloudflare Workers에 배포하고, 데이터는 D1(SQLite), 이미지는 R2에 둡니다.
 - 운영 도메인은 `mion-space.dev`, 이미지 공개 주소는 `media.mion-space.dev`입니다.
-- 공용 툴링 프리셋은 `packages/eslint-config`, `packages/typescript-config`에 있습니다. 앱은 다른 워크스페이스 패키지를 import하지 않습니다.
 - `@repo/shared`는 별도 패키지가 아니라 `apps/blog/astro.config.mjs`·`apps/blog/tsconfig.json`의 경로 별칭으로 `apps/blog/src/shared`를 가리킵니다.
 
 ## Repo Map
@@ -20,6 +19,7 @@
 - `apps/blog/migrations`: D1 마이그레이션 SQL
 - `apps/blog/test`: Vitest 테스트(`test/contract`는 빌드 산출물을 workerd에서 띄워 호출하는 계약 테스트, `test/fixtures`는 이관 때 만든 회귀 고정 자료)
 - `docs/changes`: 변경 기록(설계·구현 문서), `docs/content`: 블로그 글 원고
+- `.claude/agents/blog-post-reviewer.md`: 블로그 글 검토 서브에이전트 정의
 
 ## Commands
 
