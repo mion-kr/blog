@@ -6,6 +6,7 @@ import { listCategories, listPosts, listTags } from '../server/posts/list';
 import { summaryExcerpt } from '../lib/post-summary';
 import { formatKoreanMonthDay, formatKoreanNumericDate, serializeJsonLd } from '../lib/format';
 import { siteUrl } from '../server/env';
+import { getReadDb } from '../server/db';
 
 const SITE_NAME = '미온 블로그';
 const TITLE = `${SITE_NAME} — AI로 만들고 배우기`;
@@ -19,11 +20,12 @@ const base = siteUrl();
 const fmt = (v: number) => new Intl.NumberFormat('ko-KR').format(v);
 const settle = <T,>(p: Promise<T>) => p.catch((e) => { console.error('홈 데이터 조회 실패', (e as Error).name); return null; });
 
+const db = getReadDb();
 const [latest, trending, categoriesRes, tagsRes] = await Promise.all([
-  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'publishedAt', order: 'desc' })),
-  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'viewCount', order: 'desc' })),
-  settle(listCategories({ page: 1, limit: 8, sort: 'name', order: 'asc' })),
-  settle(listTags({ page: 1, limit: 12, sort: 'name', order: 'asc' })),
+  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'publishedAt', order: 'desc' }, db)),
+  settle(listPosts({ page: 1, limit: 7, published: true, sort: 'viewCount', order: 'desc' }, db)),
+  settle(listCategories({ page: 1, limit: 8, sort: 'name', order: 'asc' }, db)),
+  settle(listTags({ page: 1, limit: 12, sort: 'name', order: 'asc' }, db)),
 ]);
 const latestPosts = latest?.items ?? [];
 const trendingPosts = (trending?.items ?? []).slice(0, 5);

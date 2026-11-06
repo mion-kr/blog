@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
-import { getDb, schema } from '../db';
+import { getDb, schema, type Db } from '../db';
 import { tagsForPosts, type PostTag } from './public';
 
 const { posts, categories, tags, postTags } = schema;
@@ -24,8 +24,7 @@ export type PostListItem = typeof posts.$inferSelect & {
 const SORT_COLUMNS = { title: posts.title, publishedAt: posts.publishedAt, updatedAt: posts.updatedAt, viewCount: posts.viewCount } as const;
 
 /** 이관 전 drizzle-posts.repository findAll과 같은 조건. 없는 카테고리·태그 slug는 빈 결과. */
-export async function listPosts(options: ListOptions): Promise<{ items: PostListItem[]; total: number }> {
-  const db = getDb();
+export async function listPosts(options: ListOptions, db: Db = getDb()): Promise<{ items: PostListItem[]; total: number }> {
   const where: SQL[] = [];
   if (options.published !== undefined) where.push(eq(posts.published, options.published));
   if (options.search) {
@@ -54,7 +53,7 @@ export async function listPosts(options: ListOptions): Promise<{ items: PostList
         .$dynamic(),
     ),
     db.select({ n: count() }).from(posts).where(condition).get(),
-    tagsForPosts(page(db.select({ id: posts.id }).from(posts).innerJoin(categories, eq(posts.categoryId, categories.id)).where(condition).$dynamic())),
+    tagsForPosts(page(db.select({ id: posts.id }).from(posts).innerJoin(categories, eq(posts.categoryId, categories.id)).where(condition).$dynamic()), db),
   ]);
   return {
     items: rows.map((r) => ({ ...r.post, category: r.category, tags: tagMap.get(r.post.id) ?? [] })),
@@ -63,8 +62,7 @@ export async function listPosts(options: ListOptions): Promise<{ items: PostList
 }
 
 /** 이관 전 공개·관리자 목록용 카테고리: 글 수는 발행 글 실시간 계산, sort=postCount는 저장 컬럼 기준. */
-export async function listCategories(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }) {
-  const db = getDb();
+export async function listCategories(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }, db: Db = getDb()) {
   const column = { name: categories.name, postCount: categories.postCount, createdAt: categories.createdAt, updatedAt: categories.updatedAt }[options.sort ?? 'createdAt'];
   const direction = options.order === 'asc' ? asc : desc;
   const condition = options.search ? like(categories.name, `%${options.search}%`) : undefined;
@@ -86,8 +84,7 @@ export async function listCategories(options: { limit: number; page?: number; so
 }
 
 /** 이관 전 태그 목록: 글 수는 post_tags 전체(초안 포함), sort=postCount는 저장 컬럼 기준. */
-export async function listTags(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }) {
-  const db = getDb();
+export async function listTags(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }, db: Db = getDb()) {
   const column = { name: tags.name, postCount: tags.postCount, createdAt: tags.createdAt, updatedAt: tags.updatedAt }[options.sort ?? 'createdAt'];
   const direction = options.order === 'asc' ? asc : desc;
   const condition = options.search ? like(tags.name, `%${options.search}%`) : undefined;

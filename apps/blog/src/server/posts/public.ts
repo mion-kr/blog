@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, sql, type SQLWrapper } from 'drizzle-orm';
-import { getDb, schema } from '../db';
+import { getDb, getReadDb, schema, type Db } from '../db';
 
 const { posts, categories, tags, postTags, users } = schema;
 
@@ -11,10 +11,10 @@ export type PostDetail = typeof posts.$inferSelect & {
 };
 
 /** 글 id 목록 또는 글 id 하위 쿼리로 태그를 읽는다. 하위 쿼리를 쓰면 글 조회와 같은 왕복에 보낼 수 있다(D1 왕복 1회 ≈ 120ms). */
-export async function tagsForPosts(postIds: string[] | SQLWrapper): Promise<Map<string, PostTag[]>> {
+export async function tagsForPosts(postIds: string[] | SQLWrapper, db: Db = getDb()): Promise<Map<string, PostTag[]>> {
   const map = new Map<string, PostTag[]>();
   if (Array.isArray(postIds) && postIds.length === 0) return map;
-  const rows = await getDb()
+  const rows = await db
     .select({ postId: postTags.postId, id: tags.id, name: tags.name, slug: tags.slug, postCount: tags.postCount })
     .from(postTags)
     .innerJoin(tags, eq(postTags.tagId, tags.id))
@@ -25,8 +25,7 @@ export async function tagsForPosts(postIds: string[] | SQLWrapper): Promise<Map<
 }
 
 /** 이관 전 findBySlug + 관계. 공개 조회는 published만. 글·태그를 한 번의 왕복(병렬)으로 읽는다. */
-export async function findPostBySlug(slug: string, { publishedOnly }: { publishedOnly: boolean }): Promise<PostDetail | null> {
-  const db = getDb();
+export async function findPostBySlug(slug: string, { publishedOnly, db = getDb() }: { publishedOnly: boolean; db?: Db }): Promise<PostDetail | null> {
   const condition = publishedOnly ? and(eq(posts.slug, slug), eq(posts.published, true)) : eq(posts.slug, slug);
   const [[row], tagMap] = await Promise.all([
     db
@@ -36,7 +35,7 @@ export async function findPostBySlug(slug: string, { publishedOnly }: { publishe
       .innerJoin(users, eq(posts.authorId, users.id))
       .where(condition)
       .limit(1),
-    tagsForPosts(db.select({ id: posts.id }).from(posts).where(condition)),
+    tagsForPosts(db.select({ id: posts.id }).from(posts).where(condition), db),
   ]);
   if (!row) return null;
   return { ...row.post, category: row.category, author: row.author, tags: tagMap.get(row.post.id) ?? [] };
@@ -44,7 +43,8 @@ export async function findPostBySlug(slug: string, { publishedOnly }: { publishe
 
 /** 공개 글 상세: 글·태그 조회와 조회수 +1을 같은 왕복(병렬)으로 보낸다. 미발행·없는 글은 둘 다 0행이라 조회수가 그대로다. */
 export async function viewPublishedPost(slug: string): Promise<{ post: PostDetail; viewCount: number } | null> {
-  const [post, viewCount] = await Promise.all([findPostBySlug(slug, { publishedOnly: true }), incrementViewCountBySlug(slug)]);
+  // 읽기는 복제본 세션, 조회수 +1(쓰기)은 primary.
+  const [post, viewCount] = await Promise.all([findPostBySlug(slug, { publishedOnly: true, db: getReadDb() }), incrementViewCountBySlug(slug)]);
   return post ? { post, viewCount: viewCount ?? post.viewCount } : null;
 }
 

@@ -755,5 +755,14 @@ Cloudflare IP로 고정해 새 Worker 응답을 확인했다(로컬 리졸버는
 - 적용하지 않음
   - Worker 배치(Placement): `aws:ap-northeast-1`(도쿄)에 두면 D1 왕복이 약 13ms로 줄지만 단말 응답은 오히려 느려졌다(연결 재사용 중앙값 `/` 0.65 → 2.37초, `/posts` 1.05 → 2.66초, `cf-placement: remote-NRT`). LAX → 도쿄 → LAX 경유가 더해진다. `aws:ap-southeast-1`, `aws:ap-northeast-2`는 D1 왕복이 각각 약 90ms, 45ms로 도쿄보다 멀다. Smart Placement는 분석에 트래픽과 최대 15분이 필요하고, 같은 경유 비용이 생겨 시험하지 않았다.
   - 공개 HTML 캐시(Cache API·`Cache-Control`): 글 상세는 조회수를 매 요청 올리므로 캐시하면 동작이 바뀐다. 목록도 조회수를 보여 준다. Cache API 삭제는 데이터센터 하나에만 적용돼 관리자 쓰기 때 전 세계 무효화가 안 되므로 짧은 TTL이 필요하다. 제품 결정이 필요해 넣지 않았다.
-  - D1 읽기 복제(Global read replication): 복제본 추가 요금 없음(공식 문서). 켜면 LAX 근처(WNAM) 복제본에서 읽어 남은 D1 왕복(약 120~270ms)을 줄일 수 있다. 원격 D1 설정 변경과 Sessions API(`withSession`) 코드가 필요해 승인 전에는 켜지 않았다. 켜기 전에는 효과를 잴 수 없다.
+  - (아래 "D1 읽기 복제"에서 승인 후 적용) D1 읽기 복제(Global read replication): 복제본 추가 요금 없음(공식 문서). 켜면 LAX 근처(WNAM) 복제본에서 읽어 남은 D1 왕복(약 120~270ms)을 줄일 수 있다. 원격 D1 설정 변경과 Sessions API(`withSession`) 코드가 필요해 승인 전에는 켜지 않았다. 켜기 전에는 효과를 잴 수 없다.
+
+### 전환 뒤 수정: D1 읽기 복제(사용자 승인, 2026-11-06)
+
+- 원격 D1 `mion-blog`에 `read_replication.mode=auto`를 켰다(REST `PUT /d1/database/{id}`, 11:46). 끄려면 `mode=disabled`(복제본이 멈추기까지 최대 24시간).
+- 코드: 공개 화면 읽기(`/`, `/posts`, 글 상세의 글·태그 조회, `/feed.xml`, sitemap)는 요청마다 `env.DB.withSession()`(first-unconstrained) 세션 하나로 읽는다(`getReadDb`, `src/server/db.ts`). 조회수 +1과 관리자 화면·관리자 쓰기는 primary(`getDb`) 그대로다. Drizzle에는 세션을 `D1Database`로 넘긴다(prepare·batch만 쓴다).
+- 측정 1(읽기 전용 측정 Worker, LAX 처리): 쿼리 1개 primary(APAC) 약 117ms, 복제본(WNAM) 41~62ms(중앙값 52ms). 켠 직후 5~10분은 APAC·WNAM이 섞여 나왔다.
+- 측정 2(같은 임시 Worker에 세션 적용 전·후 배포, tail `wallTime` 중앙값, 9회): `/` 285 → 222ms, `/posts` 252 → 158ms, `/posts?categorySlug=…` 215 → 199ms, `/posts?tagSlug=…` 170 → 113ms, `/feed.xml` 128 → 63ms, 없는 글 상세 149 → 145ms(조회수 쓰기가 primary로 가서 거의 같다). 실제 글 상세는 운영 조회수를 올리지 않으려고 재지 않았다. 측정 Worker 2개는 삭제했다.
+- 결과: 공개 읽기마다 약 60ms씩 줄어 적용했다.
+- 주의: 복제본은 primary보다 잠깐 늦을 수 있다. 관리자가 글을 저장한 직후 공개 화면이 이전 내용을 잠시 보여 줄 수 있다(관리자 화면은 primary라 바로 보인다).
 
