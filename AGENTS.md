@@ -2,95 +2,59 @@
 
 ## Quick Start
 
-- 이 레포는 `apps/blog-web`(Next.js 15)과 `apps/blog-api`(NestJS 11)로 구성됩니다.
-- 공용 패키지는 `packages/` 아래에 있습니다. 주요 패키지는 `database`, `shared`, `ui`, `eslint-config`, `typescript-config` 입니다.
-- 백엔드 규칙의 source of truth는 `docs/backend/README.md` 입니다.
-- 프론트엔드 규칙의 source of truth는 `docs/frontend/README.md` 입니다.
-- 핵심 용어는 `transport 계층`, `use-case 계층`, `persistence 계층`, `응답 변환 계층`으로 통일합니다.
-- 프론트엔드 핵심 용어는 `route 계층`, `server 실행 계층`, `data access 계층`, `client 상호작용 계층`, `presentation 계층`으로 통일합니다.
-
-## Read Order
-
-- 백엔드 작업 시작 전: `docs/backend/README.md`
-- 프론트엔드 작업 시작 전: `docs/frontend/README.md`
-- 레이어 경계 판단: `docs/backend/boundary-and-dependency-rules.md`
-- 프론트엔드 경계 판단: `docs/frontend/boundary-and-dependency-rules.md`
-- 구현 중 레이어별 규칙 확인: 해당 레이어 문서
-- 구현 마무리 점검: `docs/backend/review-checklist.md`
-- 프론트엔드 구현 마무리 점검: `docs/frontend/review-checklist.md`
-- 새 모듈 설계: `docs/backend/module-template.md`
-- 새 프론트엔드 화면/기능 설계: `docs/frontend/route-template.md`
+- 이 레포는 블로그 앱 `apps/blog` 하나로 구성됩니다. Astro 7 서버 렌더링 앱을 Cloudflare Workers에 배포하고, 데이터는 D1(SQLite), 이미지는 R2에 둡니다.
+- 운영 도메인은 `mion-space.dev`, 이미지 공개 주소는 `media.mion-space.dev`입니다.
+- 공용 툴링 프리셋은 `packages/eslint-config`, `packages/typescript-config`에 있습니다. 앱은 다른 워크스페이스 패키지를 import하지 않습니다.
+- `@repo/shared`는 별도 패키지가 아니라 `apps/blog/astro.config.mjs`·`apps/blog/tsconfig.json`의 경로 별칭으로 `apps/blog/src/shared`를 가리킵니다.
 
 ## Repo Map
 
-- `apps/blog-web`: Next.js 앱
-- `apps/blog-api`: NestJS 앱
-- `packages/database`: Drizzle ORM 래퍼
-- `packages/shared`: 공용 유틸과 타입
-- `packages/ui`: 디자인 시스템
+- `apps/blog/src/pages`: 공개 화면(`posts`), 관리자 화면(`admin`), 인증(`auth`), API(`api`) 라우트
+- `apps/blog/src/server`: 서버 처리(인증·세션, 관리자 쓰기, 글, 설정, 업로드)
+- `apps/blog/src/db`: Drizzle 스키마(`schema.ts`)
+- `apps/blog/src/lib`: 글 조회 조건, MDX 렌더링, slug 같은 순수 로직
+- `apps/blog/src/components`, `src/layouts`, `src/styles`: Astro·React 화면 구성 요소와 스타일
+- `apps/blog/src/islands`: 관리자 화면 React island 진입점
+- `apps/blog/src/features`: 관리자 화면 데이터 조회(`*/server`)와 업로드 요청(`uploads/client`)
+- `apps/blog/src/shims`: 관리자 React 컴포넌트가 쓰는 `next/*` import를 대신하는 모듈
+- `apps/blog/migrations`: D1 마이그레이션 SQL
+- `apps/blog/test`: Vitest 테스트(`test/contract`는 빌드 산출물을 workerd에서 띄워 호출하는 계약 테스트, `test/fixtures`는 이관 때 만든 회귀 고정 자료)
+- `docs/changes`: 변경 기록(설계·구현 문서), `docs/content`: 블로그 글 원고
 
 ## Commands
 
-- 초기 셋업: `pnpm install`
-- 환경 설정: `pnpm doppler-setup`
+- 설치: `pnpm install`
 - 전체 빌드: `pnpm build`
 - 타입 체크: `pnpm check-types`
-- 프론트 dev: `pnpm --filter blog-web dev`
-- 백엔드 dev: `pnpm --filter blog-api dev`
-- 백엔드 테스트: `pnpm --filter blog-api test`
+- 테스트: `pnpm --filter blog test` (`astro build` 뒤 `vitest run`)
+- 로컬 실행: `pnpm --filter blog dev` (`http://localhost:4321`)
+- 로컬 D1 마이그레이션 적용: `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --local`
+- 스키마 변경 뒤 마이그레이션 생성: `pnpm --filter blog exec drizzle-kit generate`
+- 운영 배포: `pnpm --filter blog deploy:prod` (운영 Worker를 바꾸므로 사용자 승인 뒤에만 실행)
+
+## Environment And Secrets
+
+- 비밀값(`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `SESSION_SECRET`)의 원본은 Doppler 프로젝트 `mion-blog`입니다. 운영은 `prd_blog`, 로컬은 `local_blog` 설정을 씁니다.
+- 운영 Worker에는 `wrangler secret`으로, 로컬에는 `local_blog` 값으로 만든 `apps/blog/.dev.vars`로 넣습니다.
+- 비밀이 아닌 설정값은 `apps/blog/wrangler.jsonc`의 `vars`(로컬 기본값)와 `deploy:prod`의 `--var`(운영 값)에 둡니다.
+- MUST `.dev.vars`, `.env*`, 운영 덤프를 Git에 커밋하지 않습니다.
+- MUST 운영 D1·R2에 쓰는 명령(`wrangler d1 execute --remote`, `wrangler r2 object put` 등)은 사용자 승인 뒤에만 실행합니다.
 
 ## Working Rules
 
 - MUST 기존 코드 스타일과 구조를 우선 따릅니다.
-- MUST feature-first 구조를 유지합니다.
-- MUST Nest 모듈 파일명은 `*.module.ts` 패턴을 유지합니다.
-- MUST React/Nest 클래스는 `PascalCase`, 유틸과 일반 파일은 `camelCase`를 사용합니다.
-- MUST 환경 변수는 Doppler를 기준으로 관리합니다.
-- MUST `.env` 파일을 Git에 커밋하지 않습니다.
-- MUST 백엔드 레이어 규칙 변경 시 `docs/backend/README.md`, 관련 세부 문서, `docs/backend/review-checklist.md`, `docs/backend/module-template.md`를 함께 갱신합니다.
-- MUST 프론트엔드 레이어 규칙 변경 시 `docs/frontend/README.md`, 관련 세부 문서, `docs/frontend/review-checklist.md`, `docs/frontend/route-template.md`를 함께 갱신합니다.
+- MUST 파일 이름은 같은 디렉터리의 관례를 따릅니다(`src/islands`와 Astro 컴포넌트는 `PascalCase`, `src/pages` 라우트와 그 밖의 파일은 kebab-case).
+- MUST DB 스키마를 바꾸면 `src/db/schema.ts`와 `migrations/`를 함께 갱신합니다.
+- MUST 서버 처리나 공개 응답을 바꾸면 관련 테스트(`test/`, 계약 테스트는 `test/contract/`)를 추가하거나 고치고 `pnpm --filter blog test`를 실행합니다.
 
-## Backend Contract
+## Blog Writing Rules
 
-- NestJS 컨트롤러 Swagger 기준은 `apps/blog-api/src/posts/posts.controller.ts` 패턴을 따릅니다.
-- 신규/수정 컨트롤러는 `@ApiTags`, `@ApiExtraModels`, 공통 응답 데코레이터 패턴을 유지합니다.
-- 세부 경계와 예외 규칙은 `docs/backend/` 하위 문서를 우선합니다.
-- Controller는 transport 계층, Service는 use-case 계층, Repository는 persistence 계층으로 취급합니다.
-
-## Testing Rules
-
-- 백엔드 변경 시 관련 서비스 또는 통합 테스트 추가를 우선 검토합니다.
-- 핵심 경로 변경 시 `pnpm --filter blog-api test` 실행을 우선 검토합니다.
-- 커버리지는 `coverage/`에 생성됩니다.
+- MUST 블로그 글을 새로 쓰거나 고치면, 저장·발행 전에 `blog-post-reviewer` 서브에이전트(`.claude/agents/blog-post-reviewer.md`)로 리뷰하고 지적을 반영합니다.
+- MUST 기존 글의 관례를 따릅니다: 본문에 `# 제목`을 넣지 않음(화면이 제목을 따로 표시), 짧은 도입부로 시작, 한다체 일인칭, 짧은 문단, 표·Mermaid·코드로 설명, 대표 이미지 1장, `## 정리`로 마무리.
+- MUST 글에 '주인', '주인님' 호칭, 계정 ID·내부 도메인·비밀값, 아직 고치지 않은 보안 취약점을 넣지 않습니다.
 
 ## PR Rules
 
 - 커밋 메시지는 간결한 한국어 명령형 한 문장을 기본값으로 사용합니다.
 - PR 본문에는 목적, 영향 범위, 관련 이슈, 필요한 적용 절차를 포함합니다.
-- 환경 변수나 DB 스키마 변경이 있으면 적용 절차와 검증 결과를 함께 남깁니다.
-
-## Backend Docs Index
-
-- 허브: `docs/backend/README.md`
-- 경계/의존성: `docs/backend/boundary-and-dependency-rules.md`
-- DTO: `docs/backend/dto-guardrails.md`
-- Controller: `docs/backend/controller-guardrails.md`
-- Service: `docs/backend/service-guardrails.md`
-- Repository: `docs/backend/repository-guardrails.md`
-- Error/Response: `docs/backend/error-and-response-guardrails.md`
-- Testing/Change: `docs/backend/testing-and-change-management.md`
-- 점검 체크리스트: `docs/backend/review-checklist.md`
-- 모듈 템플릿: `docs/backend/module-template.md`
-
-## Frontend Docs Index
-
-- 허브: `docs/frontend/README.md`
-- 경계/의존성: `docs/frontend/boundary-and-dependency-rules.md`
-- App Router: `docs/frontend/app-router-guardrails.md`
-- Server Actions/Data Access: `docs/frontend/server-actions-and-data-access-guardrails.md`
-- Components/Hooks: `docs/frontend/components-and-hooks-guardrails.md`
-- Styling/Design System: `docs/frontend/styling-and-design-system-guardrails.md`
-- Route Handlers/Error: `docs/frontend/route-handlers-and-error-guardrails.md`
-- Testing/Change: `docs/frontend/testing-and-change-management.md`
-- 점검 체크리스트: `docs/frontend/review-checklist.md`
-- 라우트 템플릿: `docs/frontend/route-template.md`
+- 환경 변수, D1 스키마, 운영 배포 설정이 바뀌면 적용 절차와 검증 결과를 함께 남깁니다.

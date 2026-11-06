@@ -5,34 +5,20 @@ name = "blog"
 [setup]
 script = '''
 pnpm install &&
-pnpm run build &&
-pnpm doppler-setup
+pnpm run build
 '''
 
 [[actions]]
-name = "Front Run"
+name = "Run"
 icon = "run"
-command = "pnpm run --filter blog-web dev"
-
-[[actions]]
-name = "Back Run"
-icon = "run"
-command = "pnpm run --filter blog-api dev"
+command = "pnpm run --filter blog dev"
 
 [[actions]]
 name = "build"
 icon = "tool"
-command = '''
-pnpm run build &&
-pnpm run doppler-setup
-'''
+command = "pnpm run build"
 
 [[actions]]
 name = "install"
 icon = "tool"
 command = "pnpm install"
-
-[[actions]]
-name = "doppler-setup"
-icon = "tool"
-command = "pnpm doppler-setup"
