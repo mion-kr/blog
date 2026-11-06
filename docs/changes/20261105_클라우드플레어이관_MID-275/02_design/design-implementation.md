@@ -396,6 +396,7 @@ apps/blog/src/
 | 13 | 테스트 도구는 `@cloudflare/vitest-plugin` 1.6.0으로 유지한다(`vitest-pool-workers`의 바뀐 이름) | 설계 결정 8의 `@cloudflare/vitest-pool-workers` | 작업 1 확인 결과 |
 | 14 | Astro 기본 `security.checkOrigin`은 끄고 middleware 출처 검사 하나로 둔다 | Astro 기본 검사와 middleware 검사를 함께 | `astro.config.mjs` |
 | 15 | 원격 D1·R2 생성, 원격 스키마 적용, `wrangler secret` 등록, 운영 데이터 원격 D1 적재, 커버 R2 복사, workers.dev 미리보기 배포를 진행한다 | 작업 48 각 단계 승인 후 | 작업 48 |
+| 16 | `SESSION_SECRET`도 Doppler로 관리한다 | Worker 비밀값에만 있음 | Doppler `prd_blog`, 미리보기 배포 결과 |
 
 ## 대안
 
@@ -660,7 +661,7 @@ design.md "변경 파일 후보"에 더한다.
 - 적재: 운영 Supabase를 읽기 전용 트랜잭션으로 다시 덤프 → `MEDIA_TO=https://mion-blog.whddbs311.workers.dev/local-media/`로 `build-sql.ts` → 원격 D1에 `clear.sql`·`load.sql` 실행(INSERT 57건, D1 `rows_written` 221은 인덱스 쓰기 포함) → `compare.ts --remote` 결과: users 1/1, categories 2/2, tags 5/5, posts 21/21, post_tags 28/28, settings 0/0, 전 컬럼 일치(덤프 쿼리 값·드라이버 값 모두).
   - 첫 적재 뒤 비교에서는 `view_count`만 1씩 달랐다. 운영이 살아 있어 덤프와 비교 사이에 조회수가 올랐다. 덤프부터 비교까지 다시 이어서 실행해 일치를 확인했다. 최종 전환(작업 49)은 편집 동결 뒤 적재하지만 조회수는 계속 오르므로, 같은 방식으로 적재 직후 비교한다.
 - 커버: 덤프의 Supabase 공개 URL 21개를 HTTP로 받아(모두 200 `image/webp`) R2 `posts/{id}/thumbnail/…` 키에 `--content-type image/webp`로 올렸다. 배포 뒤 `/local-media/{key}` 21개 모두 200 `image/webp`, 원본과 바이트가 같다.
-- 비밀값: `GOOGLE_CLIENT_ID`·`GOOGLE_CLIENT_SECRET`·`ADMIN_EMAIL`은 Doppler `prd_web` 값을 표준 입력으로 `wrangler secret put`에 넘겼다(값 미출력, `local_web`과 같은 Google 클라이언트). `SESSION_SECRET`은 새로 만든 무작위 값이다.
+- 비밀값: `GOOGLE_CLIENT_ID`·`GOOGLE_CLIENT_SECRET`·`ADMIN_EMAIL`은 Doppler `prd_web` 값을 표준 입력으로 `wrangler secret put`에 넘겼다(값 미출력, `local_web`과 같은 Google 클라이언트). `SESSION_SECRET`은 Doppler `mion-blog`/`prd_blog`(새 앱용 config, 환경 `prd`)에 새 무작위 값으로 저장하고 그 값을 등록했다(사용자 결정 16). `prd_web`은 Vercel `blog-web` 운영 환경변수로 동기화되고 있어(`vercel env ls`의 이름 목록이 `prd_web`과 같고 `DOPPLER_*`가 있음) 넣으면 Vercel이 바뀌므로 쓰지 않았다.
 - 배포: `pnpm --filter blog deploy:preview` 같은 명령으로 `https://mion-blog.whddbs311.workers.dev`. 배포 vars: `SITE_URL`·`MEDIA_BASE_URL` 미리보기 값, `ROBOTS_INDEXABLE=false`, `SERVE_MEDIA_FROM_BINDING=true`, `ADMIN_WRITES_FROZEN=false`, `UPLOAD_ALLOWED_MIME=image/jpeg,image/png,image/webp`.
 - 미리보기 확인(`verify-local.mjs`를 미리보기 주소로 실행): 공개 글 21편 200, RSS·sitemap이 운영 응답(2026-11-06 수집)과 글자 단위로 같음, 관리자 주소 307, 관리자 API 401, 목록 오류 문구. 그 밖에 `robots.txt` 전체 차단, canonical이 미리보기 주소, 다른 출처 `POST /posts` 403, 같은 출처 로그아웃 303, `/auth/google`이 미리보기 콜백 주소로 302하고 `__Host-mion-oauth`(Secure) 쿠키를 붙임, 홈 이미지 깨짐 0.
 - 브라우저 확인(Playwright, 미리보기): 글 상세 21편·`/about`·`/posts`에서 이미지 33개 모두 로드(깨짐 0), 페이지 오류 0. `pnpm --filter blog deploy:preview -- --dry-run`이 두 값을 덮어쓰는 것도 확인했다.
