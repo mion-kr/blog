@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, or, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import { getDb, schema, type Db } from '../db';
 import { tagsForPosts, type PostTag } from './public';
 
@@ -21,6 +21,9 @@ export type PostListItem = typeof posts.$inferSelect & {
   tags: PostTag[];
 };
 
+// D1은 LIKE 패턴이 50바이트를 넘으면 'LIKE or GLOB pattern too complex'로 실패한다. LIKE처럼 ASCII 대소문자만 무시하는 부분 문자열 비교를 쓴다.
+const contains = (column: AnyColumn, term: string) => sql`instr(lower(${column}), lower(${term})) > 0`;
+
 const SORT_COLUMNS = { title: posts.title, publishedAt: posts.publishedAt, updatedAt: posts.updatedAt, viewCount: posts.viewCount } as const;
 
 /** 이관 전 drizzle-posts.repository findAll과 같은 조건. 없는 카테고리·태그 slug는 빈 결과. */
@@ -28,8 +31,8 @@ export async function listPosts(options: ListOptions, db: Db = getDb()): Promise
   const where: SQL[] = [];
   if (options.published !== undefined) where.push(eq(posts.published, options.published));
   if (options.search) {
-    const term = `%${options.search}%`;
-    where.push(or(like(posts.title, term), like(posts.content, term), like(posts.excerpt, term))!);
+    const term = options.search;
+    where.push(or(contains(posts.title, term), contains(posts.content, term), contains(posts.excerpt, term))!);
   }
   // 카테고리·태그 slug는 하위 쿼리로 넣어 따로 왕복하지 않는다. 없는 slug면 조건이 거짓이라 빈 결과다.
   if (options.categorySlug) where.push(eq(posts.categoryId, sql`(SELECT ${categories.id} FROM ${categories} WHERE ${categories.slug} = ${options.categorySlug})`));
@@ -65,7 +68,7 @@ export async function listPosts(options: ListOptions, db: Db = getDb()): Promise
 export async function listCategories(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }, db: Db = getDb()) {
   const column = { name: categories.name, postCount: categories.postCount, createdAt: categories.createdAt, updatedAt: categories.updatedAt }[options.sort ?? 'createdAt'];
   const direction = options.order === 'asc' ? asc : desc;
-  const condition = options.search ? like(categories.name, `%${options.search}%`) : undefined;
+  const condition = options.search ? contains(categories.name, options.search) : undefined;
   const [items, totalRow] = await Promise.all([
     db
       .select({
@@ -87,7 +90,7 @@ export async function listCategories(options: { limit: number; page?: number; so
 export async function listTags(options: { limit: number; page?: number; sort?: 'name' | 'postCount' | 'createdAt' | 'updatedAt'; order?: 'asc' | 'desc'; search?: string }, db: Db = getDb()) {
   const column = { name: tags.name, postCount: tags.postCount, createdAt: tags.createdAt, updatedAt: tags.updatedAt }[options.sort ?? 'createdAt'];
   const direction = options.order === 'asc' ? asc : desc;
-  const condition = options.search ? like(tags.name, `%${options.search}%`) : undefined;
+  const condition = options.search ? contains(tags.name, options.search) : undefined;
   const [items, totalRow] = await Promise.all([
     db
       .select({

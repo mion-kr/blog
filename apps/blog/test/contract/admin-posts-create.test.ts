@@ -47,6 +47,17 @@ describe('POST /api/admin/posts', () => {
     expect((await create(valid({ title: '!!!' }))).body!.data.slug).toBe('post');
   });
 
+  it('slug가 50바이트를 넘는 긴 제목도 저장하고, 같은 제목 두 번째는 -1', async () => {
+    const title = '새 서비스를 Vercel 대신 Cloudflare로 시작하는 이유';
+    const slug = 'sae-seobiseureul-vercel-daesin-cloudflarero-sijakhaneun-iyu';
+    const first = await create(valid({ title }));
+    expect(first.status).toBe(201);
+    expect(first.body!.data.slug).toBe(slug);
+    const second = await create(valid({ title }));
+    expect(second.status).toBe(201);
+    expect(second.body!.data.slug).toBe(`${slug}-1`);
+  });
+
   it('검증 오류는 400 VALIDATION_FAILED + fieldErrors, DB 쓰기 없음', async () => {
     for (const body of [
       valid({ title: '' }), valid({ title: 'a'.repeat(201) }), valid({ content: '' }), valid({ excerpt: 'a'.repeat(501) }),

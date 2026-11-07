@@ -1,4 +1,4 @@
-import { and, eq, inArray, like, ne, sql } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { slugFromTitle, slugBase } from '../../lib/slug';
 import { getDb, schema, type Db } from '../db';
@@ -32,10 +32,12 @@ async function ensureTags(db: Db, tagIds: string[]) {
 
 async function uniqueSlug(db: Db, title: string, excludeId?: string) {
   const base = slugBase(title);
+  // D1은 LIKE 패턴이 50바이트를 넘으면 'LIKE or GLOB pattern too complex'로 실패한다. 길이 제한 없는 접두사 비교를 쓴다.
+  const sameBase = sql`substr(${posts.slug}, 1, length(${base})) = ${base}`;
   const rows = await db
     .select({ slug: posts.slug })
     .from(posts)
-    .where(excludeId ? and(like(posts.slug, `${base}%`), ne(posts.id, excludeId)) : like(posts.slug, `${base}%`));
+    .where(excludeId ? and(sameBase, ne(posts.id, excludeId)) : sameBase);
   return slugFromTitle(title, rows.map((r) => r.slug));
 }
 
