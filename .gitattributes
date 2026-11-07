@@ -1,0 +1,2 @@
+# humanizer 샘플·원고는 원본 바이트(CRLF 포함)를 그대로 보존한다
+humanizer/** -text
