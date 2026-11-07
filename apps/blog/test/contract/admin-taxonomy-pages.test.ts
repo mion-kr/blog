@@ -34,6 +34,18 @@ describe('관리자 카테고리·태그 화면', () => {
     expect(html).toMatch(/"name":\[0,"AI"\],"slug":\[0,"ai"\],"createdAt":\[3,"[^"]+"\],"updatedAt":\[3,"[^"]+"\],"postCount":\[0,2\]/);
   });
 
+  it('카테고리·태그 검색: ASCII 대소문자 무시, 50바이트 넘는 한글 검색어도 찾는다', async () => {
+    const long = '클라우드플레어로시작하는이유를정리한다';
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO categories (id,name,slug,created_at,updated_at) VALUES (?,?,?,?,?)').bind('c-long', `${long} 모음`, 'c-long', T0, T0),
+      env.DB.prepare('INSERT INTO tags (id,name,slug,post_count,created_at,updated_at) VALUES (?,?,?,?,?,?)').bind('t-long', `${long} 태그`, 't-long', 0, T0, T0),
+    ]);
+    expect(names(await page(`/admin/categories?search=${encodeURIComponent(long)}`))).toEqual([`${long} 모음`]);
+    expect(names(await page(`/admin/tags?search=${encodeURIComponent(long)}`))).toEqual([`${long} 태그`]);
+    expect(names(await page('/admin/categories?search=sKiLlS'))).toEqual(['Skills']);
+    expect(names(await page('/admin/tags?search=NEST'))).toEqual(['Nest.js']);
+  });
+
   it('새 카테고리 링크와 수정 모달(slug 쿼리)', async () => {
     expect(await page('/admin/categories')).toContain('href="/admin/categories?modal=create"');
     expect(await page('/admin/categories?modal=edit&slug=skills')).toContain('카테고리 수정');

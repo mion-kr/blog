@@ -1,6 +1,7 @@
+import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearTables } from '../helpers/db';
-import { fetchPage, seedBasic, seedManyPublished } from '../helpers/seed';
+import { fetchPage, ids, seedBasic, seedManyPublished } from '../helpers/seed';
 
 const page = async (q: string) => {
   const res = await fetchPage(`/posts${q}`);
@@ -53,6 +54,17 @@ describe('GET /posts', () => {
     expect(titles((await page('?search=nestjs')).html)).toEqual(['second-post']);
     expect(titles((await page('?search=%EA%B5%B5%EA%B2%8C')).html)).toEqual(['first-post']);
     expect(titles((await page('?search=%EC%9A%94%EC%95%BD')).html)).toEqual(['first-post']);
+    expect(titles((await page('?search=NESTJS')).html)).toEqual(['second-post']);
+    expect(titles((await page('?search=nEsTjS%20%EB%82%B4%EC%9A%A9')).html)).toEqual(['second-post']);
+  });
+
+  it('검색어가 50바이트를 넘어도(한글 19자) 행이 있는 상태에서 목록을 찾는다', async () => {
+    const long = '클라우드플레어로시작하는이유를정리한다';
+    await env.DB.prepare('UPDATE posts SET excerpt=? WHERE id=?').bind(`${long} 요약`, ids.post2).run();
+    const { status, html } = await page(`?search=${encodeURIComponent(long)}`);
+    expect(status).toBe(200);
+    expect(html).not.toContain('포스트를 불러올 수 없습니다');
+    expect(titles(html)).toEqual(['second-post']);
   });
 
   it('조회수 정렬', async () => {

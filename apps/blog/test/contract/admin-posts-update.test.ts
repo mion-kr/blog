@@ -37,6 +37,17 @@ describe('PUT /api/admin/posts/{id}', () => {
     expect(same.body!.data.slug).toBe('choan-sae-jemok');
   });
 
+  it('발행 전 글을 slug가 50바이트를 넘는 긴 제목으로 바꿔도 저장(자기 자신 제외)', async () => {
+    const title = '새 서비스를 Vercel 대신 Cloudflare로 시작하는 이유';
+    const slug = 'sae-seobiseureul-vercel-daesin-cloudflarero-sijakhaneun-iyu';
+    const first = await update(ids.draft, full({ title, published: false }));
+    expect(first.status).toBe(200);
+    expect(first.body!.data.slug).toBe(slug);
+    const same = await update(ids.draft, full({ title, published: false }));
+    expect(same.status).toBe(200);
+    expect(same.body!.data.slug).toBe(slug);
+  });
+
   it('발행 전환: 미발행→발행 now, 발행→미발행 null', async () => {
     const before = Date.now();
     await update(ids.draft, full({ title: '초안', published: true }));
