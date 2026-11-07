@@ -54,7 +54,7 @@
 
 - MUST 블로그 글을 새로 쓰거나 고치면, 저장·발행 전에 `blog-post-reviewer` 서브에이전트(`.claude/agents/blog-post-reviewer.md`)로 리뷰하고 지적을 반영합니다.
 - MUST 기존 글의 관례를 따릅니다: 본문에 `# 제목`을 넣지 않음(화면이 제목을 따로 표시), 짧은 도입부로 시작, 한다체 일인칭, 짧은 문단, 표·Mermaid·코드로 설명, 대표 이미지 1장, `## 정리`로 마무리.
-- MUST 글을 쓰거나 다듬을 때 `humanizer` 스킬을 적용하고, `humanizer/sample.txt`를 문체 샘플로, `humanizer/title-sample.txt`를 제목 샘플로 씁니다. `humanizer/revised/`의 원고는 참고용입니다.
+- MUST 글을 쓰거나 다듬을 때 전역 `humanizer-sample` 스킬을 씁니다. 본문 샘플은 `humanizer/revised/`의 다듬은 글 2~3편 전체, 제목 샘플은 `humanizer/title-sample.txt`입니다. 샘플 바이트 수와 문장 통계 보고를 남깁니다.
 - MUST 글에 '주인', '주인님' 호칭, 계정 ID·내부 도메인·비밀값, 아직 고치지 않은 보안 취약점을 넣지 않습니다.
 
 ## PR Rules
