@@ -19,6 +19,7 @@
 - `apps/blog/migrations`: D1 마이그레이션 SQL
 - `apps/blog/test`: Vitest 테스트(`test/contract`는 빌드 산출물을 workerd에서 띄워 호출하는 계약 테스트, `test/fixtures`는 이관 때 만든 회귀 고정 자료)
 - `docs/changes`: 변경 기록(설계·구현 문서), `docs/content`: 블로그 글 원고
+- `.github/workflows`: GitHub Actions(`check.yml`은 PR마다 타입 검사·테스트, `deploy-blog.yml`은 main 병합 시 검사 뒤 운영 배포)
 - `.claude/agents/blog-post-reviewer.md`: 블로그 글 검토 서브에이전트 정의
 
 ## Commands
@@ -30,15 +31,17 @@
 - 로컬 실행: `pnpm --filter blog dev` (`http://localhost:4321`)
 - 로컬 D1 마이그레이션 적용: `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --local`
 - 스키마 변경 뒤 마이그레이션 생성: `pnpm --filter blog exec drizzle-kit generate`
-- 운영 배포: `pnpm --filter blog deploy:prod` (운영 Worker를 바꾸므로 사용자 승인 뒤에만 실행)
+- 운영 배포: main 병합(GitHub Actions `deploy-blog.yml`이 타입 검사·테스트 뒤 `wrangler deploy`). `pnpm --filter blog deploy:prod` 수동 실행은 Actions가 막혔을 때만, 운영 Worker를 바꾸므로 사용자 승인 뒤에만 실행
 
 ## Environment And Secrets
 
 - 비밀값(`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `SESSION_SECRET`)의 원본은 Doppler 프로젝트 `mion-blog`입니다. 운영은 `prd_blog`, 로컬은 `local_blog` 설정을 씁니다.
 - 운영 Worker에는 `wrangler secret`으로, 로컬에는 `local_blog` 값으로 만든 `apps/blog/.dev.vars`로 넣습니다.
-- 비밀이 아닌 설정값은 `apps/blog/wrangler.jsonc`의 `vars`(로컬 기본값)와 `deploy:prod`의 `--var`(운영 값)에 둡니다.
+- 비밀이 아닌 설정값은 `apps/blog/wrangler.jsonc`에 둡니다. 최상위 `vars`가 운영 값(맨 `astro build`·`wrangler deploy`가 씀)이고, 로컬 값은 `env.local`(`CLOUDFLARE_ENV=local`, `pnpm --filter blog dev`가 씀)에 있습니다. `test/deploy-config.test.ts`가 빌드 산출물의 운영 값을 고정합니다.
+- GitHub Actions 배포는 저장소 비밀값 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`를 씁니다.
 - MUST `.dev.vars`, `.env*`, 운영 덤프를 Git에 커밋하지 않습니다.
 - MUST 운영 D1·R2에 쓰는 명령(`wrangler d1 execute --remote`, `wrangler r2 object put` 등)은 사용자 승인 뒤에만 실행합니다.
+- MUST 배포는 D1 마이그레이션을 하지 않습니다. 마이그레이션을 더한 PR은 병합 전에 사용자 승인을 받아 `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --remote`를 먼저 적용합니다.
 
 ## Working Rules
 
@@ -59,3 +62,4 @@
 - 커밋 메시지는 간결한 한국어 명령형 한 문장을 기본값으로 사용합니다.
 - PR 본문에는 목적, 영향 범위, 관련 이슈, 필요한 적용 절차를 포함합니다.
 - 환경 변수, D1 스키마, 운영 배포 설정이 바뀌면 적용 절차와 검증 결과를 함께 남깁니다.
+- MUST main 병합은 곧 운영 배포입니다(`deploy-blog.yml`의 `paths`에 걸린 변경: `apps/blog/**`(마이그레이션만 바꾼 경우 제외), 루트 의존성 파일, 워크플로 파일). 병합은 사용자 승인 뒤에만 하고, 마이그레이션 PR은 운영 D1 적용을 먼저 마칩니다.

@@ -41,9 +41,12 @@
 
 ## 배포와 환경 변수
 
-- 운영 배포는 `pnpm --filter blog deploy:prod`로 합니다. 빌드 뒤 `wrangler deploy`가 운영 설정값(`SITE_URL`, `ROBOTS_INDEXABLE`, `MEDIA_BASE_URL` 등)을 `--var`로 넣습니다.
+- 운영 배포는 main 병합으로 합니다. GitHub Actions(`.github/workflows/deploy-blog.yml`)가 타입 검사·테스트(빌드 포함)를 통과한 산출물을 `wrangler deploy`로 올립니다. PR마다 `.github/workflows/check.yml`이 같은 검사를 돌립니다.
+- Actions가 막혔을 때만 `pnpm --filter blog deploy:prod`로 손수 배포합니다.
+- 배포는 D1 마이그레이션을 하지 않습니다. 마이그레이션을 더한 PR은 병합 전에 `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --remote`로 운영 D1에 먼저 적용합니다.
+- 비밀이 아닌 설정값(`SITE_URL`, `ROBOTS_INDEXABLE`, `MEDIA_BASE_URL` 등)은 `apps/blog/wrangler.jsonc`에 있습니다. 최상위 `vars`가 운영 값이고, 로컬 값은 `env.local`(`pnpm --filter blog dev`가 씀)에 있습니다.
 - 비밀값(`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAIL`, `SESSION_SECRET`)은 Doppler `prd_blog`가 원본이고, 운영 Worker에는 `wrangler secret`으로 등록합니다.
-- 비밀이 아닌 로컬 기본값은 `apps/blog/wrangler.jsonc`의 `vars`에 있습니다.
+- Actions 배포에는 저장소 비밀값 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`가 필요합니다.
 
 ## 라이선스 및 기여
 

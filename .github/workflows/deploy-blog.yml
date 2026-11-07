@@ -1,0 +1,55 @@
+# main에 병합하면 블로그 Worker(apps/blog/wrangler.jsonc)를 운영에 배포한다(MID-317). 배포 전에 PR 검사와 같은 확인을 한 번 더 한다.
+# D1 마이그레이션은 하지 않는다(수동). 새 표를 쓰는 PR은 병합 전에 승인을 받아 `pnpm --filter blog exec wrangler d1 migrations apply mion-blog --remote`로 먼저 적용한다
+# 기준: blox-code-lol .github/workflows/deploy-site.yml. pnpm 모노레포라 다른 곳은 해당 줄에 이유를 적었다
+name: Deploy blog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/blog/**'
+      - '!apps/blog/migrations/**'
+      # 루트 의존성·워크스페이스 설정이 바뀌어도 배포 결과가 바뀐다
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/deploy-blog.yml'
+  workflow_dispatch:
+
+# 배포가 겹치지 않게 하나씩 실행한다. 진행 중인 배포는 취소하지 않는다
+concurrency:
+  group: deploy-blog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # working-directory를 두지 않는다. lock 파일이 루트에 있어 루트에서 설치하고 `pnpm --filter blog`로 실행한다(AGENTS.md Commands와 같은 명령)
+    env:
+      # API 토큰: Cloudflare "Edit Cloudflare Workers"(Cloudflare Workers 편집) 템플릿 권한 그대로, D1 편집 권한 없음. 범위는 계정 1개·계정의 모든 영역.
+      # 배포는 database_id로 D1을 연결만 하고 마이그레이션은 하지 않으므로 D1 편집 권한이 필요 없다
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # setup-node의 `cache: pnpm`은 pnpm이 먼저 있어야 하므로 앞에 둔다. pnpm 버전은 루트 package.json의 packageManager를 따른다(version 입력을 주면 겹쳐서 실패한다)
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+      # lint 스크립트와 타입 생성 단계가 없어 타입 검사·테스트만 한다
+      - name: 확인(타입·테스트)
+        run: pnpm --filter blog check-types && pnpm --filter blog test
+      # 빌드 단계를 따로 두지 않는다. test가 `astro build`(운영 vars)를 하므로 확인을 마친 산출물을 그대로 배포한다(deploy:prod를 부르면 빌드가 한 번 더 돈다)
+      - name: 배포
+        run: pnpm --filter blog exec wrangler deploy
